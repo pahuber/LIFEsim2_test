@@ -1,0 +1,15 @@
+# Observation Configuration File
+# Contains physical and instrumental parameters
+---
+# Array Configuration
+array_configuration: emma-x-circular-rotation
+
+# Beam Combination Scheme
+beam_combination_scheme: double-bracewell-4
+
+# Instrument Specification
+instrument_specification:
+  aperture_diameter: 4 m
+  spectral_range_lower_limit: 4 um
+  spectral_range_upper_limit: 18 um
+...
