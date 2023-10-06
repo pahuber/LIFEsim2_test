@@ -10,6 +10,10 @@ beam_combination_scheme: double-bracewell-4
 # Instrument Specification
 instrument_specification:
   aperture_diameter: 4 m
+  baseline_minimum: 10 m
+  baseline_maximum: 600 m
+  baseline_ratio: 6
+  modulation_period: 100 s
   spectral_range_lower_limit: 4 um
   spectral_range_upper_limit: 18 um
 ...
