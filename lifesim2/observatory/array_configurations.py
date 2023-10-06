@@ -31,6 +31,10 @@ class ArrayConfiguration(ABC):
         :param baseline_ratio: Ratio between the respective baselines
         :param modulation_period: Period for one full array modulation (e.g. rotation period for circular rotation)
         """
+        self.baseline_minimum = baseline_minimum
+        self.baseline_maximum = baseline_maximum
+        self.baselne_ratio = baseline_ratio
+        self.modulation_period = modulation_period
 
         super().__init__()
 
@@ -48,12 +52,9 @@ class EmmaXCircularRotation(ArrayConfiguration):
     """
 
     def get_collector_positions(self, time: astropy.units.Quantity) -> np.ndarray:
-        period = 100
-        rotation_matrix = get_2d_rotation_matrix(time, period)
-        baseline = 10
-        baseline_ratio = 6
-        emma_x_static = baseline / 2 * np.array([[baseline_ratio, -baseline_ratio, -baseline_ratio, baseline_ratio],
-                                                 [1, 1, -1, -1]])
+        rotation_matrix = get_2d_rotation_matrix(time, self.modulation_period)
+        emma_x_static = self.baseline_minimum / 2 * np.array(
+            [[self.baseline_ratio, -self.baseline_ratio, -self.baseline_ratio, self.baseline_ratio], [1, 1, -1, -1]])
 
         return np.matmul(rotation_matrix, emma_x_static)
 
