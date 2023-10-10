@@ -1,0 +1,32 @@
+# -------------------------------------------
+# LIFEsim 2 Configuration File
+# -------------------------------------------
+---
+# ----------------------------------
+# Simulation Configuration
+# ----------------------------------
+simulation:
+  grid_size: 100
+  time_step: 10 min
+# ----------------------------------
+# Observation Configuration
+# ----------------------------------
+observation:
+  field_of_view: 0.4 arcsec
+  integration_time: 1 d
+# ----------------------------------
+# Observatory Configuration
+# ----------------------------------
+observatory:
+  array_configuration: emma-x-circular-rotation
+  beam_combination_scheme: double-bracewell-4
+  instrument_parameters:
+    aperture_diameter: 4 m
+    baseline_minimum: 12 m
+    baseline_maximum: 600 m
+    baseline_ratio: 6
+    modulation_period: 1d
+    spectral_range_lower_limit: 4 um
+    spectral_range_upper_limit: 18 um
+
+...
