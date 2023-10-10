@@ -12,21 +12,41 @@ simulation:
 # Observation Configuration
 # ----------------------------------
 observation:
+  adjust_baseline: true
   field_of_view: 0.4 arcsec
   integration_time: 1 d
+  modulation_period: 1 d
+  optimized_wavelength: 10 um
 # ----------------------------------
 # Observatory Configuration
 # ----------------------------------
 observatory:
-  array_configuration: emma-x-circular-rotation
-  beam_combination_scheme: double-bracewell-4
+  array_configuration:
+    type: emma-x-circular-rotation
+    baseline_maximum: 600 m
+    baseline_minimum: 12 m
+    baseline_ratio: 6
+  beam_combination_scheme: double-bracewell
   instrument_parameters:
     aperture_diameter: 4 m
-    baseline_minimum: 12 m
-    baseline_maximum: 600 m
-    baseline_ratio: 6
-    modulation_period: 1d
     spectral_range_lower_limit: 4 um
     spectral_range_upper_limit: 18 um
-
+    spectral_resolution: 100
+# ----------------------------------
+# Source Configuration
+# ----------------------------------
+source:
+  planet:
+    planet_mass: 1 Mearth
+    planet_radius: 1 Rearth
+    planet_temperature: 230 K
+    planet_star_separation: 1 au
+  noise:
+    star:
+      star_mass: 1 Msun
+      star_radius: 1 Rsun
+      star_distance: 10 pc
+    local_zodi: true
+    exozodi: true
+    exozodi_level: 3
 ...
