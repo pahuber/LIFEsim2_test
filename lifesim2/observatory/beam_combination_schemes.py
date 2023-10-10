@@ -21,6 +21,8 @@ class BeamCombinationScheme(ABC):
         """Constructor method.
         """
         super().__init__()
+        self.number_of_inputs = self.get_beam_combination_transfer_matrix().shape[1]
+        self.number_of_outputs = self.get_beam_combination_transfer_matrix().shape[0]
 
     @abstractmethod
     def get_beam_combination_transfer_matrix(self) -> np.ndarray:
