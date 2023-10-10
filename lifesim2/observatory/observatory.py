@@ -2,8 +2,7 @@ from lifesim2.observatory.array_configurations import ArrayConfigurationEnum, \
     EmmaXCircularRotation, EmmaXDoubleStretch, EquilateralTriangleCircularRotation, RegularPentagonCircularRotation
 from lifesim2.observatory.beam_combination_schemes import BeamCombinationSchemeEnum, \
     DoubleBracewell4, Kernel3, Kernel4, Kernel5
-from lifesim2.observatory.instrument_specification import InstrumentSpecification
-from lifesim2.util.config_reader import ConfigReader
+from lifesim2.observatory.instrument_parameters import InstrumentParameters
 
 
 class Observatory():
@@ -18,11 +17,12 @@ class Observatory():
         self.beam_combination_scheme = None
         self.instrument_specification = None
 
-    def load_from_config(self, path_to_file: str):
+    def _set_from_config(self, observatory_dictionary: dict()):
         """Read the configuration file and set the Observatory parameters.
-        :param path_to_file: Path to the configuration file
+
+        :param path_to_config_file: Path to the configuration file
         """
-        self._config_dict = ConfigReader(path_to_file).get_config_from_file()
+        self._config_dict = observatory_dictionary
         self._set_array_configuration_from_config()
         self._set_beam_combination_scheme_from_config()
         self._set_instrument_specification_from_config()
@@ -30,10 +30,10 @@ class Observatory():
     def _set_array_configuration_from_config(self):
         """Initialize the ArrayConfiguration object with the respective parameters.
         """
-        baseline_minimum = self._config_dict['instrument_specification']['baseline_minimum']
-        baseline_maximum = self._config_dict['instrument_specification']['baseline_maximum']
-        baseline_ratio = self._config_dict['instrument_specification']['baseline_ratio']
-        modulation_period = self._config_dict['instrument_specification']['modulation_period']
+        baseline_minimum = self._config_dict['instrument_parameters']['baseline_minimum']
+        baseline_maximum = self._config_dict['instrument_parameters']['baseline_maximum']
+        baseline_ratio = self._config_dict['instrument_parameters']['baseline_ratio']
+        modulation_period = self._config_dict['instrument_parameters']['modulation_period']
 
         array_configuration = self._config_dict['array_configuration']
 
@@ -83,5 +83,5 @@ class Observatory():
     def _set_instrument_specification_from_config(self):
         """Initialize the InstrumentSpecification object.
         """
-        self.instrument_specification = InstrumentSpecification(
-            specification_dict=self._config_dict['instrument_specification'])
+        self.instrument_specification = InstrumentParameters(
+            specification_dict=self._config_dict['instrument_parameters'])
