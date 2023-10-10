@@ -7,7 +7,7 @@ import numpy as np
 class BeamCombinationSchemeEnum(Enum):
     """Enum representing the different beam combination schemes.
     """
-    DOUBLE_BRACEWELL_4 = 'double-bracewell-4'
+    DOUBLE_BRACEWELL = 'double-bracewell'
     KERNEL_3 = 'kernel-3'
     KERNEL_4 = 'kernel-4'
     KERNEL_5 = 'kernel-5'
@@ -32,7 +32,7 @@ class BeamCombinationScheme(ABC):
         pass
 
 
-class DoubleBracewell4(BeamCombinationScheme):
+class DoubleBracewell(BeamCombinationScheme):
     """Class representation of a double Bracewell beam combination scheme.
     """
 

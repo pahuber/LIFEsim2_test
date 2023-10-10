@@ -24,15 +24,31 @@ class ConfigReader():
     def _parse_units(self):
         """Parse the units of the numerical parameters and convert them to astropy quantities.
         """
-        for key in self._config_dict['simulation'].keys():
-            self._config_dict['simulation'][key] = u.Quantity(self._config_dict['simulation'][key])
+        for key in self._config_dict.keys():
+            for subkey in self._config_dict[key]:
+                try:
+                    self._config_dict[key][subkey] = u.Quantity(self._config_dict[key][subkey])
+                except TypeError:
+                    for subsubkey in self._config_dict[key][subkey]:
+                        try:
+                            self._config_dict[key][subkey][subsubkey] = u.Quantity(
+                                self._config_dict[key][subkey][subsubkey])
+                        except TypeError:
+                            pass
 
-        for key in self._config_dict['observation'].keys():
-            self._config_dict['observation'][key] = u.Quantity(self._config_dict['observation'][key])
-
-        for key in self._config_dict['observatory']['instrument_parameters']:
-            self._config_dict['observatory']['instrument_parameters'][key] = \
-                u.Quantity(self._config_dict['observatory']['instrument_parameters'][key])
+        # for key in self._config_dict['simulation'].keys():
+        #     self._config_dict['simulation'][key] = u.Quantity(self._config_dict['simulation'][key])
+        #
+        # for key in self._config_dict['observation'].keys():
+        #     self._config_dict['observation'][key] = u.Quantity(self._config_dict['observation'][key])
+        #
+        # for key in self._config_dict['observatory']['instrument_parameters']:
+        #     self._config_dict['observatory']['instrument_parameters'][key] = \
+        #         u.Quantity(self._config_dict['observatory']['instrument_parameters'][key])
+        #
+        # for key in self._config_dict['observatory']['instrument_parameters']:
+        #     self._config_dict['observatory']['instrument_parameters'][key] = \
+        #         u.Quantity(self._config_dict['observatory']['instrument_parameters'][key])
 
     def get_config_from_file(self) -> dict():
         """Return a dictionary containing the content of the configuration file.
