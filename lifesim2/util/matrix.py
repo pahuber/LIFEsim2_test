@@ -1,5 +1,6 @@
 import astropy.units
 import numpy as np
+from astropy import units as u
 from numpy import cos, sin, pi
 
 
@@ -9,6 +10,6 @@ def get_2d_rotation_matrix(time: astropy.units.Quantity, rotation_period: astrop
     :param rotation_period: Rotation period for a full rotation in seconds
     :return: An array containing the matrix
     """
-    argument = 2 * pi / rotation_period * time
+    argument = 2 * pi * u.rad / rotation_period * time
     return np.array([[cos(argument), -sin(argument)],
                      [sin(argument), cos(argument)]])
