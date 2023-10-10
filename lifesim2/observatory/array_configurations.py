@@ -3,6 +3,7 @@ from enum import Enum
 
 import astropy.units
 import numpy as np
+from astropy import units as u
 
 from lifesim2.util.matrix import get_2d_rotation_matrix
 
@@ -33,7 +34,7 @@ class ArrayConfiguration(ABC):
         """
         self.baseline_minimum = baseline_minimum
         self.baseline_maximum = baseline_maximum
-        self.baselne_ratio = baseline_ratio
+        self.baseline_ratio = baseline_ratio
         self.modulation_period = modulation_period
 
         super().__init__()
@@ -54,8 +55,7 @@ class EmmaXCircularRotation(ArrayConfiguration):
     def get_collector_positions(self, time: astropy.units.Quantity) -> np.ndarray:
         rotation_matrix = get_2d_rotation_matrix(time, self.modulation_period)
         emma_x_static = self.baseline_minimum / 2 * np.array(
-            [[self.baseline_ratio, -self.baseline_ratio, -self.baseline_ratio, self.baseline_ratio], [1, 1, -1, -1]])
-
+            [[self.baseline_ratio, self.baseline_ratio, -self.baseline_ratio, -self.baseline_ratio], [1, -1, -1, 1]])
         return np.matmul(rotation_matrix, emma_x_static)
 
 
@@ -64,7 +64,10 @@ class EmmaXDoubleStretch(ArrayConfiguration):
     """
 
     def get_collector_positions(self, time: float) -> np.ndarray:
-        pass
+        emma_x_static = self.baseline_minimum / 2 * np.array(
+            [[self.baseline_ratio, self.baseline_ratio, -self.baseline_ratio, -self.baseline_ratio], [1, -1, -1, 1]])
+        return emma_x_static * (1 + self.baseline_maximum / self.baseline_minimum * np.sin(
+            2 * np.pi * u.rad / self.modulation_period * time))
 
 
 class EquilateralTriangleCircularRotation(ArrayConfiguration):
