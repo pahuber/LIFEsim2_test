@@ -46,7 +46,11 @@ class DoubleBracewell(BeamCombinationScheme):
 class Kernel3(BeamCombinationScheme):
     """Class representation of a Kernel nulling beam combination scheme.
     """
-    pass
+
+    def get_beam_combination_transfer_matrix(self) -> np.ndarray:
+        return 1 / np.sqrt(3) * np.array([[1, 1, 1],
+                                          [1, np.exp(2j * np.pi / 3), np.exp(4j * np.pi / 3)],
+                                          [1, np.exp(4j * np.pi / 3), np.exp(2j * np.pi / 3)]])
 
 
 class Kernel4(BeamCombinationScheme):
