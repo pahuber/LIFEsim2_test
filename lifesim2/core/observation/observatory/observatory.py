@@ -1,8 +1,8 @@
-from lifesim2.observatory.array_configurations import ArrayConfigurationEnum, \
+from lifesim2.core.observation.observatory.array_configurations import ArrayConfigurationEnum, \
     EmmaXCircularRotation, EmmaXDoubleStretch, EquilateralTriangleCircularRotation, RegularPentagonCircularRotation
-from lifesim2.observatory.beam_combination_schemes import BeamCombinationSchemeEnum, \
-    DoubleBracewell4, Kernel3, Kernel4, Kernel5
-from lifesim2.observatory.instrument_parameters import InstrumentParameters
+from lifesim2.core.observation.observatory.beam_combination_schemes import BeamCombinationSchemeEnum, \
+    Kernel3, Kernel4, Kernel5, DoubleBracewell
+from lifesim2.core.observation.observatory.instrument_parameters import InstrumentParameters
 
 
 class Observatory():
@@ -12,30 +12,29 @@ class Observatory():
     def __init__(self):
         """Constructor method.
         """
-        self._config_dict = None
         self.array_configuration = None
         self.beam_combination_scheme = None
-        self.instrument_specification = None
+        self.instrument_parameters = None
 
-    def _set_from_config(self, observatory_dictionary: dict()):
+    def set_from_config(self, observatory_dictionary: dict()):
         """Read the configuration file and set the Observatory parameters.
 
         :param path_to_config_file: Path to the configuration file
         """
-        self._config_dict = observatory_dictionary
+        self._observatory_dict = observatory_dictionary
         self._set_array_configuration_from_config()
         self._set_beam_combination_scheme_from_config()
-        self._set_instrument_specification_from_config()
+        self._set_instrument_parameters_from_config()
 
     def _set_array_configuration_from_config(self):
         """Initialize the ArrayConfiguration object with the respective parameters.
         """
-        baseline_minimum = self._config_dict['instrument_parameters']['baseline_minimum']
-        baseline_maximum = self._config_dict['instrument_parameters']['baseline_maximum']
-        baseline_ratio = self._config_dict['instrument_parameters']['baseline_ratio']
-        modulation_period = self._config_dict['instrument_parameters']['modulation_period']
+        baseline_minimum = self._observatory_dict['array_configuration']['baseline_minimum']
+        baseline_maximum = self._observatory_dict['array_configuration']['baseline_maximum']
+        baseline_ratio = self._observatory_dict['array_configuration']['baseline_ratio']
+        modulation_period = self._observatory_dict['array_configuration']['modulation_period']
 
-        array_configuration = self._config_dict['array_configuration']
+        array_configuration = self._observatory_dict['array_configuration']['type']
 
         match array_configuration:
             case ArrayConfigurationEnum.EMMA_X_CIRCULAR_ROTATION.value:
@@ -65,11 +64,11 @@ class Observatory():
     def _set_beam_combination_scheme_from_config(self):
         """Initialize the BeamCombinationScheme object.
         """
-        beam_combination_scheme = self._config_dict['beam_combination_scheme']
+        beam_combination_scheme = self._observatory_dict['beam_combination_scheme']
 
         match beam_combination_scheme:
-            case BeamCombinationSchemeEnum.DOUBLE_BRACEWELL_4.value:
-                self.beam_combination_scheme = DoubleBracewell4()
+            case BeamCombinationSchemeEnum.DOUBLE_BRACEWELL.value:
+                self.beam_combination_scheme = DoubleBracewell()
 
             case BeamCombinationSchemeEnum.KERNEL_3.value:
                 self.beam_combination_scheme = Kernel3()
@@ -80,8 +79,8 @@ class Observatory():
             case BeamCombinationSchemeEnum.KERNEL_5.value:
                 self.beam_combination_scheme = Kernel5()
 
-    def _set_instrument_specification_from_config(self):
-        """Initialize the InstrumentSpecification object.
+    def _set_instrument_parameters_from_config(self):
+        """Initialize the InstrumentParameters object.
         """
-        self.instrument_specification = InstrumentParameters(
-            specification_dict=self._config_dict['instrument_parameters'])
+        self.instrument_parameters = InstrumentParameters(
+            parameters_dict=self._observatory_dict['instrument_parameters'])

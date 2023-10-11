@@ -1,32 +1,47 @@
-# -------------------------------------------
+#############################################
 # LIFEsim 2 Configuration File
 # -------------------------------------------
+# For documentation see:
+# https://github.com/pahuber/LIFEsim2
+#############################################
 ---
-# ----------------------------------
+# -------------------------------------------
 # Simulation Configuration
-# ----------------------------------
+# -------------------------------------------
 simulation:
   grid_size: 100
   time_step: 10 min
-# ----------------------------------
+# -------------------------------------------
 # Observation Configuration
-# ----------------------------------
+# -------------------------------------------
 observation:
-  field_of_view: 0.4 arcsec
+  adjust_baseline_to_habitable_zone: true
   integration_time: 1 d
-# ----------------------------------
+  optimized_wavelength: 10 um
+# -------------------------------------------
 # Observatory Configuration
-# ----------------------------------
+# -------------------------------------------
 observatory:
-  array_configuration: emma-x-circular-rotation
-  beam_combination_scheme: double-bracewell-4
+  array_configuration:
+    type: emma-x-circular-rotation
+    baseline_maximum: 600 m
+    baseline_minimum: 12 m
+    baseline_ratio: 6
+    modulation_period: 1 d
+  beam_combination_scheme: double-bracewell
   instrument_parameters:
     aperture_diameter: 4 m
-    baseline_minimum: 12 m
-    baseline_maximum: 600 m
-    baseline_ratio: 6
-    modulation_period: 1d
     spectral_range_lower_limit: 4 um
     spectral_range_upper_limit: 18 um
-
+    spectral_resolution: 100
+# -------------------------------------------
+# Noise Configuration
+# -------------------------------------------
+noise:
+  stellar_leakage: true
+  local_zodi: true
+  exozodi: true
+  exozodi_level: 3
+  fiber_injection_variability: true
+  optical_path_difference_variability: true
 ...

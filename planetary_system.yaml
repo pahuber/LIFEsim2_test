@@ -1,0 +1,16 @@
+#############################################
+# LIFEsim 2 Planetary System File
+#############################################
+---
+planets:
+  planet_1:
+    planet_mass: 1 Mearth
+    planet_radius: 1 Rearth
+    planet_star_separation: 1 au
+    planet_temperature: 230 K
+star:
+  star_distance: 10 pc
+  star_mass: 1 Msun
+  star_radius: 1 Rsun
+  star_temperature: 5700 K
+...

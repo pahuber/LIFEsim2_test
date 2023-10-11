@@ -75,7 +75,16 @@ class EquilateralTriangleCircularRotation(ArrayConfiguration):
     """
 
     def get_collector_positions(self, time: float) -> np.ndarray:
-        pass
+        units = self.baseline_minimum.unit
+        height = np.sqrt(3) / 2 * self.baseline_minimum
+        height_to_center = height / 3
+        rotation_matrix = get_2d_rotation_matrix(time, self.modulation_period)
+
+        equilateral_triangle_static = np.array(
+            [[0, self.baseline_minimum.value / 2, -self.baseline_minimum.value / 2],
+             [height.value - height_to_center.value, -height_to_center.value, -height_to_center.value]]) * units
+
+        return np.matmul(rotation_matrix, equilateral_triangle_static)
 
 
 class RegularPentagonCircularRotation(ArrayConfiguration):
