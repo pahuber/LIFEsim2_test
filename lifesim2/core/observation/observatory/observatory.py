@@ -1,8 +1,8 @@
-from lifesim2.observatory.array_configurations import ArrayConfigurationEnum, \
+from lifesim2.core.observation.observatory.array_configurations import ArrayConfigurationEnum, \
     EmmaXCircularRotation, EmmaXDoubleStretch, EquilateralTriangleCircularRotation, RegularPentagonCircularRotation
-from lifesim2.observatory.beam_combination_schemes import BeamCombinationSchemeEnum, \
+from lifesim2.core.observation.observatory.beam_combination_schemes import BeamCombinationSchemeEnum, \
     Kernel3, Kernel4, Kernel5, DoubleBracewell
-from lifesim2.observatory.instrument_parameters import InstrumentParameters
+from lifesim2.core.observation.observatory.instrument_parameters import InstrumentParameters
 
 
 class Observatory():
@@ -12,7 +12,6 @@ class Observatory():
     def __init__(self):
         """Constructor method.
         """
-        self._observatory_dict = None
         self.array_configuration = None
         self.beam_combination_scheme = None
         self.instrument_parameters = None

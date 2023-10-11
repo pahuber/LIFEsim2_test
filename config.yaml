@@ -16,7 +16,6 @@ simulation:
 # -------------------------------------------
 observation:
   adjust_baseline_to_habitable_zone: true
-  adjust_baseline_to_planet: false
   integration_time: 1 d
   optimized_wavelength: 10 um
 # -------------------------------------------
@@ -36,20 +35,13 @@ observatory:
     spectral_range_upper_limit: 18 um
     spectral_resolution: 100
 # -------------------------------------------
-# Source Configuration
+# Noise Configuration
 # -------------------------------------------
-source:
-  planet:
-    planet_mass: 1 Mearth
-    planet_radius: 1 Rearth
-    planet_temperature: 230 K
-    planet_star_separation: 1 au
-  noise:
-    star:
-      star_mass: 1 Msun
-      star_radius: 1 Rsun
-      star_distance: 10 pc
-    local_zodi: true
-    exozodi: true
-    exozodi_level: 3
+noise:
+  stellar_leakage: true
+  local_zodi: true
+  exozodi: true
+  exozodi_level: 3
+  fiber_injection_variability: true
+  optical_path_difference_variability: true
 ...

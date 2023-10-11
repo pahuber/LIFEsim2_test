@@ -36,22 +36,9 @@ class ConfigReader():
                         except TypeError:
                             pass
 
-        # for key in self._config_dict['simulation'].keys():
-        #     self._config_dict['simulation'][key] = u.Quantity(self._config_dict['simulation'][key])
-        #
-        # for key in self._config_dict['observation'].keys():
-        #     self._config_dict['observation'][key] = u.Quantity(self._config_dict['observation'][key])
-        #
-        # for key in self._config_dict['observatory']['instrument_parameters']:
-        #     self._config_dict['observatory']['instrument_parameters'][key] = \
-        #         u.Quantity(self._config_dict['observatory']['instrument_parameters'][key])
-        #
-        # for key in self._config_dict['observatory']['instrument_parameters']:
-        #     self._config_dict['observatory']['instrument_parameters'][key] = \
-        #         u.Quantity(self._config_dict['observatory']['instrument_parameters'][key])
-
     def get_config_from_file(self) -> dict():
         """Return a dictionary containing the content of the configuration file.
+
         :return: A dictionary with the configurations.
         """
         return self._config_dict
