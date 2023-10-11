@@ -15,7 +15,7 @@ class Observatory():
         self._observatory_dict = None
         self.array_configuration = None
         self.beam_combination_scheme = None
-        self.instrument_specification = None
+        self.instrument_parameters = None
 
     def set_from_config(self, observatory_dictionary: dict()):
         """Read the configuration file and set the Observatory parameters.
@@ -25,7 +25,7 @@ class Observatory():
         self._observatory_dict = observatory_dictionary
         self._set_array_configuration_from_config()
         self._set_beam_combination_scheme_from_config()
-        self._set_instrument_specification_from_config()
+        self._set_instrument_parameters_from_config()
 
     def _set_array_configuration_from_config(self):
         """Initialize the ArrayConfiguration object with the respective parameters.
@@ -80,8 +80,8 @@ class Observatory():
             case BeamCombinationSchemeEnum.KERNEL_5.value:
                 self.beam_combination_scheme = Kernel5()
 
-    def _set_instrument_specification_from_config(self):
-        """Initialize the InstrumentSpecification object.
+    def _set_instrument_parameters_from_config(self):
+        """Initialize the InstrumentParameters object.
         """
-        self.instrument_specification = InstrumentParameters(
-            specification_dict=self._observatory_dict['instrument_parameters'])
+        self.instrument_parameters = InstrumentParameters(
+            parameters_dict=self._observatory_dict['instrument_parameters'])
