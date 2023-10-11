@@ -56,6 +56,7 @@ class Observation():
         beam_combination_matrix = self.observatory.beam_combination_scheme.get_beam_combination_transfer_matrix()
 
         for time_index, time in enumerate(self.time_range):
+            # Get intensity response vector and virtual transmission maps
             input_complex_amplitude_unperturbed_vector = np.reshape(self.get_input_complex_amplitude_vector(time), (
                 self.observatory.beam_combination_scheme.number_of_inputs, self.simulation_grid_size ** 2))
 
@@ -73,16 +74,19 @@ class Observation():
 
             t_map = np.real(intensity_response_vector[2] - intensity_response_vector[3])
             # 
-            plt.imshow(np.real(intensity_response_vector[2] - intensity_response_vector[3]), vmin=-1.6, vmax=1.6)
-            plt.colorbar()
-            plt.savefig(f't_{time_index}.png')
-            # plt.show()
-            plt.close()
+            # plt.imshow(t_map, vmin=-1.6, vmax=1.6)
+            # plt.colorbar()
+            # plt.savefig(f't_{time_index}.png')
+            # # plt.show()
+            # plt.close()
+
+            # Given the transmission maps, get the photon rate per source
             self.photon_rate_time_series.append(t_map[self.simulation_grid_size // 4][self.simulation_grid_size // 4])
 
+        # Save the photon rate time series
         plt.plot(self.photon_rate_time_series)
         plt.savefig('photon_rate.png')
-        plt.show()
+        plt.close()
 
     def get_input_complex_amplitude_vector(self, time: astropy.units.Quantity) -> np.ndarray:
         """Return the unperturbed input complex amplitude vector, consisting of a flat wavefront per collector.
@@ -102,7 +106,7 @@ class Observation():
 
         for index_input in range(self.observatory.beam_combination_scheme.number_of_inputs):
             input_complex_amplitude_vector[index_input] = (
-                    self.observatory.instrument_specification.aperture_radius * np.exp(
+                    self.observatory.instrument_parameters.aperture_radius * np.exp(
                 1j * 2 * np.pi / wavelength * (
                         x_observatory_coordinates[index_input] * x_sky_coordinates + y_observatory_coordinates[
                     index_input] * y_sky_coordinates)))
@@ -116,9 +120,9 @@ class Observation():
         """
         diagonal_of_matrix = []
         for index in range(self.observatory.beam_combination_scheme.number_of_inputs):
-            diagonal_of_matrix.append(np.random.uniform(0.2, 0.4) * np.exp(1j * np.random.uniform(-0.4, 0.4)))
+            diagonal_of_matrix.append(np.random.uniform(0.2, 0.4) * np.exp(1j * np.random.uniform(-0.2, 0.2)))
 
         perturbation_matrix = np.diag(diagonal_of_matrix)
-        # perturbation_matrix = np.diag([1, 1, 1, 1])
+        # perturbation_matrix = np.diag([1, 1, 1])
 
         return perturbation_matrix
