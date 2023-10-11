@@ -25,7 +25,16 @@ class SimulationMode(Enum):
 
 
 class Simulation():
+    """Class representation of a simulation. This is the main object of this simulator.
+
+    """
+
     def __init__(self, mode: SimulationMode):
+        """Constructor method.
+
+        :param mode: Mode of the simulation. Determines which kinds of calculations are done and what results are
+                     produced
+        """
         self.mode = mode
         self._configurations = None
         self.grid_size = None
@@ -73,6 +82,10 @@ class Simulation():
         plt.show()
 
     def load_config(self, path_to_config_file):
+        """Extract the configuration from the file, set the parameters and instantiate the objects.
+
+        :param path_to_config_file: Path to the configuration file
+        """
         self._configurations = ConfigReader(path_to_config_file=path_to_config_file).get_config_from_file()
         self._load_simulation_config()
         self.observation = self._create_observation_from_config()
@@ -83,6 +96,11 @@ class Simulation():
         self._create_composite_variables()
 
     def import_data(self, type: DataType, path_to_data_file: str):
+        """Import the data of a specific type.
+
+        :param type: Type of the data
+        :param path_to_data_file: Path to the data file
+        """
 
         match type.value:
             case 1:
@@ -99,10 +117,16 @@ class Simulation():
                 pass
 
     def _load_simulation_config(self):
+        """Set the class variables from the configuration.
+        """
         self.grid_size = int(self._configurations['simulation']['grid_size'].value)
         self.time_step = self._configurations['simulation']['time_step']
 
     def _create_observation_from_config(self):
+        """Return an observation object.
+
+        :return: Observation object.
+        """
         return Observation(
             adjust_baseline_to_habitable_zone=self._configurations['observation']['adjust_baseline_to_habitable_zone'],
             integration_time=self._configurations['observation']['integration_time'],
@@ -110,9 +134,17 @@ class Simulation():
             grid_size=self.grid_size)
 
     def _create_observatory_from_config(self):
+        """Return an observatory object.
+
+        :return: Observatory object.
+        """
         return Observatory()
 
     def _create_array_configuration_from_config(self):
+        """Return an ArrayConfiguration object.
+
+        :return: ArrayConfiguration object.
+        """
         array_configuration = self._configurations['observatory']['array_configuration']['type']
         baseline_minimum = self._configurations['observatory']['array_configuration']['baseline_minimum']
         baseline_maximum = self._configurations['observatory']['array_configuration']['baseline_maximum']
@@ -145,6 +177,10 @@ class Simulation():
                                                        modulation_period=modulation_period)
 
     def _create_beam_combination_scheme_from_config(self):
+        """Return an BeamCombinationScheme object.
+
+        :return: BeamCombinationScheme object.
+        """
         beam_combination_scheme = self._configurations['observatory']['beam_combination_scheme']
 
         match beam_combination_scheme:
@@ -161,6 +197,10 @@ class Simulation():
                 return Kernel5()
 
     def _create_instrument_parameters_from_config(self):
+        """Return an InstrumentParameters object.
+
+        :return: InstrumentParameters object.
+        """
         return InstrumentParameters(
             aperture_diameter=self._configurations['observatory']['instrument_parameters']['aperture_diameter'],
             spectral_range_lower_limit=self._configurations['observatory']['instrument_parameters'][
@@ -170,5 +210,7 @@ class Simulation():
             spectral_resolution=self._configurations['observatory']['instrument_parameters']['spectral_resolution'])
 
     def _create_composite_variables(self):
+        """Create and set composite variables.
+        """
         self.time_range = np.arange(0, self.observation.observatory.array_configuration.modulation_period.to(u.s).value,
                                     self.time_step.to(u.s).value) * u.s
