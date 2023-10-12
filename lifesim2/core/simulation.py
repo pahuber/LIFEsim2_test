@@ -4,6 +4,7 @@ import numpy as np
 from astropy import units as u
 from matplotlib import pyplot as plt
 
+from lifesim2.core.calculator import get_intensity_response_vector, get_transmission_maps
 from lifesim2.core.data import DataType
 from lifesim2.core.observation.observation import Observation
 from lifesim2.core.observation.observatory.array_configurations import ArrayConfigurationEnum, EmmaXCircularRotation, \
@@ -13,7 +14,6 @@ from lifesim2.core.observation.observatory.beam_combination_schemes import BeamC
     Kernel4, Kernel5
 from lifesim2.core.observation.observatory.instrument_parameters import InstrumentParameters
 from lifesim2.core.observation.observatory.observatory import Observatory
-from lifesim2.core.observation.sources.general import get_input_complex_amplitude_vector, get_perturbation_matrix
 from lifesim2.util.config_reader import ConfigReader
 
 
@@ -48,33 +48,21 @@ class Simulation():
         beam_combination_matrix = self.observation.observatory.beam_combination_scheme.get_beam_combination_transfer_matrix()
 
         for time_index, time in enumerate(self.time_range):
-            # Get intensity response vector and virtual transmission maps
-            input_complex_amplitude_unperturbed_vector = np.reshape(
-                get_input_complex_amplitude_vector(self.observation, time), (
-                    self.observation.observatory.beam_combination_scheme.number_of_inputs, self.grid_size ** 2))
-
-            perturbation_matrix = get_perturbation_matrix(self.observation)
-
-            input_complex_amplitude_perturbed_vector = np.dot(perturbation_matrix,
-                                                              input_complex_amplitude_unperturbed_vector)
-
-            intensity_response_vector = np.reshape(abs(
-                np.dot(beam_combination_matrix, input_complex_amplitude_perturbed_vector)) ** 2,
-                                                   (
-                                                       self.observation.observatory.beam_combination_scheme.number_of_outputs,
-                                                       self.grid_size,
-                                                       self.grid_size))
-
-            t_map = np.real(intensity_response_vector[2] - intensity_response_vector[3])
+            intensity_response_vector = get_intensity_response_vector(time, self.observation, beam_combination_matrix,
+                                                                      self.grid_size)
+            transmission_maps = get_transmission_maps(intensity_response_vector,
+                                                      self.observation.observatory.beam_combination_scheme,
+                                                      self.grid_size)
+            # t_map = np.real(intensity_response_vector[2] - intensity_response_vector[3])
             #
-            plt.imshow(t_map, vmin=-1.6, vmax=1.6)
-            plt.colorbar()
-            plt.savefig(f't_{time_index}.png')
+            # plt.imshow(transmission_maps[0], vmin=-1.6, vmax=1.6)
+            # plt.colorbar()
+            # plt.savefig(f't_{time_index}.png')
             # plt.show()
-            plt.close()
+            # plt.close()
 
             # Given the transmission maps, get the photon rate per source
-            self.photon_rate_time_series.append(t_map[self.grid_size // 4][self.grid_size // 4])
+            self.photon_rate_time_series.append(transmission_maps[0][self.grid_size // 4][self.grid_size // 4])
 
         # Save the photon rate time series
         plt.plot(self.photon_rate_time_series)
