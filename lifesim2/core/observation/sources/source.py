@@ -1,4 +1,4 @@
-from abc import ABC, abstractmethod
+from abc import ABC
 
 
 class Source(ABC):
@@ -6,6 +6,6 @@ class Source(ABC):
         super.__init__()
         self.flux = None
 
-    @abstractmethod
-    def get_spectrum(self):
-        pass
+    # @abstractmethod
+    # def get_spectrum(self):
+    #     pass

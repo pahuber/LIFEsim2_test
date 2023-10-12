@@ -8,13 +8,13 @@ planets:
     planet_mass: 1 Mearth
     planet_radius: 1 Rearth
     planet_star_separation: 1 au
-    planet_temperature: 230 K
+    planet_temperature: 300 K
   planet_2:
     planet_label: Mars
     planet_mass: 1 Mearth
     planet_radius: 1 Rearth
     planet_star_separation: 1 au
-    planet_temperature: 230 K
+    planet_temperature: 300 K
 star:
   star_label: Sun
   star_distance: 10 pc
