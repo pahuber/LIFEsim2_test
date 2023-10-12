@@ -25,8 +25,8 @@ def get_transmission_maps(intensity_response_vector: np.ndarray,
     return transmission_maps
 
 
-def get_intensity_response_vector(time: astropy.units.Quantity, observation: Observation,
-                                  beam_combination_matrix: np.ndarray, grid_size: int) -> np.ndarray:
+def get_intensity_response(time: astropy.units.Quantity, observation: Observation,
+                           beam_combination_matrix: np.ndarray, grid_size: int) -> np.ndarray:
     """Return the intensity response vector.
 
     :param time: Time to calculate the intensity responese vector for
