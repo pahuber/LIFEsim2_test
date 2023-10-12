@@ -2,7 +2,6 @@ from enum import Enum
 
 import numpy as np
 from astropy import units as u
-from matplotlib import pyplot as plt
 
 from lifesim2.core.calculator import get_intensity_response_vector, get_transmission_maps
 from lifesim2.core.data import DataType
@@ -14,6 +13,7 @@ from lifesim2.core.observation.observatory.beam_combination_schemes import BeamC
     Kernel4, Kernel5
 from lifesim2.core.observation.observatory.instrument_parameters import InstrumentParameters
 from lifesim2.core.observation.observatory.observatory import Observatory
+from lifesim2.core.observation.simulation_output import SimulationOutput
 from lifesim2.util.config_reader import ConfigReader
 
 
@@ -40,12 +40,15 @@ class Simulation():
         self.grid_size = None
         self.time_step = None
         self.observation = None
+
         self.photon_rate_time_series = []
 
     def run(self):
         """Main method of the simulator. Run the simulated observation and calculate the photon rate time series.
         """
         beam_combination_matrix = self.observation.observatory.beam_combination_scheme.get_beam_combination_transfer_matrix()
+        self.output = SimulationOutput(self.observation.observatory.beam_combination_scheme.number_of_transmission_maps,
+                                       len(self.time_range))
 
         for time_index, time in enumerate(self.time_range):
             intensity_response_vector = get_intensity_response_vector(time, self.observation, beam_combination_matrix,
@@ -53,21 +56,13 @@ class Simulation():
             transmission_maps = get_transmission_maps(intensity_response_vector,
                                                       self.observation.observatory.beam_combination_scheme,
                                                       self.grid_size)
-            # t_map = np.real(intensity_response_vector[2] - intensity_response_vector[3])
-            #
+            self.output.append_photon_rate(time_index, transmission_maps)
+
             # plt.imshow(transmission_maps[0], vmin=-1.6, vmax=1.6)
             # plt.colorbar()
             # plt.savefig(f't_{time_index}.png')
             # plt.show()
             # plt.close()
-
-            # Given the transmission maps, get the photon rate per source
-            self.photon_rate_time_series.append(transmission_maps[0][self.grid_size // 4][self.grid_size // 4])
-
-        # Save the photon rate time series
-        plt.plot(self.photon_rate_time_series)
-        plt.savefig('photon_rate.png')
-        plt.show()
 
     def load_config(self, path_to_config_file):
         """Extract the configuration from the file, set the parameters and instantiate the objects.

@@ -1,3 +1,5 @@
+from matplotlib import pyplot as plt
+
 from lifesim2.core.data import DataType
 from lifesim2.core.simulation import Simulation, SimulationMode
 
@@ -16,3 +18,8 @@ simulation.import_data(type=DataType.PLANETARY_SYSTEM_SPECIFICATION, path_to_dat
 
 # Run simulation
 simulation.run()
+
+# Extract photon rate time series and plot them
+photon_rate_time_series = simulation.output.photon_rate_time_series
+plt.plot(photon_rate_time_series[0])
+plt.show()

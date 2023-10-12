@@ -23,6 +23,7 @@ class BeamCombinationScheme(ABC):
         super().__init__()
         self.number_of_inputs = self.get_beam_combination_transfer_matrix().shape[1]
         self.number_of_outputs = self.get_beam_combination_transfer_matrix().shape[0]
+        self.number_of_transmission_maps = len(self.get_transmission_map_indices())
 
     @abstractmethod
     def get_beam_combination_transfer_matrix(self) -> np.ndarray:

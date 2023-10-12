@@ -9,6 +9,14 @@ from lifesim2.core.observation.observatory.beam_combination_schemes import BeamC
 def get_transmission_maps(intensity_response_vector: np.ndarray,
                           beam_combination_scheme: BeamCombinationScheme,
                           grid_size: int) -> np.ndarray:
+    """Return the transmission map(s), given an intensity response vector. For certain bea, combination schemes,
+    multiple transmission maps exist.
+
+    :param intensity_response_vector: The intensity response vector
+    :param beam_combination_scheme: The beam combination scheme
+    :param grid_size: The grid size for the calculations
+    :return: An array containing the transmission map(s)
+    """
     indices = beam_combination_scheme.get_transmission_map_indices()
     transmission_maps = np.zeros((len(indices), grid_size, grid_size))
     for index_index, index_pair in enumerate(indices):
