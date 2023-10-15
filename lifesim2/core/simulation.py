@@ -4,19 +4,19 @@ import numpy as np
 from astropy import units as u
 
 from lifesim2.core.calculator import get_differential_intensity_responses
-from lifesim2.core.data import DataType
-from lifesim2.core.observation.observation import Observation
-from lifesim2.core.observation.observatory.array_configurations import ArrayConfigurationEnum, EmmaXCircularRotation, \
+from lifesim2.core.observation import Observation
+from lifesim2.core.observatory import InstrumentParameters
+from lifesim2.core.observatory import Observatory
+from lifesim2.core.observatory.array_configurations import ArrayConfigurationEnum, EmmaXCircularRotation, \
     EmmaXDoubleStretch, EquilateralTriangleCircularRotation, RegularPentagonCircularRotation
-from lifesim2.core.observation.observatory.beam_combination_schemes import BeamCombinationSchemeEnum, DoubleBracewell, \
+from lifesim2.core.observatory.beam_combination_schemes import BeamCombinationSchemeEnum, DoubleBracewell, \
     Kernel3, \
     Kernel4, Kernel5
-from lifesim2.core.observation.observatory.instrument_parameters import InstrumentParameters
-from lifesim2.core.observation.observatory.observatory import Observatory
-from lifesim2.core.observation.sources.planet import Planet
-from lifesim2.core.observation.sources.star import Star
 from lifesim2.core.simulation_output import SimulationOutput
+from lifesim2.core.sources import Planet
+from lifesim2.core.sources import Star
 from lifesim2.read.config_reader import ConfigReader
+from lifesim2.read.data_type import DataType
 
 
 class SimulationMode(Enum):

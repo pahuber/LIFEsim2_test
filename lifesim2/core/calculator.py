@@ -2,7 +2,7 @@ import astropy
 import numpy as np
 from astropy import units as u
 
-from lifesim2.core.observation.observation import Observation
+from lifesim2.core.observation import Observation
 
 
 def get_differential_intensity_responses(time,

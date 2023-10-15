@@ -1,7 +1,7 @@
 import astropy.units
 from astropy import units as u
 
-from lifesim2.core.observation.sources.source import Source
+from lifesim2.core.sources.source import Source
 
 
 class Planet(Source):

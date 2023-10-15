@@ -1,6 +1,6 @@
 import astropy.units
 
-from lifesim2.core.observation.sources.source import Source
+from lifesim2.core.sources.source import Source
 
 
 class Star(Source):
