@@ -14,7 +14,7 @@ simulation = Simulation(mode=SimulationMode.SINGLE_OBSERVATION)
 simulation.load_config(path_to_config_file=path_to_config_file)
 
 # Import data
-simulation.import_data(type=DataType.PLANETARY_SYSTEM_SPECIFICATION, path_to_data_file=path_to_data_file)
+simulation.import_data(type=DataType.PLANETARY_SYSTEM_CONFIGURATION, path_to_data_file=path_to_data_file)
 
 # Run simulation
 simulation.run()

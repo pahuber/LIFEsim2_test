@@ -8,6 +8,7 @@ from lifesim2.util.blackbody import get_blackbody_spectrum
 class Source(ABC):
     def __init__(self):
         super.__init__()
+        self.name = None
         self.flux = None
         self.temperature = None
 

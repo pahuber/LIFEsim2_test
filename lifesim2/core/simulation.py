@@ -5,16 +5,16 @@ from astropy import units as u
 
 from lifesim2.core.calculator import get_differential_intensity_responses
 from lifesim2.core.observation import Observation
-from lifesim2.core.observatory import InstrumentParameters
-from lifesim2.core.observatory import Observatory
 from lifesim2.core.observatory.array_configurations import ArrayConfigurationEnum, EmmaXCircularRotation, \
     EmmaXDoubleStretch, EquilateralTriangleCircularRotation, RegularPentagonCircularRotation
 from lifesim2.core.observatory.beam_combination_schemes import BeamCombinationSchemeEnum, DoubleBracewell, \
     Kernel3, \
     Kernel4, Kernel5
+from lifesim2.core.observatory.instrument_parameters import InstrumentParameters
+from lifesim2.core.observatory.observatory import Observatory
 from lifesim2.core.simulation_output import SimulationOutput
-from lifesim2.core.sources import Planet
-from lifesim2.core.sources import Star
+from lifesim2.core.sources.planet import Planet
+from lifesim2.core.sources.star import Star
 from lifesim2.read.config_reader import ConfigReader
 from lifesim2.read.data_type import DataType
 
@@ -59,6 +59,8 @@ class Simulation():
                                                                                         self.grid_size)
 
                 # TODO: For each source, calculate photon rate
+                for source in self.observation.sources:
+                    print(source)
                 self.output.append_photon_rate(time_index, differential_intensity_responses, wavelength)
 
             # plt.imshow(transmission_maps[0], vmin=-1.6, vmax=1.6)
@@ -92,21 +94,21 @@ class Simulation():
             case 1:
                 # TODO: generate planetary blackbody spectra
                 planetary_system_dict = ConfigReader(path_to_config_file=path_to_data_file).get_config_from_file()
-                star = Star(label=planetary_system_dict['star']['star_label'],
-                            radius=planetary_system_dict['star']['star_radius'],
-                            temperature=planetary_system_dict['star']['star_temperature'],
-                            mass=planetary_system_dict['star']['star_mass'],
-                            distance=planetary_system_dict['star']['star_distance'])
+                star = Star(name=planetary_system_dict['star']['name'],
+                            radius=planetary_system_dict['star']['radius'],
+                            temperature=planetary_system_dict['star']['temperature'],
+                            mass=planetary_system_dict['star']['mass'],
+                            distance=planetary_system_dict['star']['distance'])
                 star.create_blackbody_spectrum(
                     self.observation.observatory.instrument_parameters.spectral_range_lower_limit,
                     self.observation.observatory.instrument_parameters.spectral_range_upper_limit)
                 self.observation.sources.append(star)
                 for key in planetary_system_dict['planets'].keys():
-                    planet = Planet(label=planetary_system_dict['planets'][key]['planet_label'],
-                                    radius=planetary_system_dict['planets'][key]['planet_radius'],
-                                    temperature=planetary_system_dict['planets'][key]['planet_temperature'],
-                                    mass=planetary_system_dict['planets'][key]['planet_mass'],
-                                    star_separation=planetary_system_dict['planets'][key]['planet_star_separation'],
+                    planet = Planet(name=planetary_system_dict['planets'][key]['name'],
+                                    radius=planetary_system_dict['planets'][key]['radius'],
+                                    temperature=planetary_system_dict['planets'][key]['temperature'],
+                                    mass=planetary_system_dict['planets'][key]['mass'],
+                                    star_separation=planetary_system_dict['planets'][key]['star_separation'],
                                     star_distance=star.distance)
                     planet.create_blackbody_spectrum(
                         self.observation.observatory.instrument_parameters.spectral_range_lower_limit,
