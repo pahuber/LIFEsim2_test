@@ -1,24 +1,13 @@
 from abc import ABC
 
-import astropy
-
-from lifesim2.util.blackbody import get_blackbody_spectrum
+import numpy as np
+from astropy import units as u
 
 
 class Source(ABC):
+    number_of_steps = 1000
+
     def __init__(self):
-        super.__init__()
         self.name = None
-        self.flux = None
+        self.flux = np.zeros(Source.number_of_steps) * u.ph / u.m ** 2 / u.s / u.um
         self.temperature = None
-
-    def create_blackbody_spectrum(self,
-                                  spectral_range_lower_limit: astropy.units.Quantity,
-                                  spectral_range_upper_limit: astropy.units.Quantity):
-        self.spectrum = get_blackbody_spectrum(temperature=self.temperature,
-                                               spectral_range_lower_limit=spectral_range_lower_limit,
-                                               spectral_range_upper_limit=spectral_range_upper_limit)
-
-    # @abstractmethod
-    # def get_spectrum(self):
-    #     pass

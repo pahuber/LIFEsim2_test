@@ -10,6 +10,7 @@ class Star(Source):
                  mass: astropy.units.Quantity,
                  temperature: astropy.units.Quantity,
                  distance: astropy.units.Quantity):
+        super().__init__()
         self.name = name
         self.radius = radius
         self.mass = mass
