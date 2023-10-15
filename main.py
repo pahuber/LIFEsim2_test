@@ -21,5 +21,7 @@ simulation.run()
 
 # Extract photon rate time series and plot them
 photon_rate_time_series = simulation.output.photon_rate_time_series
-plt.plot(photon_rate_time_series[0])
+for wavelength in photon_rate_time_series.keys():
+    plt.plot(photon_rate_time_series[wavelength][0], label=str(wavelength))
+plt.legend()
 plt.show()

@@ -3,7 +3,7 @@ from enum import Enum
 import numpy as np
 from astropy import units as u
 
-from lifesim2.core.calculator import get_transmission_maps, get_intensity_response
+from lifesim2.core.calculator import get_differential_intensity_responses
 from lifesim2.core.data import DataType
 from lifesim2.core.observation.observation import Observation
 from lifesim2.core.observation.observatory.array_configurations import ArrayConfigurationEnum, EmmaXCircularRotation, \
@@ -48,15 +48,18 @@ class Simulation():
         """
         beam_combination_matrix = self.observation.observatory.beam_combination_scheme.get_beam_combination_transfer_matrix()
         self.output = SimulationOutput(self.observation.observatory.beam_combination_scheme.number_of_transmission_maps,
-                                       len(self.time_range))
+                                       len(self.time_range),
+                                       self.observation.observatory.instrument_parameters.wavelength_bin_centers)
 
         for time_index, time in enumerate(self.time_range):
-            intensity_response = get_intensity_response(time, self.observation, beam_combination_matrix,
-                                                        self.grid_size)
-            transmission_maps = get_transmission_maps(intensity_response,
-                                                      self.observation.observatory.beam_combination_scheme,
-                                                      self.grid_size)
-            self.output.append_photon_rate(time_index, transmission_maps)
+            for wavelength in self.observation.observatory.instrument_parameters.wavelength_bin_centers:
+                differential_intensity_responses = get_differential_intensity_responses(time,
+                                                                                        wavelength,
+                                                                                        self.observation,
+                                                                                        self.grid_size)
+
+                # TODO: For each source, calculate photon rate
+                self.output.append_photon_rate(time_index, differential_intensity_responses, wavelength)
 
             # plt.imshow(transmission_maps[0], vmin=-1.6, vmax=1.6)
             # plt.colorbar()
@@ -95,7 +98,8 @@ class Simulation():
                             mass=planetary_system_dict['star']['star_mass'],
                             distance=planetary_system_dict['star']['star_distance'])
                 star.create_blackbody_spectrum(
-                    self.observation.observatory.instrument_parameters.wavelength_range)
+                    self.observation.observatory.instrument_parameters.spectral_range_lower_limit,
+                    self.observation.observatory.instrument_parameters.spectral_range_upper_limit)
                 self.observation.sources.append(star)
                 for key in planetary_system_dict['planets'].keys():
                     planet = Planet(label=planetary_system_dict['planets'][key]['planet_label'],
@@ -105,7 +109,8 @@ class Simulation():
                                     star_separation=planetary_system_dict['planets'][key]['planet_star_separation'],
                                     star_distance=star.distance)
                     planet.create_blackbody_spectrum(
-                        self.observation.observatory.instrument_parameters.wavelength_range)
+                        self.observation.observatory.instrument_parameters.spectral_range_lower_limit,
+                        self.observation.observatory.instrument_parameters.spectral_range_upper_limit)
                     self.observation.sources.append(planet)
 
             case 2:
@@ -209,7 +214,8 @@ class Simulation():
                 'spectral_range_lower_limit'],
             spectral_range_upper_limit=self._configurations['observatory']['instrument_parameters'][
                 'spectral_range_upper_limit'],
-            spectral_resolution=self._configurations['observatory']['instrument_parameters']['spectral_resolution'])
+            spectral_resolving_power=self._configurations['observatory']['instrument_parameters'][
+                'spectral_resolving_power'])
 
     def _create_composite_variables(self):
         """Create and set composite variables.

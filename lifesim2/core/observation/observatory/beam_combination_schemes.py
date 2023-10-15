@@ -23,7 +23,7 @@ class BeamCombinationScheme(ABC):
         super().__init__()
         self.number_of_inputs = self.get_beam_combination_transfer_matrix().shape[1]
         self.number_of_outputs = self.get_beam_combination_transfer_matrix().shape[0]
-        self.number_of_transmission_maps = len(self.get_transmission_map_indices())
+        self.number_of_transmission_maps = len(self.get_differential_intensity_response_indices())
 
     @abstractmethod
     def get_beam_combination_transfer_matrix(self) -> np.ndarray:
@@ -33,7 +33,7 @@ class BeamCombinationScheme(ABC):
         pass
 
     @abstractmethod
-    def get_transmission_map_indices(self) -> list:
+    def get_differential_intensity_response_indices(self) -> list:
         """Return the pairs of indices of the intensity response vector that make up a transmission map.
 
         :return: List of tuples containing the pairs of indices
@@ -51,7 +51,7 @@ class DoubleBracewell(BeamCombinationScheme):
                                           [1, -1, -np.exp(1j * np.pi / 2), np.exp(1j * np.pi / 2)],
                                           [1, -1, np.exp(1j * np.pi / 2), -np.exp(1j * np.pi / 2)]])
 
-    def get_transmission_map_indices(self) -> list:
+    def get_differential_intensity_response_indices(self) -> list:
         return [(2, 3)]
 
 
@@ -64,7 +64,7 @@ class Kernel3(BeamCombinationScheme):
                                           [1, np.exp(2j * np.pi / 3), np.exp(4j * np.pi / 3)],
                                           [1, np.exp(4j * np.pi / 3), np.exp(2j * np.pi / 3)]])
 
-    def get_transmission_map_indices(self) -> list:
+    def get_differential_intensity_response_indices(self) -> list:
         return [(1, 2)]
 
 

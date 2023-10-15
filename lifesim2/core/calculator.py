@@ -3,12 +3,12 @@ import numpy as np
 from astropy import units as u
 
 from lifesim2.core.observation.observation import Observation
-from lifesim2.core.observation.observatory.beam_combination_schemes import BeamCombinationScheme
 
 
-def get_transmission_maps(intensity_response_vector: np.ndarray,
-                          beam_combination_scheme: BeamCombinationScheme,
-                          grid_size: int) -> np.ndarray:
+def get_differential_intensity_responses(time,
+                                         wavelength,
+                                         observation: Observation,
+                                         grid_size: int) -> np.ndarray:
     """Return the transmission map(s), given an intensity response vector. For certain bea, combination schemes,
     multiple transmission maps exist.
 
@@ -17,7 +17,8 @@ def get_transmission_maps(intensity_response_vector: np.ndarray,
     :param grid_size: The grid size for the calculations
     :return: An array containing the transmission map(s)
     """
-    indices = beam_combination_scheme.get_transmission_map_indices()
+    intensity_response_vector = get_intensity_responses(time, wavelength, observation, grid_size)
+    indices = observation.observatory.beam_combination_scheme.get_differential_intensity_response_indices()
     transmission_maps = np.zeros((len(indices), grid_size, grid_size))
     for index_index, index_pair in enumerate(indices):
         transmission_maps[index_index] = intensity_response_vector[index_pair[0]] - intensity_response_vector[
@@ -25,8 +26,10 @@ def get_transmission_maps(intensity_response_vector: np.ndarray,
     return transmission_maps
 
 
-def get_intensity_response(time: astropy.units.Quantity, observation: Observation,
-                           beam_combination_matrix: np.ndarray, grid_size: int) -> np.ndarray:
+def get_intensity_responses(time: astropy.units.Quantity,
+                            wavelength: astropy.units.Quantity,
+                            observation: Observation,
+                            grid_size: int) -> np.ndarray:
     """Return the intensity response vector.
 
     :param time: Time to calculate the intensity responese vector for
@@ -36,7 +39,7 @@ def get_intensity_response(time: astropy.units.Quantity, observation: Observatio
     :return: The intensity response vector
     """
     input_complex_amplitude_unperturbed_vector = np.reshape(
-        get_input_complex_amplitude_vector(observation, time), (
+        get_input_complex_amplitude_vector(observation, time, wavelength), (
             observation.observatory.beam_combination_scheme.number_of_inputs, grid_size ** 2))
 
     perturbation_matrix = get_perturbation_matrix(observation)
@@ -44,6 +47,7 @@ def get_intensity_response(time: astropy.units.Quantity, observation: Observatio
     input_complex_amplitude_perturbed_vector = np.dot(perturbation_matrix,
                                                       input_complex_amplitude_unperturbed_vector)
 
+    beam_combination_matrix = observation.observatory.beam_combination_scheme.get_beam_combination_transfer_matrix()
     intensity_response_vector = np.reshape(abs(
         np.dot(beam_combination_matrix, input_complex_amplitude_perturbed_vector)) ** 2,
                                            (
@@ -53,13 +57,13 @@ def get_intensity_response(time: astropy.units.Quantity, observation: Observatio
     return intensity_response_vector
 
 
-def get_input_complex_amplitude_vector(observation: Observation, time: astropy.units.Quantity) -> np.ndarray:
+def get_input_complex_amplitude_vector(observation: Observation, time: astropy.units.Quantity,
+                                       wavelength: astropy.units.Quantity) -> np.ndarray:
     """Return the unperturbed input complex amplitude vector, consisting of a flat wavefront per collector.
 
     :param time: The time to calculate the vector at
     :return: The input complex amplitude vector
     """
-    wavelength = 10 * u.um
     x_sky_coordinates = observation.x_sky_coordinates_map.to(u.rad).value
     y_sky_coordinates = observation.y_sky_coordinates_map.to(u.rad).value
 

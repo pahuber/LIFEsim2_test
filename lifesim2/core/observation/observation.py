@@ -24,6 +24,7 @@ class Observation():
         self.integration_time = integration_time
         self.optimized_wavelength = optimized_wavelength
         self.grid_size = grid_size
+        # TODO: calculate fov
         self.x_sky_coordinates_map, self.y_sky_coordinates_map = get_meshgrid(0.4 * u.arcsec, self.grid_size)
         self.observatory = None
         self.sources = []
