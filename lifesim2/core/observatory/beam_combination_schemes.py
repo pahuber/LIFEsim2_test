@@ -23,11 +23,20 @@ class BeamCombinationScheme(ABC):
         super().__init__()
         self.number_of_inputs = self.get_beam_combination_transfer_matrix().shape[1]
         self.number_of_outputs = self.get_beam_combination_transfer_matrix().shape[0]
+        self.number_of_transmission_maps = len(self.get_differential_intensity_response_indices())
 
     @abstractmethod
     def get_beam_combination_transfer_matrix(self) -> np.ndarray:
         """Return the bea, combination transfer matrix.
         :return: An array representing the bea combination transfer matrix
+        """
+        pass
+
+    @abstractmethod
+    def get_differential_intensity_response_indices(self) -> list:
+        """Return the pairs of indices of the intensity response vector that make up a transmission map.
+
+        :return: List of tuples containing the pairs of indices
         """
         pass
 
@@ -42,6 +51,9 @@ class DoubleBracewell(BeamCombinationScheme):
                                           [1, -1, -np.exp(1j * np.pi / 2), np.exp(1j * np.pi / 2)],
                                           [1, -1, np.exp(1j * np.pi / 2), -np.exp(1j * np.pi / 2)]])
 
+    def get_differential_intensity_response_indices(self) -> list:
+        return [(2, 3)]
+
 
 class Kernel3(BeamCombinationScheme):
     """Class representation of a Kernel nulling beam combination scheme.
@@ -51,6 +63,9 @@ class Kernel3(BeamCombinationScheme):
         return 1 / np.sqrt(3) * np.array([[1, 1, 1],
                                           [1, np.exp(2j * np.pi / 3), np.exp(4j * np.pi / 3)],
                                           [1, np.exp(4j * np.pi / 3), np.exp(2j * np.pi / 3)]])
+
+    def get_differential_intensity_response_indices(self) -> list:
+        return [(1, 2)]
 
 
 class Kernel4(BeamCombinationScheme):

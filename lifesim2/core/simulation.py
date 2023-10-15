@@ -2,19 +2,21 @@ from enum import Enum
 
 import numpy as np
 from astropy import units as u
-from matplotlib import pyplot as plt
 
-from lifesim2.core.data import DataType
-from lifesim2.core.observation.observation import Observation
-from lifesim2.core.observation.observatory.array_configurations import ArrayConfigurationEnum, EmmaXCircularRotation, \
+from lifesim2.core.calculator import get_differential_intensity_responses
+from lifesim2.core.observation import Observation
+from lifesim2.core.observatory import InstrumentParameters
+from lifesim2.core.observatory import Observatory
+from lifesim2.core.observatory.array_configurations import ArrayConfigurationEnum, EmmaXCircularRotation, \
     EmmaXDoubleStretch, EquilateralTriangleCircularRotation, RegularPentagonCircularRotation
-from lifesim2.core.observation.observatory.beam_combination_schemes import BeamCombinationSchemeEnum, DoubleBracewell, \
+from lifesim2.core.observatory.beam_combination_schemes import BeamCombinationSchemeEnum, DoubleBracewell, \
     Kernel3, \
     Kernel4, Kernel5
-from lifesim2.core.observation.observatory.instrument_parameters import InstrumentParameters
-from lifesim2.core.observation.observatory.observatory import Observatory
-from lifesim2.core.observation.sources.general import get_input_complex_amplitude_vector, get_perturbation_matrix
-from lifesim2.util.config_reader import ConfigReader
+from lifesim2.core.simulation_output import SimulationOutput
+from lifesim2.core.sources import Planet
+from lifesim2.core.sources import Star
+from lifesim2.read.config_reader import ConfigReader
+from lifesim2.read.data_type import DataType
 
 
 class SimulationMode(Enum):
@@ -40,46 +42,30 @@ class Simulation():
         self.grid_size = None
         self.time_step = None
         self.observation = None
-        self.photon_rate_time_series = []
 
     def run(self):
         """Main method of the simulator. Run the simulated observation and calculate the photon rate time series.
         """
         beam_combination_matrix = self.observation.observatory.beam_combination_scheme.get_beam_combination_transfer_matrix()
+        self.output = SimulationOutput(self.observation.observatory.beam_combination_scheme.number_of_transmission_maps,
+                                       len(self.time_range),
+                                       self.observation.observatory.instrument_parameters.wavelength_bin_centers)
 
         for time_index, time in enumerate(self.time_range):
-            # Get intensity response vector and virtual transmission maps
-            input_complex_amplitude_unperturbed_vector = np.reshape(
-                get_input_complex_amplitude_vector(self.observation, time), (
-                    self.observation.observatory.beam_combination_scheme.number_of_inputs, self.grid_size ** 2))
+            for wavelength in self.observation.observatory.instrument_parameters.wavelength_bin_centers:
+                differential_intensity_responses = get_differential_intensity_responses(time,
+                                                                                        wavelength,
+                                                                                        self.observation,
+                                                                                        self.grid_size)
 
-            perturbation_matrix = get_perturbation_matrix(self.observation)
+                # TODO: For each source, calculate photon rate
+                self.output.append_photon_rate(time_index, differential_intensity_responses, wavelength)
 
-            input_complex_amplitude_perturbed_vector = np.dot(perturbation_matrix,
-                                                              input_complex_amplitude_unperturbed_vector)
-
-            intensity_response_vector = np.reshape(abs(
-                np.dot(beam_combination_matrix, input_complex_amplitude_perturbed_vector)) ** 2,
-                                                   (
-                                                       self.observation.observatory.beam_combination_scheme.number_of_outputs,
-                                                       self.grid_size,
-                                                       self.grid_size))
-
-            t_map = np.real(intensity_response_vector[2] - intensity_response_vector[3])
-            #
-            plt.imshow(t_map, vmin=-1.6, vmax=1.6)
-            plt.colorbar()
-            plt.savefig(f't_{time_index}.png')
+            # plt.imshow(transmission_maps[0], vmin=-1.6, vmax=1.6)
+            # plt.colorbar()
+            # plt.savefig(f't_{time_index}.png')
             # plt.show()
-            plt.close()
-
-            # Given the transmission maps, get the photon rate per source
-            self.photon_rate_time_series.append(t_map[self.grid_size // 4][self.grid_size // 4])
-
-        # Save the photon rate time series
-        plt.plot(self.photon_rate_time_series)
-        plt.savefig('photon_rate.png')
-        plt.show()
+            # plt.close()
 
     def load_config(self, path_to_config_file):
         """Extract the configuration from the file, set the parameters and instantiate the objects.
@@ -105,7 +91,28 @@ class Simulation():
         match type.value:
             case 1:
                 # TODO: generate planetary blackbody spectra
-                pass
+                planetary_system_dict = ConfigReader(path_to_config_file=path_to_data_file).get_config_from_file()
+                star = Star(label=planetary_system_dict['star']['star_label'],
+                            radius=planetary_system_dict['star']['star_radius'],
+                            temperature=planetary_system_dict['star']['star_temperature'],
+                            mass=planetary_system_dict['star']['star_mass'],
+                            distance=planetary_system_dict['star']['star_distance'])
+                star.create_blackbody_spectrum(
+                    self.observation.observatory.instrument_parameters.spectral_range_lower_limit,
+                    self.observation.observatory.instrument_parameters.spectral_range_upper_limit)
+                self.observation.sources.append(star)
+                for key in planetary_system_dict['planets'].keys():
+                    planet = Planet(label=planetary_system_dict['planets'][key]['planet_label'],
+                                    radius=planetary_system_dict['planets'][key]['planet_radius'],
+                                    temperature=planetary_system_dict['planets'][key]['planet_temperature'],
+                                    mass=planetary_system_dict['planets'][key]['planet_mass'],
+                                    star_separation=planetary_system_dict['planets'][key]['planet_star_separation'],
+                                    star_distance=star.distance)
+                    planet.create_blackbody_spectrum(
+                        self.observation.observatory.instrument_parameters.spectral_range_lower_limit,
+                        self.observation.observatory.instrument_parameters.spectral_range_upper_limit)
+                    self.observation.sources.append(planet)
+
             case 2:
                 # TODO: import spectral data
                 pass
@@ -207,7 +214,8 @@ class Simulation():
                 'spectral_range_lower_limit'],
             spectral_range_upper_limit=self._configurations['observatory']['instrument_parameters'][
                 'spectral_range_upper_limit'],
-            spectral_resolution=self._configurations['observatory']['instrument_parameters']['spectral_resolution'])
+            spectral_resolving_power=self._configurations['observatory']['instrument_parameters'][
+                'spectral_resolving_power'])
 
     def _create_composite_variables(self):
         """Create and set composite variables.

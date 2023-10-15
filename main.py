@@ -1,5 +1,7 @@
-from lifesim2.core.data import DataType
+from matplotlib import pyplot as plt
+
 from lifesim2.core.simulation import Simulation, SimulationMode
+from lifesim2.read.data_type import DataType
 
 # Specify paths
 path_to_config_file = r'C:\Users\huber\Desktop\LIFEsim2\config.yaml'
@@ -16,3 +18,10 @@ simulation.import_data(type=DataType.PLANETARY_SYSTEM_SPECIFICATION, path_to_dat
 
 # Run simulation
 simulation.run()
+
+# Extract photon rate time series and plot them
+photon_rate_time_series = simulation.output.photon_rate_time_series
+for wavelength in photon_rate_time_series.keys():
+    plt.plot(photon_rate_time_series[wavelength][0], label=str(wavelength))
+plt.legend()
+plt.show()
