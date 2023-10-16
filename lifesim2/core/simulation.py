@@ -2,6 +2,7 @@ from enum import Enum
 
 import numpy as np
 from astropy import units as u
+from matplotlib import pyplot as plt
 
 from lifesim2.core.calculator import get_differential_intensity_responses
 from lifesim2.core.observation import Observation
@@ -18,6 +19,7 @@ from lifesim2.core.sources.star import Star
 from lifesim2.read.config_reader import ConfigReader
 from lifesim2.read.data_type import DataType
 from lifesim2.util.blackbody import create_blackbody_spectrum
+from lifesim2.util.grid import get_sky_coordinates
 
 
 class SimulationMode(Enum):
@@ -53,15 +55,22 @@ class Simulation():
                                        self.observation.observatory.instrument_parameters.wavelength_bin_centers)
 
         for time_index, time in enumerate(self.time_range):
-            for wavelength in self.observation.observatory.instrument_parameters.wavelength_bin_centers:
+            for wavelength_index, wavelength in enumerate(
+                    self.observation.observatory.instrument_parameters.wavelength_bin_centers):
                 differential_intensity_responses = get_differential_intensity_responses(time,
                                                                                         wavelength,
                                                                                         self.observation,
                                                                                         self.grid_size)
 
                 # TODO: For each source, calculate photon rate
-                # for source in self.observation.sources:
-                # print(source.flux)
+                for source in self.observation.sources:
+                    if isinstance(source, Planet):
+                        print(source.name, source.flux[wavelength_index])
+                    # get flux per bin
+                    pass
+                    # if flux is for one pixel, multiply by flux location on transmission map
+                    # integrate all fluxes
+                    # add to total photon rate and individual source photon rate
                 self.output.append_photon_rate(time_index, differential_intensity_responses, wavelength)
 
             # plt.imshow(transmission_maps[0], vmin=-1.6, vmax=1.6)
@@ -191,10 +200,10 @@ class Simulation():
         """
         return InstrumentParameters(
             aperture_diameter=self._configurations['observatory']['instrument_parameters']['aperture_diameter'],
-            spectral_range_lower_limit=self._configurations['observatory']['instrument_parameters'][
-                'spectral_range_lower_limit'],
-            spectral_range_upper_limit=self._configurations['observatory']['instrument_parameters'][
-                'spectral_range_upper_limit'],
+            wavelength_range_lower_limit=self._configurations['observatory']['instrument_parameters'][
+                'wavelength_range_lower_limit'],
+            wavelength_range_upper_limit=self._configurations['observatory']['instrument_parameters'][
+                'wavelength_range_upper_limit'],
             spectral_resolving_power=self._configurations['observatory']['instrument_parameters'][
                 'spectral_resolving_power'])
 
@@ -203,6 +212,11 @@ class Simulation():
         """
         self.time_range = np.arange(0, self.observation.observatory.array_configuration.modulation_period.to(u.s).value,
                                     self.time_step.to(u.s).value) * u.s
+        self.observation.observatory.x_sky_coordinates_map, self.observation.observatory.y_sky_coordinates_map = get_sky_coordinates(
+            self.observation.observatory.instrument_parameters.wavelength_bin_centers,
+            self.observation.observatory.instrument_parameters.field_of_view, self.grid_size)
+        self.angle_per_pixel = list(field_of_view / self.grid_size for field_of_view in
+                                    self.observation.observatory.instrument_parameters.field_of_view)
 
     def _create_sources_from_planetary_system_configuration(self, path_to_data_file):
         planetary_system_dict = ConfigReader(path_to_config_file=path_to_data_file).get_config_from_file()
@@ -210,10 +224,15 @@ class Simulation():
                     radius=planetary_system_dict['star']['radius'],
                     temperature=planetary_system_dict['star']['temperature'],
                     mass=planetary_system_dict['star']['mass'],
-                    distance=planetary_system_dict['star']['distance'])
+                    distance=planetary_system_dict['star']['distance'],
+                    number_of_wavelength_bins=len(
+                        self.observation.observatory.instrument_parameters.wavelength_bin_centers))
         star.flux = create_blackbody_spectrum(star.temperature,
-                                              self.observation.observatory.instrument_parameters.spectral_range_lower_limit,
-                                              self.observation.observatory.instrument_parameters.spectral_range_upper_limit)
+                                              self.observation.observatory.instrument_parameters.wavelength_range_lower_limit,
+                                              self.observation.observatory.instrument_parameters.wavelength_range_upper_limit,
+                                              self.observation.observatory.instrument_parameters.wavelength_bin_centers,
+                                              self.observation.observatory.instrument_parameters.wavelength_bin_widths,
+                                              self.angle_per_pixel)
         self.observation.sources.append(star)
         for key in planetary_system_dict['planets'].keys():
             planet = Planet(name=planetary_system_dict['planets'][key]['name'],
@@ -221,8 +240,15 @@ class Simulation():
                             temperature=planetary_system_dict['planets'][key]['temperature'],
                             mass=planetary_system_dict['planets'][key]['mass'],
                             star_separation=planetary_system_dict['planets'][key]['star_separation'],
-                            star_distance=star.distance)
+                            star_distance=star.distance,
+                            number_of_wavelength_bins=len(
+                                self.observation.observatory.instrument_parameters.wavelength_bin_centers))
             planet.flux = create_blackbody_spectrum(planet.temperature,
-                                                    self.observation.observatory.instrument_parameters.spectral_range_lower_limit,
-                                                    self.observation.observatory.instrument_parameters.spectral_range_upper_limit)
+                                                    self.observation.observatory.instrument_parameters.wavelength_range_lower_limit,
+                                                    self.observation.observatory.instrument_parameters.wavelength_range_upper_limit,
+                                                    self.observation.observatory.instrument_parameters.wavelength_bin_centers,
+                                                    self.observation.observatory.instrument_parameters.wavelength_bin_widths,
+                                                    self.angle_per_pixel)
             self.observation.sources.append(planet)
+            plt.plot(planet.flux.value)
+            plt.show()

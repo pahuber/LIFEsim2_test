@@ -11,8 +11,9 @@ class Planet(Source):
                  mass: astropy.units.Quantity,
                  temperature: astropy.units.Quantity,
                  star_separation: astropy.units.Quantity,
-                 star_distance: astropy.units.Quantity) -> object:
-        super().__init__()
+                 star_distance: astropy.units.Quantity,
+                 number_of_wavelength_bins: int) -> object:
+        super().__init__(number_of_wavelength_bins=number_of_wavelength_bins)
         self.name = name
         self.radius = radius
         self.mass = mass

@@ -64,8 +64,8 @@ def get_input_complex_amplitude_vector(observation: Observation, time: astropy.u
     :param time: The time to calculate the vector at
     :return: The input complex amplitude vector
     """
-    x_sky_coordinates = observation.x_sky_coordinates_map.to(u.rad).value
-    y_sky_coordinates = observation.y_sky_coordinates_map.to(u.rad).value
+    x_sky_coordinates = observation.observatory.x_sky_coordinates_map.to(u.rad).value
+    y_sky_coordinates = observation.observatory.y_sky_coordinates_map.to(u.rad).value
 
     x_observatory_coordinates, y_observatory_coordinates = observation.observatory.array_configuration.get_collector_positions(
         time)
@@ -101,9 +101,9 @@ def get_perturbation_matrix(observation: Observation) -> np.ndarray:
     """
     diagonal_of_matrix = []
     for index in range(observation.observatory.beam_combination_scheme.number_of_inputs):
-        diagonal_of_matrix.append(np.random.uniform(0.4, 0.6) * np.exp(1j * np.random.uniform(-0.2, 0.2)))
+        diagonal_of_matrix.append(np.random.uniform(0.6, 0.8) * np.exp(1j * np.random.uniform(-0.1, 0.1)))
 
     perturbation_matrix = np.diag(diagonal_of_matrix)
-    # perturbation_matrix = np.diag([1, 1, 1])
+    # perturbation_matrix = np.diag([1, 1, 1, 1])
 
     return perturbation_matrix
