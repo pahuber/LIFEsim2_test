@@ -3,7 +3,7 @@ from astropy import units as u
 
 
 class ConfigReader():
-    """Class to read configuration files.
+    """Class to io configuration files.
     """
 
     def __init__(self, path_to_config_file: str):

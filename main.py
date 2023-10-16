@@ -1,7 +1,7 @@
 from matplotlib import pyplot as plt
 
 from lifesim2.core.simulation import Simulation, SimulationMode
-from lifesim2.read.data_type import DataType
+from lifesim2.io.data_type import DataType
 
 # Specify paths
 path_to_config_file = r'C:\Users\huber\Desktop\LIFEsim2\config.yaml'

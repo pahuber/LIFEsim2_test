@@ -2,9 +2,8 @@ from enum import Enum
 
 import numpy as np
 from astropy import units as u
-from matplotlib import pyplot as plt
 
-from lifesim2.core.calculator import get_differential_intensity_responses
+from lifesim2.core.intensity_response import get_differential_intensity_responses
 from lifesim2.core.observation import Observation
 from lifesim2.core.observatory.array_configurations import ArrayConfigurationEnum, EmmaXCircularRotation, \
     EmmaXDoubleStretch, EquilateralTriangleCircularRotation, RegularPentagonCircularRotation
@@ -13,11 +12,11 @@ from lifesim2.core.observatory.beam_combination_schemes import BeamCombinationSc
     Kernel4, Kernel5
 from lifesim2.core.observatory.instrument_parameters import InstrumentParameters
 from lifesim2.core.observatory.observatory import Observatory
-from lifesim2.core.simulation_output import SimulationOutput
 from lifesim2.core.sources.planet import Planet
 from lifesim2.core.sources.star import Star
-from lifesim2.read.config_reader import ConfigReader
-from lifesim2.read.data_type import DataType
+from lifesim2.io.config_reader import ConfigReader
+from lifesim2.io.data_type import DataType
+from lifesim2.io.simulation_output import SimulationOutput
 from lifesim2.util.blackbody import create_blackbody_spectrum
 from lifesim2.util.grid import get_sky_coordinates
 
@@ -208,7 +207,7 @@ class Simulation():
                 'spectral_resolving_power'])
 
     def _create_composite_variables(self):
-        """Create and set composite variables.
+        """Create and set some composite variables.
         """
         self.time_range = np.arange(0, self.observation.observatory.array_configuration.modulation_period.to(u.s).value,
                                     self.time_step.to(u.s).value) * u.s
@@ -218,7 +217,11 @@ class Simulation():
         self.angle_per_pixel = list(field_of_view / self.grid_size for field_of_view in
                                     self.observation.observatory.instrument_parameters.field_of_view)
 
-    def _create_sources_from_planetary_system_configuration(self, path_to_data_file):
+    def _create_sources_from_planetary_system_configuration(self, path_to_data_file: str):
+        """Read the planetary system configuration file, extract the data and create the Star and Planet objects.
+
+        :param path_to_data_file: Path to the data file
+        """
         planetary_system_dict = ConfigReader(path_to_config_file=path_to_data_file).get_config_from_file()
         star = Star(name=planetary_system_dict['star']['name'],
                     radius=planetary_system_dict['star']['radius'],
@@ -250,5 +253,3 @@ class Simulation():
                                                     self.observation.observatory.instrument_parameters.wavelength_bin_widths,
                                                     self.angle_per_pixel)
             self.observation.sources.append(planet)
-            plt.plot(planet.flux.value)
-            plt.show()
