@@ -4,8 +4,8 @@ from lifesim2.core.simulation import Simulation, SimulationMode
 from lifesim2.io.data_type import DataType
 
 # Specify paths
-path_to_config_file = r'C:\Users\huber\Desktop\LIFEsim2\config.yaml'
-path_to_data_file = r'C:\Users\huber\Desktop\LIFEsim2\planetary_system.yaml'
+path_to_config_file = r'C:\Users\huber\Desktop\LIFEsim2\lifesim2\examples\single_observation_planetary_system\config.yaml'
+path_to_data_file = r'C:\Users\huber\Desktop\LIFEsim2\lifesim2\examples\single_observation_planetary_system\planetary_system.yaml'
 
 # Create simulation object
 simulation = Simulation(mode=SimulationMode.SINGLE_OBSERVATION)

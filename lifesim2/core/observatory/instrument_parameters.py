@@ -22,7 +22,7 @@ class InstrumentParameters():
             self.wavelength_bin_centers)
 
     def _get_wavelength_bins(self):
-        """Return the wavelength bin widths. Implementation as in
+        """Calculate and set the wavelength bin widths. Implementation as in
         https://github.com/jlustigy/coronagraph/blob/master/coronagraph/noise_routines.py.
 
         :return:
