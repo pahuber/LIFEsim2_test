@@ -33,7 +33,7 @@ observatory:
     aperture_diameter: 4 m
     wavelength_range_lower_limit: 4 um
     wavelength_range_upper_limit: 18 um
-    spectral_resolving_power: 1
+    spectral_resolving_power: 10
 # -------------------------------------------
 # Noise Configuration
 # -------------------------------------------

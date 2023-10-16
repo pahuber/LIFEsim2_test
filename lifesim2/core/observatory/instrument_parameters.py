@@ -17,9 +17,6 @@ class InstrumentParameters():
         self.wavelength_bin_widths = None
         self.wavelength_bin_centers = None
         self._get_wavelength_bins()
-        self.field_of_view = list(
-            (wavelength.to(u.m) / self.aperture_radius.to(u.m)) * u.arcsec for wavelength in
-            self.wavelength_bin_centers)
 
     def _get_wavelength_bins(self):
         """Calculate and set the wavelength bin widths. Implementation as in

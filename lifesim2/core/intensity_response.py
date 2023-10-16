@@ -49,13 +49,24 @@ def get_intensity_responses(time: astropy.units.Quantity,
                                                       input_complex_amplitude_unperturbed_vector)
 
     beam_combination_matrix = observation.observatory.beam_combination_scheme.get_beam_combination_transfer_matrix()
+
     intensity_response_vector = np.reshape(abs(
-        np.dot(beam_combination_matrix, input_complex_amplitude_perturbed_vector)) ** 2,
+        np.dot(beam_combination_matrix, input_complex_amplitude_unperturbed_vector)) ** 2,
                                            (
                                                observation.observatory.beam_combination_scheme.number_of_outputs,
                                                grid_size,
                                                grid_size))
-    return intensity_response_vector
+
+    intensity_response_perturbed_vector = np.reshape(abs(
+        np.dot(beam_combination_matrix, input_complex_amplitude_perturbed_vector)) ** 2,
+                                                     (
+                                                         observation.observatory.beam_combination_scheme.number_of_outputs,
+                                                         grid_size,
+                                                         grid_size))
+
+    for index in range(len(intensity_response_perturbed_vector)):
+        intensity_response_perturbed_vector[index] /= np.max(intensity_response_vector[index])
+    return intensity_response_perturbed_vector
 
 
 def get_input_complex_amplitude_vector(observation: Observation, time: astropy.units.Quantity,
@@ -104,7 +115,7 @@ def get_perturbation_matrix(observation: Observation) -> np.ndarray:
     for index in range(observation.observatory.beam_combination_scheme.number_of_inputs):
         diagonal_of_matrix.append(np.random.uniform(0.6, 0.8) * np.exp(1j * np.random.uniform(-0.1, 0.1)))
 
-    perturbation_matrix = np.diag(diagonal_of_matrix)
-    # perturbation_matrix = np.diag([1, 1, 1, 1])
+    # perturbation_matrix = np.diag(diagonal_of_matrix)
+    perturbation_matrix = np.diag([1, 1, 1, 1])
 
     return perturbation_matrix

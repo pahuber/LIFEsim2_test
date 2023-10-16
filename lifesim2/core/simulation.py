@@ -64,7 +64,8 @@ class Simulation():
                 # TODO: For each source, calculate photon rate
                 for source in self.observation.sources:
                     if isinstance(source, Planet):
-                        print(source.name, source.flux[wavelength_index])
+                        print(source.name, wavelength, source.flux[
+                            wavelength_index])
                     # get flux per bin
                     pass
                     # if flux is for one pixel, multiply by flux location on transmission map
@@ -72,11 +73,11 @@ class Simulation():
                     # add to total photon rate and individual source photon rate
                 self.output.append_photon_rate(time_index, differential_intensity_responses, wavelength)
 
-            # plt.imshow(transmission_maps[0], vmin=-1.6, vmax=1.6)
-            # plt.colorbar()
-            # plt.savefig(f't_{time_index}.png')
-            # plt.show()
-            # plt.close()
+                # plt.imshow(differential_intensity_responses[0])
+                # plt.colorbar()
+                # # plt.savefig(f't_{time_index}.png')
+                # plt.show()
+                # plt.close()
 
     def load_config(self, path_to_config_file):
         """Extract the configuration from the file, set the parameters and instantiate the objects.
@@ -211,6 +212,11 @@ class Simulation():
         """
         self.time_range = np.arange(0, self.observation.observatory.array_configuration.modulation_period.to(u.s).value,
                                     self.time_step.to(u.s).value) * u.s
+        # TODO: implement baseline correctly
+        self.observation.observatory.instrument_parameters.field_of_view = list(((wavelength.to(
+            u.m) / self.observation.observatory.array_configuration.baseline_minimum.to(u.m)) * u.rad).to(u.arcsec) for
+                                                                                wavelength in
+                                                                                self.observation.observatory.instrument_parameters.wavelength_bin_centers)
         self.observation.observatory.x_sky_coordinates_map, self.observation.observatory.y_sky_coordinates_map = get_sky_coordinates(
             self.observation.observatory.instrument_parameters.wavelength_bin_centers,
             self.observation.observatory.instrument_parameters.field_of_view, self.grid_size)

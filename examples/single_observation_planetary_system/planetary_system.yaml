@@ -8,7 +8,7 @@ planets:
     mass: 1 Mearth
     radius: 1 Rearth
     star_separation: 1 au
-    temperature: 300 K
+    temperature: 288 K
   planet_2:
     name: Mars
     mass: 0.3 Mearth

@@ -1,5 +1,6 @@
 import astropy.units
 import numpy as np
+import spectres
 from astropy import units as u
 from astropy.modeling.models import BlackBody
 
@@ -26,35 +27,13 @@ def create_blackbody_spectrum(temperature,
 
     blackbody_spectrum = BlackBody(temperature=temperature)(wavelength_range)
 
-    blackbody_spectrum_binned = bin_blackbody_spectrum(blackbody_spectrum, wavelength_range, wavelength_bin_centers,
-                                                       wavelength_bin_widths)
+    units = blackbody_spectrum.unit
+
+    blackbody_spectrum_binned = spectres.spectres(new_wavs=wavelength_bin_centers.to(u.um).value,
+                                                  spec_wavs=wavelength_range.to(u.um).value,
+                                                  spec_fluxes=blackbody_spectrum.value) * units
 
     return convert_blackbody_to_flux(blackbody_spectrum_binned, angle_per_pixel, wavelength_bin_centers)
-
-
-def bin_blackbody_spectrum(blackbody_spectrum: np.ndarray,
-                           wavelength_range: np.ndarray,
-                           wavelength_bin_centers: np.ndarray,
-                           wavelength_bin_widths: np.ndarray) -> np.ndarray:
-    """Rebin the blackbody spectrum to the wavelength bins of the observation and return the binned spectrum.
-
-    :param blackbody_spectrum: The un-binned blackbody spectrum
-    :param wavelength_range: The full wavelength range of the un-binned spectrum
-    :param wavelength_bin_centers: The wavelength bin centers
-    :param wavelength_bin_widths: The wavelength bin widths
-    :return: An array containing the binned blackbody spectrum
-    """
-    blackbody_spectrum_binned = np.zeros(len(wavelength_bin_centers))
-    units = blackbody_spectrum.unit
-    for index_wavelength, wavelength in enumerate(wavelength_range):
-        for index_wavelength_bin_center, wavelength_bin_center in enumerate(wavelength_bin_centers):
-            bin_lower_edge = wavelength_bin_centers[index_wavelength_bin_center] - wavelength_bin_widths[
-                index_wavelength_bin_center] / 2
-            bin_upper_edge = wavelength_bin_centers[index_wavelength_bin_center] + wavelength_bin_widths[
-                index_wavelength_bin_center] / 2
-            if wavelength >= bin_lower_edge and wavelength < bin_upper_edge:
-                blackbody_spectrum_binned[index_wavelength_bin_center] += wavelength.value
-    return blackbody_spectrum_binned * units
 
 
 def convert_blackbody_to_flux(blackbody_spectrum_binned: np.ndarray,
@@ -74,6 +53,6 @@ def convert_blackbody_to_flux(blackbody_spectrum_binned: np.ndarray,
             u.ph / u.m ** 2 / u.s / u.um,
             equivalencies=u.spectral_density(
                 wavelength_bin_centers[index]))
-        # TODO: fix flux to high
+        # TODO: fix flux too low
         flux[index] = current_flux
     return flux
