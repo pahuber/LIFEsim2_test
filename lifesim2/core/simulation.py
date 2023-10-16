@@ -3,20 +3,22 @@ from enum import Enum
 import numpy as np
 from astropy import units as u
 
-from lifesim2.core.calculator import get_differential_intensity_responses
+from lifesim2.core.intensity_response import get_differential_intensity_responses
 from lifesim2.core.observation import Observation
-from lifesim2.core.observatory import InstrumentParameters
-from lifesim2.core.observatory import Observatory
 from lifesim2.core.observatory.array_configurations import ArrayConfigurationEnum, EmmaXCircularRotation, \
     EmmaXDoubleStretch, EquilateralTriangleCircularRotation, RegularPentagonCircularRotation
 from lifesim2.core.observatory.beam_combination_schemes import BeamCombinationSchemeEnum, DoubleBracewell, \
     Kernel3, \
     Kernel4, Kernel5
-from lifesim2.core.simulation_output import SimulationOutput
-from lifesim2.core.sources import Planet
-from lifesim2.core.sources import Star
-from lifesim2.read.config_reader import ConfigReader
-from lifesim2.read.data_type import DataType
+from lifesim2.core.observatory.instrument_parameters import InstrumentParameters
+from lifesim2.core.observatory.observatory import Observatory
+from lifesim2.core.sources.planet import Planet
+from lifesim2.core.sources.star import Star
+from lifesim2.io.config_reader import ConfigReader
+from lifesim2.io.data_type import DataType
+from lifesim2.io.simulation_output import SimulationOutput
+from lifesim2.util.blackbody import create_blackbody_spectrum
+from lifesim2.util.grid import get_sky_coordinates
 
 
 class SimulationMode(Enum):
@@ -52,13 +54,22 @@ class Simulation():
                                        self.observation.observatory.instrument_parameters.wavelength_bin_centers)
 
         for time_index, time in enumerate(self.time_range):
-            for wavelength in self.observation.observatory.instrument_parameters.wavelength_bin_centers:
+            for wavelength_index, wavelength in enumerate(
+                    self.observation.observatory.instrument_parameters.wavelength_bin_centers):
                 differential_intensity_responses = get_differential_intensity_responses(time,
                                                                                         wavelength,
                                                                                         self.observation,
                                                                                         self.grid_size)
 
                 # TODO: For each source, calculate photon rate
+                for source in self.observation.sources:
+                    if isinstance(source, Planet):
+                        print(source.name, source.flux[wavelength_index])
+                    # get flux per bin
+                    pass
+                    # if flux is for one pixel, multiply by flux location on transmission map
+                    # integrate all fluxes
+                    # add to total photon rate and individual source photon rate
                 self.output.append_photon_rate(time_index, differential_intensity_responses, wavelength)
 
             # plt.imshow(transmission_maps[0], vmin=-1.6, vmax=1.6)
@@ -88,38 +99,16 @@ class Simulation():
         :param path_to_data_file: Path to the data file
         """
 
-        match type.value:
-            case 1:
-                # TODO: generate planetary blackbody spectra
-                planetary_system_dict = ConfigReader(path_to_config_file=path_to_data_file).get_config_from_file()
-                star = Star(label=planetary_system_dict['star']['star_label'],
-                            radius=planetary_system_dict['star']['star_radius'],
-                            temperature=planetary_system_dict['star']['star_temperature'],
-                            mass=planetary_system_dict['star']['star_mass'],
-                            distance=planetary_system_dict['star']['star_distance'])
-                star.create_blackbody_spectrum(
-                    self.observation.observatory.instrument_parameters.spectral_range_lower_limit,
-                    self.observation.observatory.instrument_parameters.spectral_range_upper_limit)
-                self.observation.sources.append(star)
-                for key in planetary_system_dict['planets'].keys():
-                    planet = Planet(label=planetary_system_dict['planets'][key]['planet_label'],
-                                    radius=planetary_system_dict['planets'][key]['planet_radius'],
-                                    temperature=planetary_system_dict['planets'][key]['planet_temperature'],
-                                    mass=planetary_system_dict['planets'][key]['planet_mass'],
-                                    star_separation=planetary_system_dict['planets'][key]['planet_star_separation'],
-                                    star_distance=star.distance)
-                    planet.create_blackbody_spectrum(
-                        self.observation.observatory.instrument_parameters.spectral_range_lower_limit,
-                        self.observation.observatory.instrument_parameters.spectral_range_upper_limit)
-                    self.observation.sources.append(planet)
-
-            case 2:
+        match type:
+            case DataType.PLANETARY_SYSTEM_CONFIGURATION:
+                self._create_sources_from_planetary_system_configuration(path_to_data_file=path_to_data_file)
+            case DataType.SPECTRUM_DATA:
                 # TODO: import spectral data
                 pass
-            case 3:
+            case DataType.SPECTRUM_CONTEXT:
                 # TODO: import spectral context data
                 pass
-            case 4:
+            case DataType.POPULATION_CATALOG:
                 # TODO: import population catalog
                 pass
 
@@ -210,15 +199,57 @@ class Simulation():
         """
         return InstrumentParameters(
             aperture_diameter=self._configurations['observatory']['instrument_parameters']['aperture_diameter'],
-            spectral_range_lower_limit=self._configurations['observatory']['instrument_parameters'][
-                'spectral_range_lower_limit'],
-            spectral_range_upper_limit=self._configurations['observatory']['instrument_parameters'][
-                'spectral_range_upper_limit'],
+            wavelength_range_lower_limit=self._configurations['observatory']['instrument_parameters'][
+                'wavelength_range_lower_limit'],
+            wavelength_range_upper_limit=self._configurations['observatory']['instrument_parameters'][
+                'wavelength_range_upper_limit'],
             spectral_resolving_power=self._configurations['observatory']['instrument_parameters'][
                 'spectral_resolving_power'])
 
     def _create_composite_variables(self):
-        """Create and set composite variables.
+        """Create and set some composite variables.
         """
         self.time_range = np.arange(0, self.observation.observatory.array_configuration.modulation_period.to(u.s).value,
                                     self.time_step.to(u.s).value) * u.s
+        self.observation.observatory.x_sky_coordinates_map, self.observation.observatory.y_sky_coordinates_map = get_sky_coordinates(
+            self.observation.observatory.instrument_parameters.wavelength_bin_centers,
+            self.observation.observatory.instrument_parameters.field_of_view, self.grid_size)
+        self.angle_per_pixel = list(field_of_view / self.grid_size for field_of_view in
+                                    self.observation.observatory.instrument_parameters.field_of_view)
+
+    def _create_sources_from_planetary_system_configuration(self, path_to_data_file: str):
+        """Read the planetary system configuration file, extract the data and create the Star and Planet objects.
+
+        :param path_to_data_file: Path to the data file
+        """
+        planetary_system_dict = ConfigReader(path_to_config_file=path_to_data_file).get_config_from_file()
+        star = Star(name=planetary_system_dict['star']['name'],
+                    radius=planetary_system_dict['star']['radius'],
+                    temperature=planetary_system_dict['star']['temperature'],
+                    mass=planetary_system_dict['star']['mass'],
+                    distance=planetary_system_dict['star']['distance'],
+                    number_of_wavelength_bins=len(
+                        self.observation.observatory.instrument_parameters.wavelength_bin_centers))
+        star.flux = create_blackbody_spectrum(star.temperature,
+                                              self.observation.observatory.instrument_parameters.wavelength_range_lower_limit,
+                                              self.observation.observatory.instrument_parameters.wavelength_range_upper_limit,
+                                              self.observation.observatory.instrument_parameters.wavelength_bin_centers,
+                                              self.observation.observatory.instrument_parameters.wavelength_bin_widths,
+                                              self.angle_per_pixel)
+        self.observation.sources.append(star)
+        for key in planetary_system_dict['planets'].keys():
+            planet = Planet(name=planetary_system_dict['planets'][key]['name'],
+                            radius=planetary_system_dict['planets'][key]['radius'],
+                            temperature=planetary_system_dict['planets'][key]['temperature'],
+                            mass=planetary_system_dict['planets'][key]['mass'],
+                            star_separation=planetary_system_dict['planets'][key]['star_separation'],
+                            star_distance=star.distance,
+                            number_of_wavelength_bins=len(
+                                self.observation.observatory.instrument_parameters.wavelength_bin_centers))
+            planet.flux = create_blackbody_spectrum(planet.temperature,
+                                                    self.observation.observatory.instrument_parameters.wavelength_range_lower_limit,
+                                                    self.observation.observatory.instrument_parameters.wavelength_range_upper_limit,
+                                                    self.observation.observatory.instrument_parameters.wavelength_bin_centers,
+                                                    self.observation.observatory.instrument_parameters.wavelength_bin_widths,
+                                                    self.angle_per_pixel)
+            self.observation.sources.append(planet)

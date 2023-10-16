@@ -31,9 +31,9 @@ observatory:
   beam_combination_scheme: double-bracewell
   instrument_parameters:
     aperture_diameter: 4 m
-    spectral_range_lower_limit: 4 um
-    spectral_range_upper_limit: 18 um
-    spectral_resolving_power: 2
+    wavelength_range_lower_limit: 4 um
+    wavelength_range_upper_limit: 18 um
+    spectral_resolving_power: 1
 # -------------------------------------------
 # Noise Configuration
 # -------------------------------------------
