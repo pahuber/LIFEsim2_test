@@ -1,26 +1,28 @@
+from typing import Any
+
 import astropy.units
+from astropy import units as u
+from pydantic import BaseModel, field_validator
+from pydantic_core.core_schema import ValidationInfo
+
+from lifesim2.io.validators import validate_quantity_units
 
 
-class Observation():
-    """Class representation of a simulated observation. This is the core object of the simulation process."""
+class Observation(BaseModel):
+    """Class representation of an observation."""
 
-    def __init__(self,
-                 adjust_baseline_to_habitable_zone: bool,
-                 integration_time: astropy.units.Quantity,
-                 optimized_wavelength: astropy.units.Quantity,
-                 grid_size: int):
-        """Constructor method.
+    adjust_baseline_to_habitable_zone: bool
+    integration_time: Any
+    optimized_wavelength: Any
+    x_sky_coordinates_map: Any = None
+    y_sky_coordinates_map: Any = None
+    observatory: Any = None
+    sources: list = []
 
-        :param adjust_baseline_to_habitable_zone: If true, the baseline is adjusted to the habitable zone, else it is
-                                                  adjusted to the planet position.
-        :param integration_time: Integration time for an observation
-        :param optimized_wavelength: Wavelength for which the baseline is optimized to the habitable zone
-        :param grid_size: Grid size for the caluclations
-        """
-        self.adjust_baseline_to_habitable_zone = adjust_baseline_to_habitable_zone
-        self.integration_time = integration_time
-        self.optimized_wavelength = optimized_wavelength
-        self.grid_size = grid_size
-        self.x_sky_coordinates_map, self.y_sky_coordinates_map = None, None
-        self.observatory = None
-        self.sources = []
+    @field_validator('integration_time')
+    def validate_integration_time(cls, value: Any, info: ValidationInfo) -> astropy.units.Quantity:
+        return validate_quantity_units(value=value, field_name=info.field_name, unit_equivalency=u.s)
+
+    @field_validator('optimized_wavelength')
+    def validate_optimized_wavelength(cls, value: Any, info: ValidationInfo) -> astropy.units.Quantity:
+        return validate_quantity_units(value=value, field_name=info.field_name, unit_equivalency=u.m)

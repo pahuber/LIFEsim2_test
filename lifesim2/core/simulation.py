@@ -1,7 +1,11 @@
 from enum import Enum
+from typing import Any
 
+import astropy
 import numpy as np
 from astropy import units as u
+from pydantic import BaseModel, field_validator
+from pydantic_core.core_schema import ValidationInfo
 
 from lifesim2.core.intensity_response import get_differential_intensity_responses
 from lifesim2.core.observation import Observation
@@ -17,6 +21,7 @@ from lifesim2.core.sources.star import Star
 from lifesim2.io.config_reader import ConfigReader
 from lifesim2.io.data_type import DataType
 from lifesim2.io.simulation_output import SimulationOutput
+from lifesim2.io.validators import validate_quantity_units
 from lifesim2.util.blackbody import create_blackbody_spectrum
 from lifesim2.util.grid import get_sky_coordinates
 
@@ -26,6 +31,17 @@ class SimulationMode(Enum):
     """
     SINGLE_OBSERVATION = 1
     YIELD_ESTIMATE = 2
+
+
+class SimulationProperties(BaseModel):
+    grid_size: int
+    time_step: Any
+    time_range: Any = None
+    maximum_angle_per_pixel: Any = None
+
+    @field_validator('time_step')
+    def validate_time_step(cls, value: Any, info: ValidationInfo) -> astropy.units.Quantity:
+        return validate_quantity_units(value=value, field_name=info.field_name, unit_equivalency=u.s)
 
 
 class Simulation():
@@ -41,8 +57,7 @@ class Simulation():
         """
         self.mode = mode
         self._configurations = None
-        self.grid_size = None
-        self.time_step = None
+        self.properties = None
         self.observation = None
 
     def run(self):
@@ -50,16 +65,16 @@ class Simulation():
         """
         beam_combination_matrix = self.observation.observatory.beam_combination_scheme.get_beam_combination_transfer_matrix()
         self.output = SimulationOutput(self.observation.observatory.beam_combination_scheme.number_of_transmission_maps,
-                                       len(self.time_range),
+                                       len(self.properties.time_range),
                                        self.observation.observatory.instrument_parameters.wavelength_bin_centers)
 
-        for time_index, time in enumerate(self.time_range):
+        for time_index, time in enumerate(self.properties.time_range):
             for wavelength_index, wavelength in enumerate(
                     self.observation.observatory.instrument_parameters.wavelength_bin_centers):
                 differential_intensity_responses = get_differential_intensity_responses(time,
                                                                                         wavelength,
                                                                                         self.observation,
-                                                                                        self.grid_size)
+                                                                                        self.properties.grid_size)
 
                 # TODO: For each source, calculate photon rate
                 for source in self.observation.sources:
@@ -87,9 +102,9 @@ class Simulation():
         :param path_to_config_file: Path to the configuration file
         """
         self._configurations = ConfigReader(path_to_config_file=path_to_config_file).get_config_from_file()
-        self._load_simulation_config()
-        self.observation = self._create_observation_from_config()
-        self.observation.observatory = self._create_observatory_from_config()
+        self.properties = SimulationProperties(**self._configurations['simulation'])
+        self.observation = Observation(**self._configurations['observation'])
+        self.observation.observatory = Observatory()
         self.observation.observatory.array_configuration = self._create_array_configuration_from_config()
         self.observation.observatory.beam_combination_scheme = self._create_beam_combination_scheme_from_config()
         self.observation.observatory.instrument_parameters = self._create_instrument_parameters_from_config()
@@ -115,12 +130,6 @@ class Simulation():
                 # TODO: import population catalog
                 pass
 
-    def _load_simulation_config(self):
-        """Set the class variables from the configuration.
-        """
-        self.grid_size = int(self._configurations['simulation']['grid_size'].value)
-        self.time_step = self._configurations['simulation']['time_step']
-
     def _create_observation_from_config(self):
         """Return an observation object.
 
@@ -132,48 +141,25 @@ class Simulation():
             optimized_wavelength=self._configurations['observation']['optimized_wavelength'],
             grid_size=self.grid_size)
 
-    def _create_observatory_from_config(self):
-        """Return an observatory object.
-
-        :return: Observatory object.
-        """
-        return Observatory()
-
     def _create_array_configuration_from_config(self):
         """Return an ArrayConfiguration object.
 
         :return: ArrayConfiguration object.
         """
-        array_configuration = self._configurations['observatory']['array_configuration']['type']
-        baseline_minimum = self._configurations['observatory']['array_configuration']['baseline_minimum']
-        baseline_maximum = self._configurations['observatory']['array_configuration']['baseline_maximum']
-        baseline_ratio = self._configurations['observatory']['array_configuration']['baseline_ratio']
-        modulation_period = self._configurations['observatory']['array_configuration']['modulation_period']
+        type = self._configurations['observatory']['array_configuration']['type']
 
-        match array_configuration:
+        match type:
             case ArrayConfigurationEnum.EMMA_X_CIRCULAR_ROTATION.value:
-                return EmmaXCircularRotation(baseline_minimum=baseline_minimum,
-                                             baseline_maximum=baseline_maximum,
-                                             baseline_ratio=baseline_ratio,
-                                             modulation_period=modulation_period)
+                return EmmaXCircularRotation(**self._configurations['observatory']['array_configuration'])
 
             case ArrayConfigurationEnum.EMMA_X_DOUBLE_STRETCH.value:
-                return EmmaXDoubleStretch(baseline_minimum=baseline_minimum,
-                                          baseline_maximum=baseline_maximum,
-                                          baseline_ratio=baseline_ratio,
-                                          modulation_period=modulation_period)
+                return EmmaXDoubleStretch(**self._configurations['observatory']['array_configuration'])
 
             case ArrayConfigurationEnum.EQUILATERAL_TRIANGLE_CIRCULAR_ROTATION.value:
-                return EquilateralTriangleCircularRotation(baseline_minimum=baseline_minimum,
-                                                           baseline_maximum=baseline_maximum,
-                                                           baseline_ratio=baseline_ratio,
-                                                           modulation_period=modulation_period)
+                return EquilateralTriangleCircularRotation(**self._configurations['observatory']['array_configuration'])
 
             case ArrayConfigurationEnum.REGULAR_PENTAGON_CIRCULAR_ROTATION.value:
-                return RegularPentagonCircularRotation(baseline_minimum=baseline_minimum,
-                                                       baseline_maximum=baseline_maximum,
-                                                       baseline_ratio=baseline_ratio,
-                                                       modulation_period=modulation_period)
+                return RegularPentagonCircularRotation(**self._configurations['observatory']['array_configuration'])
 
     def _create_beam_combination_scheme_from_config(self):
         """Return an BeamCombinationScheme object.
@@ -200,20 +186,14 @@ class Simulation():
 
         :return: InstrumentParameters object.
         """
-        return InstrumentParameters(
-            aperture_diameter=self._configurations['observatory']['instrument_parameters']['aperture_diameter'],
-            wavelength_range_lower_limit=self._configurations['observatory']['instrument_parameters'][
-                'wavelength_range_lower_limit'],
-            wavelength_range_upper_limit=self._configurations['observatory']['instrument_parameters'][
-                'wavelength_range_upper_limit'],
-            spectral_resolving_power=self._configurations['observatory']['instrument_parameters'][
-                'spectral_resolving_power'])
+        return InstrumentParameters(**self._configurations['observatory']['instrument_parameters'])
 
     def _create_composite_variables(self):
         """Create and set some composite variables.
         """
-        self.time_range = np.arange(0, self.observation.observatory.array_configuration.modulation_period.to(u.s).value,
-                                    self.time_step.to(u.s).value) * u.s
+        self.properties.time_range = np.arange(0, self.observation.observatory.array_configuration.modulation_period.to(
+            u.s).value,
+                                               self.properties.time_step.to(u.s).value) * u.s
         # TODO: implement baseline correctly
         self.observation.observatory.instrument_parameters.field_of_view = (np.array(list(((wavelength.to(
             u.m) / self.observation.observatory.array_configuration.baseline_minimum.to(u.m)).value) for
@@ -225,9 +205,10 @@ class Simulation():
             self.observation.observatory.instrument_parameters.field_of_view)
         self.observation.observatory.x_sky_coordinates_map, self.observation.observatory.y_sky_coordinates_map = get_sky_coordinates(
             self.observation.observatory.instrument_parameters.wavelength_bin_centers,
-            self.observation.observatory.instrument_parameters.field_of_view_maximum, self.grid_size)
-        self.maximum_angle_per_pixel = (self.observation.observatory.instrument_parameters.field_of_view_maximum /
-                                        self.grid_size)
+            self.observation.observatory.instrument_parameters.field_of_view_maximum, self.properties.grid_size)
+        self.properties.maximum_angle_per_pixel = (
+                self.observation.observatory.instrument_parameters.field_of_view_maximum /
+                self.properties.grid_size)
 
     def _create_sources_from_planetary_system_configuration(self, path_to_data_file: str):
         """Read the planetary system configuration file, extract the data and create the Star and Planet objects.
@@ -235,11 +216,7 @@ class Simulation():
         :param path_to_data_file: Path to the data file
         """
         planetary_system_dict = ConfigReader(path_to_config_file=path_to_data_file).get_config_from_file()
-        star = Star(name=planetary_system_dict['star']['name'],
-                    radius=planetary_system_dict['star']['radius'],
-                    temperature=planetary_system_dict['star']['temperature'],
-                    mass=planetary_system_dict['star']['mass'],
-                    distance=planetary_system_dict['star']['distance'],
+        star = Star(**planetary_system_dict['star'],
                     number_of_wavelength_bins=len(
                         self.observation.observatory.instrument_parameters.wavelength_bin_centers))
         star.flux = create_blackbody_spectrum(star.temperature,
@@ -247,7 +224,7 @@ class Simulation():
                                               self.observation.observatory.instrument_parameters.wavelength_range_upper_limit,
                                               self.observation.observatory.instrument_parameters.wavelength_bin_centers,
                                               self.observation.observatory.instrument_parameters.wavelength_bin_widths,
-                                              self.maximum_angle_per_pixel)
+                                              self.properties.maximum_angle_per_pixel)
         self.observation.sources.append(star)
         for key in planetary_system_dict['planets'].keys():
             planet = Planet(name=planetary_system_dict['planets'][key]['name'],
@@ -263,5 +240,5 @@ class Simulation():
                                                     self.observation.observatory.instrument_parameters.wavelength_range_upper_limit,
                                                     self.observation.observatory.instrument_parameters.wavelength_bin_centers,
                                                     self.observation.observatory.instrument_parameters.wavelength_bin_widths,
-                                                    self.maximum_angle_per_pixel)
+                                                    self.properties.maximum_angle_per_pixel)
             self.observation.sources.append(planet)

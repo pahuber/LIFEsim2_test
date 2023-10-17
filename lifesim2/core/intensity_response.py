@@ -40,7 +40,7 @@ def get_intensity_responses(time: astropy.units.Quantity,
     :return: The intensity response vector
     """
     input_complex_amplitude_unperturbed_vector = np.reshape(
-        get_input_complex_amplitude_vector(observation, time, wavelength), (
+        get_input_complex_amplitude_vector(observation, time, wavelength, grid_size), (
             observation.observatory.beam_combination_scheme.number_of_inputs, grid_size ** 2))
 
     perturbation_matrix = get_perturbation_matrix(observation)
@@ -70,7 +70,7 @@ def get_intensity_responses(time: astropy.units.Quantity,
 
 
 def get_input_complex_amplitude_vector(observation: Observation, time: astropy.units.Quantity,
-                                       wavelength: astropy.units.Quantity) -> np.ndarray:
+                                       wavelength: astropy.units.Quantity, grid_size: int) -> np.ndarray:
     """Return the unperturbed input complex amplitude vector, consisting of a flat wavefront per collector.
 
     :param time: The time to calculate the vector at
@@ -93,7 +93,7 @@ def get_input_complex_amplitude_vector(observation: Observation, time: astropy.u
     # plt.close()
 
     input_complex_amplitude_vector = np.zeros((observation.observatory.beam_combination_scheme.number_of_inputs,
-                                               observation.grid_size, observation.grid_size),
+                                               grid_size, grid_size),
                                               dtype=complex)
 
     for index_input in range(observation.observatory.beam_combination_scheme.number_of_inputs):

@@ -1,21 +1,25 @@
 from abc import ABC
+from typing import Any
 
-import numpy as np
+import astropy
 from astropy import units as u
+from pydantic import BaseModel, field_validator
+from pydantic_core.core_schema import ValidationInfo
+
+from lifesim2.io.validators import validate_quantity_units
 
 
-class Source(ABC, object):
+class Source(ABC, BaseModel):
     """Class representation of a photon source.
     """
 
-    def __init__(self, number_of_wavelength_bins: int):
-        """Constructor method.
+    number_of_wavelength_bins: int
+    name: str
+    temperature: Any
+    position: Any = None
+    solid_angle: Any = None
+    flux: Any = None
 
-        :param number_of_wavelength_bins: The number of wavelength bins used in the observation
-        """
-        self.number_of_wavelength_bins = number_of_wavelength_bins
-        self.name = None
-        self.temperature = None
-        self.position = None
-        self.solid_angle = None
-        self.flux = np.zeros(self.number_of_wavelength_bins) * u.ph / u.m ** 2 / u.s / u.um
+    @field_validator('temperature')
+    def validate_temperature(cls, value: Any, info: ValidationInfo) -> astropy.units.Quantity:
+        return validate_quantity_units(value=value, field_name=info.field_name, unit_equivalency=u.K)

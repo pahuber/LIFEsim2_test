@@ -1,10 +1,14 @@
 from abc import ABC, abstractmethod
 from enum import Enum
+from typing import Any
 
 import astropy.units
 import numpy as np
 from astropy import units as u
+from pydantic import BaseModel, field_validator
+from pydantic_core.core_schema import ValidationInfo
 
+from lifesim2.io.validators import validate_quantity_units
 from lifesim2.util.matrix import get_2d_rotation_matrix
 
 
@@ -17,27 +21,25 @@ class ArrayConfigurationEnum(Enum):
     REGULAR_PENTAGON_CIRCULAR_ROTATION = 'regular-pentagon-circular-rotation'
 
 
-class ArrayConfiguration(ABC):
+class ArrayConfiguration(ABC, BaseModel):
     """Class representation of a collector array configuration.
     """
+    baseline_minimum: Any
+    baseline_maximum: Any
+    baseline_ratio: int
+    modulation_period: Any
 
-    def __init__(self,
-                 baseline_minimum: astropy.units.Quantity,
-                 baseline_maximum: astropy.units.Quantity,
-                 baseline_ratio: astropy.units.Quantity,
-                 modulation_period: astropy.units.Quantity):
-        """Constructor method.
-        :param baseline_minimum: Minimum value of the baseline in meters
-        :param baseline_maximum: Maximum value of the baseline in meters
-        :param baseline_ratio: Ratio between the respective baselines
-        :param modulation_period: Period for one full array modulation (e.g. rotation period for circular rotation)
-        """
-        self.baseline_minimum = baseline_minimum
-        self.baseline_maximum = baseline_maximum
-        self.baseline_ratio = baseline_ratio
-        self.modulation_period = modulation_period
+    @field_validator('baseline_minimum')
+    def validate_baseline_minimum(cls, value: Any, info: ValidationInfo) -> astropy.units.Quantity:
+        return validate_quantity_units(value=value, field_name=info.field_name, unit_equivalency=u.m)
 
-        super().__init__()
+    @field_validator('baseline_maximum')
+    def validate_baseline_maximum(cls, value: Any, info: ValidationInfo) -> astropy.units.Quantity:
+        return validate_quantity_units(value=value, field_name=info.field_name, unit_equivalency=u.m)
+
+    @field_validator('modulation_period')
+    def validate_modulation_period(cls, value: Any, info: ValidationInfo) -> astropy.units.Quantity:
+        return validate_quantity_units(value=value, field_name=info.field_name, unit_equivalency=u.s)
 
     @abstractmethod
     def get_collector_positions(self, time: astropy.units.Quantity) -> np.ndarray:

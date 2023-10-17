@@ -1,36 +1,56 @@
-import astropy.units
+from typing import Any
+
+import astropy
 import numpy as np
 from astropy import units as u
+from pydantic import field_validator
+from pydantic_core.core_schema import ValidationInfo
 
 from lifesim2.core.sources.source import Source
+from lifesim2.io.validators import validate_quantity_units
 
 
-class Planet(Source, object):
-    def __init__(self,
-                 name: str,
-                 radius: astropy.units.Quantity,
-                 mass: astropy.units.Quantity,
-                 temperature: astropy.units.Quantity,
-                 star_separation: astropy.units.Quantity,
-                 star_distance: astropy.units.Quantity,
-                 number_of_wavelength_bins: int) -> object:
-        super().__init__(number_of_wavelength_bins=number_of_wavelength_bins)
-        self.name = name
-        self.radius = radius
-        self.mass = mass
-        self.temperature = temperature
-        self.star_separation = star_separation
-        self.star_distance = star_distance
-        self.star_angular_separation = (self.star_separation / self.star_distance * u.rad).to(u.arcsec)
-        self.solid_angle = np.pi * (((self.radius.to(u.m)) ** 2 / (self.star_distance.to(u.m))) * u.rad) ** 2
+class Planet(Source):
+    name: str
+    temperature: Any
+    radius: Any
+    mass: Any
+    star_separation: Any
+    star_distance: Any
+    number_of_wavelength_bins: int
 
-        @property
-        def position(self) -> astropy.units.Quantity:
-            """Return the (x, y) position in arcseconds.
+    @field_validator('radius')
+    def validate_radius(cls, value: Any, info: ValidationInfo) -> astropy.units.Quantity:
+        return validate_quantity_units(value=value, field_name=info.field_name, unit_equivalency=u.m)
 
-            :return: A tuple containing the x- and y-position.
-            """
-            # TODO: implement planet position correctly
-            x = self.star_angular_separation * np.cos(np.pi / 4)
-            y = self.star_angular_separation * np.sin(np.pi / 4)
-            return (x, y)
+    @property
+    @field_validator('mass')
+    def validate_mass(cls, value: Any, info: ValidationInfo) -> astropy.units.Quantity:
+        return validate_quantity_units(value=value, field_name=info.field_name, unit_equivalency=u.kg)
+
+    @field_validator('star_separation')
+    def validate_star_separation(cls, value: Any, info: ValidationInfo) -> astropy.units.Quantity:
+        return validate_quantity_units(value=value, field_name=info.field_name, unit_equivalency=u.m)
+
+    @field_validator('star_distance')
+    def validate_star_distance(cls, value: Any, info: ValidationInfo) -> astropy.units.Quantity:
+        return validate_quantity_units(value=value, field_name=info.field_name, unit_equivalency=u.m)
+
+    @property
+    def solid_angle(self):
+        return np.pi * (((self.radius.to(u.m)) ** 2 / (self.distance.to(u.m))) * u.rad) ** 2
+
+    @property
+    def star_angular_separation(self):
+        return (self.star_separation / self.star_distance * u.rad).to(u.arcsec)
+
+        # @property
+        # def position(self) -> astropy.units.Quantity:
+        #     """Return the (x, y) position in arcseconds.
+        #
+        #     :return: A tuple containing the x- and y-position.
+        #     """
+        #     # TODO: implement planet position correctly
+        #     x = self.star_angular_separation * np.cos(np.pi / 4)
+        #     y = self.star_angular_separation * np.sin(np.pi / 4)
+        #     return (x, y)
