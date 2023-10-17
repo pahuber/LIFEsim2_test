@@ -67,11 +67,13 @@ class Simulation():
                         print(source.name, wavelength, source.flux[
                             wavelength_index])
                     # get flux per bin
-                    pass
+                    # pass
                     # if flux is for one pixel, multiply by flux location on transmission map
                     # integrate all fluxes
                     # add to total photon rate and individual source photon rate
-                self.output.append_photon_rate(time_index, differential_intensity_responses, wavelength)
+                self.output.append_photon_rate(time_index, differential_intensity_responses, wavelength,
+                                               wavelength_index,
+                                               source.flux)
 
                 # plt.imshow(differential_intensity_responses[0])
                 # plt.colorbar()
@@ -213,15 +215,19 @@ class Simulation():
         self.time_range = np.arange(0, self.observation.observatory.array_configuration.modulation_period.to(u.s).value,
                                     self.time_step.to(u.s).value) * u.s
         # TODO: implement baseline correctly
-        self.observation.observatory.instrument_parameters.field_of_view = list(((wavelength.to(
-            u.m) / self.observation.observatory.array_configuration.baseline_minimum.to(u.m)) * u.rad).to(u.arcsec) for
-                                                                                wavelength in
-                                                                                self.observation.observatory.instrument_parameters.wavelength_bin_centers)
+        self.observation.observatory.instrument_parameters.field_of_view = (np.array(list(((wavelength.to(
+            u.m) / self.observation.observatory.array_configuration.baseline_minimum.to(u.m)).value) for
+                                                                                          wavelength in
+                                                                                          self.observation.observatory.instrument_parameters.wavelength_bin_centers),
+                                                                                     dtype=float) * u.rad).to(
+            u.arcsec)
+        self.observation.observatory.instrument_parameters.field_of_view_maximum = np.max(
+            self.observation.observatory.instrument_parameters.field_of_view)
         self.observation.observatory.x_sky_coordinates_map, self.observation.observatory.y_sky_coordinates_map = get_sky_coordinates(
             self.observation.observatory.instrument_parameters.wavelength_bin_centers,
-            self.observation.observatory.instrument_parameters.field_of_view, self.grid_size)
-        self.angle_per_pixel = list(field_of_view / self.grid_size for field_of_view in
-                                    self.observation.observatory.instrument_parameters.field_of_view)
+            self.observation.observatory.instrument_parameters.field_of_view_maximum, self.grid_size)
+        self.maximum_angle_per_pixel = (self.observation.observatory.instrument_parameters.field_of_view_maximum /
+                                        self.grid_size)
 
     def _create_sources_from_planetary_system_configuration(self, path_to_data_file: str):
         """Read the planetary system configuration file, extract the data and create the Star and Planet objects.
@@ -241,7 +247,7 @@ class Simulation():
                                               self.observation.observatory.instrument_parameters.wavelength_range_upper_limit,
                                               self.observation.observatory.instrument_parameters.wavelength_bin_centers,
                                               self.observation.observatory.instrument_parameters.wavelength_bin_widths,
-                                              self.angle_per_pixel)
+                                              self.maximum_angle_per_pixel)
         self.observation.sources.append(star)
         for key in planetary_system_dict['planets'].keys():
             planet = Planet(name=planetary_system_dict['planets'][key]['name'],
@@ -257,5 +263,5 @@ class Simulation():
                                                     self.observation.observatory.instrument_parameters.wavelength_range_upper_limit,
                                                     self.observation.observatory.instrument_parameters.wavelength_bin_centers,
                                                     self.observation.observatory.instrument_parameters.wavelength_bin_widths,
-                                                    self.angle_per_pixel)
+                                                    self.maximum_angle_per_pixel)
             self.observation.sources.append(planet)

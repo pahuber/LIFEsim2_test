@@ -22,7 +22,9 @@ class SimulationOutput():
     def append_photon_rate(self,
                            time_index: int,
                            differential_intensity_responses: np.ndarray,
-                           wavelength: astropy.units.Quantity):
+                           wavelength: astropy.units.Quantity,
+                           wavelength_index,
+                           source_flux: np.ndarray):
         """Append the photon rates for the different sources to the time series. Done for each time step.
 
         :param time_index: The index of the current time step
@@ -30,4 +32,4 @@ class SimulationOutput():
         """
         for index, differential_intensity_response in enumerate(differential_intensity_responses):
             self.photon_rate_time_series[wavelength][index][time_index] = \
-            differential_intensity_responses[index][100 // 4][100 // 4]
+                differential_intensity_responses[index][100 // 4][100 // 4] * source_flux[wavelength_index].value

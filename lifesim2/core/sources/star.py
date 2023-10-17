@@ -1,4 +1,6 @@
 import astropy.units
+import numpy as np
+from astropy import units as u
 
 from lifesim2.core.sources.source import Source
 
@@ -17,3 +19,5 @@ class Star(Source):
         self.mass = mass
         self.temperature = temperature
         self.distance = distance
+        self.solid_angle = np.pi * (((self.radius.to(u.m)) ** 2 / (self.distance.to(u.m))) * u.rad) ** 2
+        self.position = (0, 0) * u.arcsec

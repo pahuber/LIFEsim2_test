@@ -16,6 +16,7 @@ class InstrumentParameters():
         self.spectral_resolving_power = spectral_resolving_power
         self.wavelength_bin_widths = None
         self.wavelength_bin_centers = None
+        self.field_of_view_maximum = None
         self._get_wavelength_bins()
 
     def _get_wavelength_bins(self):
