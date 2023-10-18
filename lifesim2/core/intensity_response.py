@@ -8,6 +8,7 @@ from lifesim2.core.observation import Observation
 def get_differential_intensity_responses(time,
                                          wavelength,
                                          observation: Observation,
+                                         source_sky_coordinate_maps: np.ndarray,
                                          grid_size: int) -> np.ndarray:
     """Return an array containing the differential intensity responses (differential virtual transmission maps), given an intensity response
      vector. For certain beam combination schemes, multiple differential intensity responses exist.
@@ -17,7 +18,9 @@ def get_differential_intensity_responses(time,
     :param grid_size: The grid size for the calculations
     :return: An array containing the differential intensity responses
     """
-    intensity_response_vector = get_intensity_responses(time, wavelength, observation, grid_size)
+    # TODO: fix units
+    intensity_response_vector = get_intensity_responses(time, wavelength, observation, source_sky_coordinate_maps,
+                                                        grid_size)
     indices = observation.observatory.beam_combination_scheme.get_differential_intensity_response_indices()
     differential_intensity_responses = np.zeros((len(indices), grid_size, grid_size))
     for index_index, index_pair in enumerate(indices):
@@ -30,6 +33,7 @@ def get_differential_intensity_responses(time,
 def get_intensity_responses(time: astropy.units.Quantity,
                             wavelength: astropy.units.Quantity,
                             observation: Observation,
+                            source_sky_coordinate_maps,
                             grid_size: int) -> np.ndarray:
     """Return the intensity response vector.
 
@@ -40,7 +44,7 @@ def get_intensity_responses(time: astropy.units.Quantity,
     :return: The intensity response vector
     """
     input_complex_amplitude_unperturbed_vector = np.reshape(
-        get_input_complex_amplitude_vector(observation, time, wavelength, grid_size), (
+        get_input_complex_amplitude_vector(observation, time, wavelength, source_sky_coordinate_maps, grid_size), (
             observation.observatory.beam_combination_scheme.number_of_inputs, grid_size ** 2))
 
     perturbation_matrix = get_perturbation_matrix(observation)
@@ -70,14 +74,15 @@ def get_intensity_responses(time: astropy.units.Quantity,
 
 
 def get_input_complex_amplitude_vector(observation: Observation, time: astropy.units.Quantity,
-                                       wavelength: astropy.units.Quantity, grid_size: int) -> np.ndarray:
+                                       wavelength: astropy.units.Quantity, source_sky_coordinate_maps,
+                                       grid_size: int) -> np.ndarray:
     """Return the unperturbed input complex amplitude vector, consisting of a flat wavefront per collector.
 
     :param time: The time to calculate the vector at
     :return: The input complex amplitude vector
     """
-    x_sky_coordinates = observation.observatory.x_sky_coordinates_map.to(u.rad).value
-    y_sky_coordinates = observation.observatory.y_sky_coordinates_map.to(u.rad).value
+    # x_sky_coordinates = observation.observatory.x_sky_coordinates_map.to(u.rad).value
+    # y_sky_coordinates = observation.observatory.y_sky_coordinates_map.to(u.rad).value
 
     x_observatory_coordinates, y_observatory_coordinates = observation.observatory.array_configuration.get_collector_positions(
         time)
@@ -100,8 +105,9 @@ def get_input_complex_amplitude_vector(observation: Observation, time: astropy.u
         input_complex_amplitude_vector[index_input] = (
                 observation.observatory.instrument_parameters.aperture_radius * np.exp(
             1j * 2 * np.pi / wavelength * (
-                    x_observatory_coordinates[index_input] * x_sky_coordinates + y_observatory_coordinates[
-                index_input] * y_sky_coordinates)))
+                    x_observatory_coordinates[index_input] * source_sky_coordinate_maps[0].to(u.rad).value +
+                    y_observatory_coordinates[
+                        index_input] * source_sky_coordinate_maps[1].to(u.rad).value)))
 
     return input_complex_amplitude_vector
 
@@ -115,7 +121,7 @@ def get_perturbation_matrix(observation: Observation) -> np.ndarray:
     for index in range(observation.observatory.beam_combination_scheme.number_of_inputs):
         diagonal_of_matrix.append(np.random.uniform(0.6, 0.8) * np.exp(1j * np.random.uniform(-0.1, 0.1)))
 
-    perturbation_matrix = np.diag(diagonal_of_matrix)
-    # perturbation_matrix = np.diag([1, 1, 1, 1])
+    # perturbation_matrix = np.diag(diagonal_of_matrix)
+    perturbation_matrix = np.diag([1, 1, 1, 1])
 
     return perturbation_matrix

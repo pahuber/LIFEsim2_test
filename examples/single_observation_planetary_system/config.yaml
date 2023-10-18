@@ -9,7 +9,7 @@
 # Simulation Configuration
 # -------------------------------------------
 simulation:
-  grid_size: 100
+  grid_size: 80
   time_step: 10 min
 # -------------------------------------------
 # Observation Configuration

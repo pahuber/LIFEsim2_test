@@ -18,7 +18,8 @@ class SimulationOutput():
         """
         self.wavelength_bin_centers = wavelength_bin_centers
         self.photon_rate_time_series = dict(
-            (wavelength_bin_center, np.zeros((number_of_differential_intensity_responses, number_of_time_steps))) for
+            (wavelength_bin_center,
+             np.zeros((number_of_differential_intensity_responses, number_of_time_steps), dtype=float)) for
             wavelength_bin_center in self.wavelength_bin_centers)
 
     def append_photon_rate(self,

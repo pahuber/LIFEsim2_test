@@ -30,3 +30,7 @@ def get_sky_coordinates(wavelengths, max_field_of_view, grid_size):
     for index, wavelength in enumerate(wavelengths):
         x_sky_coordinates, y_sky_coordinates = get_meshgrid(max_field_of_view, grid_size)
     return x_sky_coordinates, y_sky_coordinates
+
+
+def get_index_of_closest_value(array: np.ndarray, value: astropy.units.Quantity):
+    return np.abs(array - value).argmin()
