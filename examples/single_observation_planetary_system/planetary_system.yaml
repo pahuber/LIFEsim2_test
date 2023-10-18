@@ -9,12 +9,12 @@ planets:
     radius: 1 Rearth
     star_separation: 1 au
     temperature: 288 K
-  planet_2:
-    name: Mars
-    mass: 0.3 Mearth
-    radius: 0.3 Rearth
-    star_separation: 2 au
-    temperature: 200 K
+#  planet_2:
+#    name: Mars
+#    mass: 0.3 Mearth
+#    radius: 0.3 Rearth
+#    star_separation: 2 au
+#    temperature: 200 K
 star:
   name: Sun
   distance: 10 pc

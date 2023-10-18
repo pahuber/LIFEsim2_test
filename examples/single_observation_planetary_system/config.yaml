@@ -25,7 +25,7 @@ observatory:
   array_configuration:
     type: emma-x-circular-rotation
     baseline_maximum: 600 m
-    baseline_minimum: 12 m
+    baseline_minimum: 10 m
     baseline_ratio: 6
     modulation_period: 1 d
   beam_combination_scheme: double-bracewell
@@ -33,12 +33,7 @@ observatory:
     aperture_diameter: 4 m
     wavelength_range_lower_limit: 4 um
     wavelength_range_upper_limit: 18 um
-    spectral_resolving_power: '10'
-    bla:
-      aperture_diameter: 4 m
-      wavelength_range_lower_limit: 4 um
-      wavelength_range_upper_limit: 18 um
-      spectral_resolving_power: '10'
+    spectral_resolving_power: 4
 # -------------------------------------------
 # Noise Configuration
 # -------------------------------------------

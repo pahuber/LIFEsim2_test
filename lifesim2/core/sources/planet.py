@@ -23,7 +23,6 @@ class Planet(Source):
     def validate_radius(cls, value: Any, info: ValidationInfo) -> astropy.units.Quantity:
         return validate_quantity_units(value=value, field_name=info.field_name, unit_equivalency=u.m)
 
-    @property
     @field_validator('mass')
     def validate_mass(cls, value: Any, info: ValidationInfo) -> astropy.units.Quantity:
         return validate_quantity_units(value=value, field_name=info.field_name, unit_equivalency=u.kg)
@@ -44,13 +43,13 @@ class Planet(Source):
     def star_angular_separation(self):
         return (self.star_separation / self.star_distance * u.rad).to(u.arcsec)
 
-        # @property
-        # def position(self) -> astropy.units.Quantity:
-        #     """Return the (x, y) position in arcseconds.
-        #
-        #     :return: A tuple containing the x- and y-position.
-        #     """
-        #     # TODO: implement planet position correctly
-        #     x = self.star_angular_separation * np.cos(np.pi / 4)
-        #     y = self.star_angular_separation * np.sin(np.pi / 4)
-        #     return (x, y)
+    @property
+    def position(self) -> astropy.units.Quantity:
+        """Return the (x, y) position in arcseconds.
+
+        :return: A tuple containing the x- and y-position.
+        """
+        # TODO: implement planet position correctly
+        x = self.star_angular_separation * np.cos(0)
+        y = self.star_angular_separation * np.sin(0)
+        return (x, y)

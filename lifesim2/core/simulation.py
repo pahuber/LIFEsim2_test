@@ -81,14 +81,17 @@ class Simulation():
                     if isinstance(source, Planet):
                         print(source.name, wavelength, source.flux[
                             wavelength_index])
-                    # get flux per bin
-                    # pass
-                    # if flux is for one pixel, multiply by flux location on transmission map
-                    # integrate all fluxes
-                    # add to total photon rate and individual source photon rate
-                self.output.append_photon_rate(time_index, differential_intensity_responses, wavelength,
-                                               wavelength_index,
-                                               source.flux)
+                        # get flux per bin
+                        # pass
+                        # if flux is for one pixel, multiply by flux location on transmission map
+                        # integrate all fluxes
+                        # add to total photon rate and individual source photon rate
+
+                        self.output.append_photon_rate(time_index, differential_intensity_responses, wavelength,
+                                                       wavelength_index,
+                                                       self.observation.observatory.x_sky_coordinates_map,
+                                                       self.observation.observatory.y_sky_coordinates_map,
+                                                       source)
 
                 # plt.imshow(differential_intensity_responses[0])
                 # plt.colorbar()

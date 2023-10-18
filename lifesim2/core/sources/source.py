@@ -16,7 +16,6 @@ class Source(ABC, BaseModel):
     number_of_wavelength_bins: int
     name: str
     temperature: Any
-    position: Any = None
     solid_angle: Any = None
     flux: Any = None
 
