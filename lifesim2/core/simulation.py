@@ -6,6 +6,7 @@ import numpy as np
 from astropy import units as u
 from pydantic import BaseModel, field_validator
 from pydantic_core.core_schema import ValidationInfo
+from tqdm import tqdm
 
 from lifesim2.core.intensity_response import get_differential_intensity_responses
 from lifesim2.core.observation import Observation
@@ -23,7 +24,6 @@ from lifesim2.io.data_type import DataType
 from lifesim2.io.simulation_output import SimulationOutput
 from lifesim2.io.validators import validate_quantity_units
 from lifesim2.util.blackbody import create_blackbody_spectrum
-from lifesim2.util.grid import get_sky_coordinates
 
 
 class SimulationMode(Enum):
@@ -34,19 +34,26 @@ class SimulationMode(Enum):
 
 
 class SimulationConfiguration(BaseModel):
+    """Class representation of the simulation configurations.
+
+    """
     grid_size: int
     time_step: Any
     time_range: Any = None
-    maximum_angle_per_pixel: Any = None
 
     @field_validator('time_step')
     def validate_time_step(cls, value: Any, info: ValidationInfo) -> astropy.units.Quantity:
+        """Validate the time step input.
+
+        :param value: Value given as input
+        :param info: ValidationInfo object
+        :return: The time step in units of time
+        """
         return validate_quantity_units(value=value, field_name=info.field_name, unit_equivalency=u.s)
 
 
 class Simulation():
     """Class representation of a simulation. This is the main object of this simulator.
-
     """
 
     def __init__(self, mode: SimulationMode):
@@ -64,11 +71,13 @@ class Simulation():
         """Main method of the simulator. Run the simulated observation and calculate the photon rate time series.
         """
         beam_combination_matrix = self.observation.observatory.beam_combination_scheme.get_beam_combination_transfer_matrix()
-        self.output = SimulationOutput(self.observation.observatory.beam_combination_scheme.number_of_transmission_maps,
-                                       len(self.config.time_range),
-                                       self.observation.observatory.instrument_parameters.wavelength_bin_centers)
+        self.observation.set_baseline()
+        self.output = SimulationOutput(
+            self.observation.observatory.beam_combination_scheme.number_of_differential_intensity_respones,
+            len(self.config.time_range),
+            self.observation.observatory.instrument_parameters.wavelength_bin_centers)
 
-        for index_time, time in enumerate(self.config.time_range):
+        for index_time, time in enumerate(tqdm(self.config.time_range)):
             for index_wavelength, wavelength in enumerate(
                     self.observation.observatory.instrument_parameters.wavelength_bin_centers):
                 for source in self.observation.sources:
@@ -81,13 +90,6 @@ class Simulation():
                     # plt.colorbar()
                     # # plt.savefig(f't_{index_time}.png')
                     # plt.show()
-                    # plt.imshow(source.shape_map)
-                    # plt.colorbar()
-                    # # plt.savefig(f't_{index_time}.png')
-                    # plt.show()
-                    # plt.close()
-                    # print(source.position_map)
-                    # print(source.shape_map)
                     for index_response, differential_intensity_response in enumerate(differential_intensity_responses):
                         self.output.photon_rate_time_series[wavelength][index_response][index_time] = \
                             (np.sum(differential_intensity_response * source.flux[
@@ -104,8 +106,10 @@ class Simulation():
         self.observation.observatory = Observatory()
         self.observation.observatory.array_configuration = self._create_array_configuration_from_config()
         self.observation.observatory.beam_combination_scheme = self._create_beam_combination_scheme_from_config()
-        self.observation.observatory.instrument_parameters = self._create_instrument_parameters_from_config()
-        self._create_composite_variables()
+        self.observation.observatory.instrument_parameters = InstrumentParameters(
+            **self._config_dict['observatory']['instrument_parameters'])
+        self.config.time_range = np.arange(0, self.observation.observatory.array_configuration.modulation_period.to(
+            u.s).value, self.config.time_step.to(u.s).value) * u.s
 
     def import_data(self, type: DataType, path_to_data_file: str):
         """Import the data of a specific type.
@@ -126,17 +130,6 @@ class Simulation():
             case DataType.POPULATION_CATALOG:
                 # TODO: import population catalog
                 pass
-
-    def _create_observation_from_config(self):
-        """Return an observation object.
-
-        :return: Observation object.
-        """
-        return Observation(
-            adjust_baseline_to_habitable_zone=self._config_dict['observation']['adjust_baseline_to_habitable_zone'],
-            integration_time=self._config_dict['observation']['integration_time'],
-            optimized_wavelength=self._config_dict['observation']['optimized_wavelength'],
-            grid_size=self.grid_size)
 
     def _create_array_configuration_from_config(self):
         """Return an ArrayConfiguration object.
@@ -178,35 +171,6 @@ class Simulation():
             case BeamCombinationSchemeEnum.KERNEL_5.value:
                 return Kernel5()
 
-    def _create_instrument_parameters_from_config(self):
-        """Return an InstrumentParameters object.
-
-        :return: InstrumentParameters object.
-        """
-        return InstrumentParameters(**self._config_dict['observatory']['instrument_parameters'])
-
-    def _create_composite_variables(self):
-        """Create and set some composite variables.
-        """
-        self.config.time_range = np.arange(0, self.observation.observatory.array_configuration.modulation_period.to(
-            u.s).value,
-                                           self.config.time_step.to(u.s).value) * u.s
-        # TODO: implement baseline correctly
-        self.observation.observatory.instrument_parameters.field_of_view = (np.array(list(((wavelength.to(
-            u.m) / self.observation.observatory.array_configuration.baseline_minimum.to(u.m)).value) for
-                                                                                          wavelength in
-                                                                                          self.observation.observatory.instrument_parameters.wavelength_bin_centers),
-                                                                                     dtype=float) * u.rad).to(
-            u.arcsec)
-        self.observation.observatory.instrument_parameters.field_of_view_maximum = np.max(
-            self.observation.observatory.instrument_parameters.field_of_view)
-        self.observation.observatory.x_sky_coordinates_map, self.observation.observatory.y_sky_coordinates_map = get_sky_coordinates(
-            self.observation.observatory.instrument_parameters.wavelength_bin_centers,
-            self.observation.observatory.instrument_parameters.field_of_view_maximum, self.config.grid_size)
-        self.config.maximum_angle_per_pixel = (
-                self.observation.observatory.instrument_parameters.field_of_view_maximum /
-                self.config.grid_size)
-
     def _create_sources_from_planetary_system_configuration(self, path_to_data_file: str):
         """Read the planetary system configuration file, extract the data and create the Star and Planet objects.
 
@@ -219,8 +183,7 @@ class Simulation():
                                               self.observation.observatory.instrument_parameters.wavelength_range_lower_limit,
                                               self.observation.observatory.instrument_parameters.wavelength_range_upper_limit,
                                               self.observation.observatory.instrument_parameters.wavelength_bin_centers,
-                                              self.observation.observatory.instrument_parameters.wavelength_bin_widths,
-                                              self.config.maximum_angle_per_pixel)
+                                              self.observation.observatory.instrument_parameters.wavelength_bin_widths)
         self.observation.sources.append(star)
         for key in planetary_system_dict['planets'].keys():
             planet = Planet(**planetary_system_dict['planets'][key],
@@ -232,6 +195,5 @@ class Simulation():
                                                     self.observation.observatory.instrument_parameters.wavelength_range_lower_limit,
                                                     self.observation.observatory.instrument_parameters.wavelength_range_upper_limit,
                                                     self.observation.observatory.instrument_parameters.wavelength_bin_centers,
-                                                    self.observation.observatory.instrument_parameters.wavelength_bin_widths,
-                                                    self.config.maximum_angle_per_pixel)
+                                                    self.observation.observatory.instrument_parameters.wavelength_bin_widths)
             self.observation.sources.append(planet)

@@ -44,7 +44,8 @@ def get_intensity_responses(time: astropy.units.Quantity,
     :return: The intensity response vector
     """
     input_complex_amplitude_unperturbed_vector = np.reshape(
-        get_input_complex_amplitude_vector(observation, time, wavelength, source_sky_coordinate_maps, grid_size), (
+        get_input_complex_amplitude_vector(observation, time, wavelength, source_sky_coordinate_maps,
+                                           grid_size), (
             observation.observatory.beam_combination_scheme.number_of_inputs, grid_size ** 2))
 
     perturbation_matrix = get_perturbation_matrix(observation)
@@ -121,7 +122,7 @@ def get_perturbation_matrix(observation: Observation) -> np.ndarray:
     for index in range(observation.observatory.beam_combination_scheme.number_of_inputs):
         diagonal_of_matrix.append(np.random.uniform(0.6, 0.8) * np.exp(1j * np.random.uniform(-0.1, 0.1)))
 
-    # perturbation_matrix = np.diag(diagonal_of_matrix)
-    perturbation_matrix = np.diag([1, 1, 1, 1])
+    perturbation_matrix = np.diag(diagonal_of_matrix)
+    # perturbation_matrix = np.diag([1, 1, 1, 1])
 
     return perturbation_matrix

@@ -2,6 +2,13 @@
 # LIFEsim 2 Planetary System File
 #############################################
 ---
+star:
+  name: Sun
+  distance: 10 pc
+  mass: 1 Msun
+  radius: 1 Rsun
+  temperature: 5700 K
+  luminosity: 1 Lsun
 planets:
   planet_1:
     name: Earth
@@ -15,10 +22,4 @@ planets:
 #    radius: 0.3 Rearth
 #    star_separation: 2 au
 #    temperature: 200 K
-star:
-  name: Sun
-  distance: 10 pc
-  mass: 1 Msun
-  radius: 1 Rsun
-  temperature: 5700 K
 ...
