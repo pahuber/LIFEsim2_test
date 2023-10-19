@@ -75,7 +75,8 @@ class Simulation():
         self.output = SimulationOutput(
             self.observation.observatory.beam_combination_scheme.number_of_differential_intensity_respones,
             len(self.config.time_range),
-            self.observation.observatory.instrument_parameters.wavelength_bin_centers)
+            self.observation.observatory.instrument_parameters.wavelength_bin_centers,
+            self.observation.sources)
 
         for index_time, time in enumerate(tqdm(self.config.time_range)):
             for index_wavelength, wavelength in enumerate(
@@ -91,7 +92,7 @@ class Simulation():
                     # # plt.savefig(f't_{index_time}.png')
                     # plt.show()
                     for index_response, differential_intensity_response in enumerate(differential_intensity_responses):
-                        self.output.photon_rate_time_series[wavelength][index_response][index_time] = \
+                        self.output.photon_rate_time_series[source.name][wavelength][index_response][index_time] = \
                             (np.sum(differential_intensity_response * source.flux[
                                 index_wavelength] * source.shape_map)).value
 
