@@ -10,6 +10,8 @@ from lifesim2.io.validators import validate_quantity_units
 
 
 class InstrumentParameters(BaseModel):
+    """Class representation of instrument parameters.
+    """
     aperture_diameter: Any
     wavelength_range_lower_limit: Any
     wavelength_range_upper_limit: Any
@@ -47,7 +49,7 @@ class InstrumentParameters(BaseModel):
         return validate_quantity_units(value=value, field_name=info.field_name, unit_equivalency=u.m)
 
     @property
-    def aperture_radius(self) -> astropy.unit.Quantity:
+    def aperture_radius(self) -> astropy.units.Quantity:
         """Return the aperture radius.
 
         :return: The aperture radius

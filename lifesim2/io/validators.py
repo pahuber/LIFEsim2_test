@@ -6,6 +6,13 @@ from astropy import units as u
 
 def validate_quantity_units(value: Any, field_name: str,
                             unit_equivalency: astropy.units.Unit) -> astropy.units.Quantity:
+    """Return the value as an astropy Quantity if it contains the correct units.
+
+    :param value: THe value to be validated
+    :param field_name: The field name of the value
+    :param unit_equivalency: The equivalent unit the value should have
+    :return: THe value as an astropy Quantity
+    """
     if isinstance(value, astropy.units.Quantity) and value.unit.is_equivalent(unit_equivalency):
         return value
     try:

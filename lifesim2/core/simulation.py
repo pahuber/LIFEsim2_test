@@ -11,10 +11,10 @@ from tqdm import tqdm
 from lifesim2.core.intensity_response import get_differential_intensity_responses
 from lifesim2.core.observation import Observation
 from lifesim2.core.observatory.array_configurations import ArrayConfigurationEnum, EmmaXCircularRotation, \
-    EmmaXDoubleStretch, EquilateralTriangleCircularRotation, RegularPentagonCircularRotation
+    EmmaXDoubleStretch, EquilateralTriangleCircularRotation, RegularPentagonCircularRotation, ArrayConfiguration
 from lifesim2.core.observatory.beam_combination_schemes import BeamCombinationSchemeEnum, DoubleBracewell, \
     Kernel3, \
-    Kernel4, Kernel5
+    Kernel4, Kernel5, BeamCombinationScheme
 from lifesim2.core.observatory.instrument_parameters import InstrumentParameters
 from lifesim2.core.observatory.observatory import Observatory
 from lifesim2.core.sources.planet import Planet
@@ -71,7 +71,7 @@ class Simulation():
         """Main method of the simulator. Run the simulated observation and calculate the photon rate time series.
         """
         beam_combination_matrix = self.observation.observatory.beam_combination_scheme.get_beam_combination_transfer_matrix()
-        self.observation.set_baseline()
+        self.observation.set_optimal_baseline()
         self.output = SimulationOutput(
             self.observation.observatory.beam_combination_scheme.number_of_differential_intensity_respones,
             len(self.config.time_range),
@@ -83,7 +83,7 @@ class Simulation():
                 for source in self.observation.sources:
                     differential_intensity_responses = get_differential_intensity_responses(time,
                                                                                             wavelength,
-                                                                                            self.observation,
+                                                                                            self.observation.observatory,
                                                                                             source.sky_coordinate_maps,
                                                                                             self.config.grid_size)
                     # plt.imshow(differential_intensity_responses[0])
@@ -131,7 +131,7 @@ class Simulation():
                 # TODO: import population catalog
                 pass
 
-    def _create_array_configuration_from_config(self):
+    def _create_array_configuration_from_config(self) -> ArrayConfiguration:
         """Return an ArrayConfiguration object.
 
         :return: ArrayConfiguration object.
@@ -151,7 +151,7 @@ class Simulation():
             case ArrayConfigurationEnum.REGULAR_PENTAGON_CIRCULAR_ROTATION.value:
                 return RegularPentagonCircularRotation(**self._config_dict['observatory']['array_configuration'])
 
-    def _create_beam_combination_scheme_from_config(self):
+    def _create_beam_combination_scheme_from_config(self) -> BeamCombinationScheme:
         """Return an BeamCombinationScheme object.
 
         :return: BeamCombinationScheme object.
@@ -183,7 +183,8 @@ class Simulation():
                                               self.observation.observatory.instrument_parameters.wavelength_range_lower_limit,
                                               self.observation.observatory.instrument_parameters.wavelength_range_upper_limit,
                                               self.observation.observatory.instrument_parameters.wavelength_bin_centers,
-                                              self.observation.observatory.instrument_parameters.wavelength_bin_widths)
+                                              self.observation.observatory.instrument_parameters.wavelength_bin_widths,
+                                              star.solid_angle)
         self.observation.sources.append(star)
         for key in planetary_system_dict['planets'].keys():
             planet = Planet(**planetary_system_dict['planets'][key],
@@ -195,5 +196,6 @@ class Simulation():
                                                     self.observation.observatory.instrument_parameters.wavelength_range_lower_limit,
                                                     self.observation.observatory.instrument_parameters.wavelength_range_upper_limit,
                                                     self.observation.observatory.instrument_parameters.wavelength_bin_centers,
-                                                    self.observation.observatory.instrument_parameters.wavelength_bin_widths)
+                                                    self.observation.observatory.instrument_parameters.wavelength_bin_widths,
+                                                    planet.solid_angle)
             self.observation.sources.append(planet)

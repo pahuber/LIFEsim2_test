@@ -12,6 +12,8 @@ from lifesim2.util.grid import get_index_of_closest_value, get_meshgrid
 
 
 class Planet(Source):
+    """Class representation of a planet.
+    """
     name: str
     temperature: Any
     radius: Any
@@ -62,15 +64,15 @@ class Planet(Source):
         return validate_quantity_units(value=value, field_name=info.field_name, unit_equivalency=u.m)
 
     @property
-    def solid_angle(self):
-        """Return the solid angle filled by the planet.
+    def solid_angle(self) -> astropy.units.Quantity:
+        """Return the solid angle covered by the planet on the sky.
 
         :return: The solid angle
         """
-        return np.pi * (((self.radius.to(u.m)) ** 2 / (self.distance.to(u.m))) * u.rad) ** 2
+        return np.pi * (self.radius.to(u.m) / (self.star_distance.to(u.m)) * u.rad) ** 2
 
     @property
-    def star_angular_separation(self):
+    def star_angular_separation(self) -> astropy.units.Quantity:
         """Return the angular star separation.
 
         :return: The angular star separation
@@ -78,17 +80,9 @@ class Planet(Source):
         return ((self.star_separation.to(u.m) / self.star_distance.to(u.m)) * u.rad).to(u.arcsec)
 
     def get_sky_coordinate_maps(self) -> Tuple[np.ndarray, np.ndarray]:
-        """Return the x- and y-sky-coordinate maps. Extend the coordinates by 10% of the planet star separation.
-
-        :return: A tuple containing the x- and y-sky coordinate maps
-        """
         return get_meshgrid(2 * (1.05 * self.star_angular_separation), self.grid_size)
 
     def get_shape_map(self) -> np.ndarray:
-        """Return the shape map of the planets. Consists of zero everywhere, but at the planet position, where it is one.
-
-        :return: The shape map
-        """
         position_map = np.zeros(self.sky_coordinate_maps[0].shape)
 
         # TODO: implement planet position correctly
