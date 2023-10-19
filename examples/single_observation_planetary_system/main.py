@@ -17,6 +17,9 @@ simulation.load_config(path_to_config_file=path_to_config_file)
 # Import data
 simulation.import_data(type=DataType.PLANETARY_SYSTEM_CONFIGURATION, path_to_data_file=path_to_data_file)
 
+# Create animations during simulation
+simulation.animate(output_path='.', source_name='Earth', wavelength=6 * u.um)
+
 # Run simulation
 simulation.run()
 
