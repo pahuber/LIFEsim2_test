@@ -91,9 +91,9 @@ class Kernel5(BeamCombinationScheme):
     """Class representation of a Kernel nulling beam combination scheme.
     """
 
-    def exp(self, number: int) -> float:
+    def _exp(self, number: int) -> float:
         """Return the exponent.
-        
+
         :param number: The number in the numerator
         :return: The exponent
         """
@@ -101,10 +101,10 @@ class Kernel5(BeamCombinationScheme):
 
     def get_beam_combination_transfer_matrix(self) -> np.ndarray:
         return 1 / np.sqrt(5) * np.array([[1, 1, 1, 1, 1],
-                                          [1, self.exp(2), self.exp(4), self.exp(6), self.exp(8)],
-                                          [1, self.exp(4), self.exp(8), self.exp(2), self.exp(6)],
-                                          [1, self.exp(6), self.exp(2), self.exp(8), self.exp(4)],
-                                          [1, self.exp(8), self.exp(6), self.exp(4), self.exp(2)]])
+                                          [1, self._exp(2), self._exp(4), self._exp(6), self._exp(8)],
+                                          [1, self._exp(4), self._exp(8), self._exp(2), self._exp(6)],
+                                          [1, self._exp(6), self._exp(2), self._exp(8), self._exp(4)],
+                                          [1, self._exp(8), self._exp(6), self._exp(4), self._exp(2)]])
 
     def get_differential_intensity_response_indices(self) -> list:
         return [(1, 4), (2, 3)]

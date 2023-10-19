@@ -46,7 +46,7 @@ class Observation(BaseModel):
             wavelength=self.optimized_wavelength, optimal_angular_distance=star.habitable_zone_central_angular_radius)
 
         if self.observatory.array_configuration.baseline_minimum <= optimal_baseline and optimal_baseline <= self.observatory.array_configuration.baseline_maximum:
-            self.observatory.array_configuration.baseline = optimal_baseline
+            self.observatory.array_configuration.baseline = optimal_baseline.to(u.m)
         else:
             raise ValueError(
                 f'Optimal baseline of {optimal_baseline} is not within allowed ranges of baselines {self.observatory.array_configuration.baseline_minimum}-{self.observatory.array_configuration.baseline_maximum}')

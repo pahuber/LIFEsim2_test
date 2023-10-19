@@ -23,12 +23,12 @@ observation:
 # -------------------------------------------
 observatory:
   array_configuration:
-    type: emma-x-circular-rotation
+    type: regular-pentagon-circular-rotation
     baseline_maximum: 600 m
     baseline_minimum: 8 m
     baseline_ratio: 6
     modulation_period: 1 d
-  beam_combination_scheme: double-bracewell
+  beam_combination_scheme: kernel-5
   instrument_parameters:
     aperture_diameter: 4 m
     wavelength_range_lower_limit: 4 um
