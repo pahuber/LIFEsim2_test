@@ -137,8 +137,29 @@ class RegularPentagonCircularRotation(ArrayConfiguration):
     """Class representation of a regular pentagon configuration with circular rotation of the array.
     """
 
+    def _x(self, angle) -> astropy.units.Quantity:
+        """Return the x position.
+
+        :param angle: The angle at which the collector is located
+        :return: The x position
+        """
+        return 0.851 * self.baseline * np.cos(angle)
+
+    def _y(self, angle) -> astropy.units.Quantity:
+        """Return the y position.
+
+        :param angle: The angle at which the collector is located
+        :return: The y position
+        """
+        return 0.851 * self.baseline * np.sin(angle)
+
     def get_collector_positions(self, time: float) -> np.ndarray:
-        pass
+        angles = [0, 2 * np.pi / 5, 4 * np.pi / 5, 6 * np.pi / 5, 8 * np.pi / 5]
+        rotation_matrix = get_2d_rotation_matrix(time, self.modulation_period)
+        pentagon_static = [
+            [self._x(angles[0]), self._x(angles[1]), self._x(angles[2]), self._x(angles[3]), self._x(angles[4])],
+            [self._y(angles[0]), self._y(angles[1]), self._y(angles[2]), self._y(angles[3]), self._y(angles[4])]]
+        return np.matmul(rotation_matrix, pentagon_static)
 
     def get_optimal_baseline(self, wavelength: astropy.units.Quantity,
                              optimal_angular_distance: astropy.units.Quantity):

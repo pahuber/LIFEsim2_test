@@ -92,6 +92,11 @@ class Kernel5(BeamCombinationScheme):
     """
 
     def exp(self, number: int) -> float:
+        """Return the exponent.
+        
+        :param number: The number in the numerator
+        :return: The exponent
+        """
         return np.exp(1j * number * np.pi / 5)
 
     def get_beam_combination_transfer_matrix(self) -> np.ndarray:
