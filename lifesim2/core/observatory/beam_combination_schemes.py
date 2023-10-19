@@ -71,10 +71,40 @@ class Kernel3(BeamCombinationScheme):
 class Kernel4(BeamCombinationScheme):
     """Class representation of a Kernel nulling beam combination scheme.
     """
-    pass
+
+    def get_beam_combination_transfer_matrix(self) -> np.ndarray:
+        exp_plus = np.exp(1j * np.pi / 2)
+        exp_minus = np.exp(-1j * np.pi / 2)
+        return 1 / 4 * np.array([[2, 2, 2, 2],
+                                 [1 + exp_plus, 1 - exp_plus, -1 + exp_plus, -1 - exp_plus],
+                                 [1 - exp_minus, -1 - exp_minus, 1 + exp_minus, -1 + exp_minus],
+                                 [1 + exp_plus, 1 - exp_plus, -1 - exp_plus, -1 + exp_plus],
+                                 [1 - exp_minus, -1 - exp_minus, -1 + exp_minus, 1 + exp_minus],
+                                 [1 + exp_plus, -1 - exp_plus, 1 - exp_plus, -1 + exp_plus],
+                                 [1 - exp_minus, -1 + exp_minus, -1 - exp_minus, 1 + exp_minus]])
+
+    def get_differential_intensity_response_indices(self) -> list:
+        return [(1, 2), (3, 4), (5, 6)]
 
 
 class Kernel5(BeamCombinationScheme):
     """Class representation of a Kernel nulling beam combination scheme.
     """
-    pass
+
+    def _exp(self, number: int) -> float:
+        """Return the exponent.
+
+        :param number: The number in the numerator
+        :return: The exponent
+        """
+        return np.exp(1j * number * np.pi / 5)
+
+    def get_beam_combination_transfer_matrix(self) -> np.ndarray:
+        return 1 / np.sqrt(5) * np.array([[1, 1, 1, 1, 1],
+                                          [1, self._exp(2), self._exp(4), self._exp(6), self._exp(8)],
+                                          [1, self._exp(4), self._exp(8), self._exp(2), self._exp(6)],
+                                          [1, self._exp(6), self._exp(2), self._exp(8), self._exp(4)],
+                                          [1, self._exp(8), self._exp(6), self._exp(4), self._exp(2)]])
+
+    def get_differential_intensity_response_indices(self) -> list:
+        return [(1, 4), (2, 3)]

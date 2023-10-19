@@ -15,7 +15,7 @@ class Observation(BaseModel):
     integration_time: Any
     optimized_wavelength: Any
     observatory: Any = None
-    sources: list = []
+    sources: dict = {}
 
     @field_validator('integration_time')
     def validate_integration_time(cls, value: Any, info: ValidationInfo) -> astropy.units.Quantity:
@@ -41,9 +41,10 @@ class Observation(BaseModel):
         """Set the baseline to optimize for the habitable zone, if it is between the minimum and maximum allowed
         baselines.
         """
-        star = self.sources[0] if isinstance(self.sources[0], Star) else None
+        star = [value for _, value in self.sources.items() if isinstance(value, Star)][0]
         optimal_baseline = self.observatory.array_configuration.get_optimal_baseline(
-            wavelength=self.optimized_wavelength, optimal_angular_distance=star.habitable_zone_central_angular_radius)
+            wavelength=self.optimized_wavelength,
+            optimal_angular_distance=star.habitable_zone_central_angular_radius).to(u.m)
 
         if self.observatory.array_configuration.baseline_minimum <= optimal_baseline and optimal_baseline <= self.observatory.array_configuration.baseline_maximum:
             self.observatory.array_configuration.baseline = optimal_baseline

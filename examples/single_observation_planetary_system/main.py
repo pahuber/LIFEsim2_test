@@ -1,3 +1,4 @@
+from astropy import units as u
 from matplotlib import pyplot as plt
 
 from lifesim2.core.simulation import Simulation, SimulationMode
@@ -16,13 +17,24 @@ simulation.load_config(path_to_config_file=path_to_config_file)
 # Import data
 simulation.import_data(type=DataType.PLANETARY_SYSTEM_CONFIGURATION, path_to_data_file=path_to_data_file)
 
+# Create animations during simulation
+simulation.animate(output_path='.', source_name='Earth', wavelength=6 * u.um)
+
 # Run simulation
 simulation.run()
 
 # Extract photon rate time series and plot them
 photon_rate_time_series = simulation.output.photon_rate_time_series
+photon_rate_time_series_total = simulation.output.photon_rate_time_series_total
+
 wavelength_bin_centers = simulation.observation.observatory.instrument_parameters.wavelength_bin_centers
-for index, wavelength in enumerate(photon_rate_time_series.keys()):
-    plt.plot(photon_rate_time_series[wavelength][0], label=str(wavelength))
+# for index0, source in enumerate(photon_rate_time_series.keys()):
+#     for index, wavelength in enumerate(photon_rate_time_series[source].keys()):
+#         if u.Quantity(wavelength) >= 10 * u.um and u.Quantity(wavelength) <= 11 * u.um:
+#             plt.plot(photon_rate_time_series[source][wavelength][0], label=f'{source}, {str(wavelength)}')
+for index0, wavelength in enumerate(photon_rate_time_series_total.keys()):
+    if u.Quantity(wavelength) >= 10 * u.um and u.Quantity(wavelength) <= 11 * u.um:
+        plt.plot(photon_rate_time_series_total[wavelength][0], label=f'total, {str(wavelength)}')
+        # plt.plot(photon_rate_time_series['Earth'][wavelength][0], label=str(wavelength))
 plt.legend()
 plt.show()
