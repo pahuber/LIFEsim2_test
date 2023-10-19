@@ -2,23 +2,24 @@
 # LIFEsim 2 Planetary System File
 #############################################
 ---
-planets:
-  planet_1:
-    name: Earth
-    mass: 1 Mearth
-    radius: 1 Rearth
-    star_separation: 1 au
-    temperature: 300 K
-  planet_2:
-    name: Mars
-    mass: 0.3 Mearth
-    radius: 0.3 Rearth
-    star_separation: 2 au
-    temperature: 200 K
 star:
   name: Sun
   distance: 10 pc
   mass: 1 Msun
   radius: 1 Rsun
   temperature: 5700 K
+  luminosity: 1 Lsun
+planets:
+  planet_1:
+    name: Earth
+    mass: 1 Mearth
+    radius: 1 Rearth
+    star_separation: 1 au
+    temperature: 288 K
+#  planet_2:
+#    name: Mars
+#    mass: 0.3 Mearth
+#    radius: 0.3 Rearth
+#    star_separation: 2 au
+#    temperature: 200 K
 ...

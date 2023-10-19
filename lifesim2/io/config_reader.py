@@ -13,7 +13,6 @@ class ConfigReader():
         self.path_to_config_file = path_to_config_file
         self._config_dict = dict()
         self._read_raw_config_file()
-        self._parse_units()
 
     def _read_raw_config_file(self):
         """Read the configuration file and save its content in a dictionary.
