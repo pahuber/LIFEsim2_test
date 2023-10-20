@@ -195,7 +195,9 @@ class Simulation():
                 wavelength: astropy.units.Quantity,
                 differential_intensity_response_index: int,
                 image_vmin: float = -0.5,
-                image_vmax: float = 0.5):
+                image_vmax: float = 0.5,
+                photon_rate_limits: float = 0.1,
+                collector_position_limits: float = 50):
         """Initiate the animator object and set its attributes accordingly.
 
         :param output_path: Output path for the animation file
@@ -204,12 +206,14 @@ class Simulation():
         :param differential_intensity_response_index: Index specifying which of the differential outputs to animate
         :param image_vmin: Minimum value of the colormap
         :param image_vmax: Maximum value of the colormap
+        :param photon_rate_limits: Limits of the photon rate plot
+        :param collector_position_limits: Limits of the collector position plot
         """
         closest_wavelength = self.observation.observatory.instrument_parameters.wavelength_bin_centers[
             get_index_of_closest_value(self.observation.observatory.instrument_parameters.wavelength_bin_centers,
                                        wavelength)]
         self.animator = Animator(output_path, source_name, closest_wavelength, differential_intensity_response_index,
-                                 image_vmin, image_vmax)
+                                 image_vmin, image_vmax, photon_rate_limits, collector_position_limits)
 
     def import_data(self, type: DataType, path_to_data_file: str):
         """Import the data of a specific type.
