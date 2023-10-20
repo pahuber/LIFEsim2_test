@@ -244,7 +244,7 @@ class Simulation():
         self.observation.observatory.beam_combination_scheme = self._initialize_beam_combination_scheme_from_config()
         self.observation.observatory.instrument_parameters = InstrumentParameters(
             **self._config_dict['observatory']['instrument_parameters'])
-        self.config.time_range = np.arange(0, self.observation.observatory.array_configuration.modulation_period.to(
+        self.config.time_range = np.arange(0, self.observation.integration_time.to(
             u.s).value, self.config.time_step.to(u.s).value) * u.s
 
     def run(self):

@@ -1,10 +1,10 @@
 import astropy
 import matplotlib
-import matplotlib.colors as mcolors
 import numpy as np
 from astropy import units as u
 from matplotlib import pyplot as plt
 from matplotlib.animation import FFMpegWriter
+from mpl_toolkits.axes_grid1.inset_locator import zoomed_inset_axes, mark_inset
 
 from lifesim2.core.observation import Observation
 from lifesim2.io.simulation_output import SimulationOutput
@@ -42,14 +42,6 @@ class Animator():
         self.photon_rate_list = []
         self.time_index_list = []
 
-    def _get_overlay_cmap(self) -> matplotlib.colors.LinearSegmentedColormap:
-        """Create a color map to overlay the source on the differential intensity response plot.
-
-        :return: The colormap
-        """
-        colors = [(0, 1, 1, c) for c in np.linspace(0, 1, 100)]
-        return mcolors.LinearSegmentedColormap.from_list('mycmap', colors, N=2)
-
     def _prepare_collector_position_image(self,
                                           gs: matplotlib.gridspec.GridSpec,
                                           grid_size: int) -> matplotlib.image.AxesImage:
@@ -80,14 +72,12 @@ class Animator():
     def _prepare_differential_intensity_response_plot(self,
                                                       gs: matplotlib.gridspec.GridSpec,
                                                       observation: Observation,
-                                                      grid_size: int,
-                                                      cmap: matplotlib.colors.LinearSegmentedColormap) -> matplotlib.image.AxesImage:
+                                                      grid_size: int) -> matplotlib.image.AxesImage:
         """Prepare the plot for the differential intensity response.
 
         :param gs: The GridSpec object
         :param observation: The observation object
         :param grid_size: Tge grid size
-        :param cmap: The color map
         :return: The image
         """
         ax1 = self.figure.add_subplot(gs[0, 1])
@@ -95,11 +85,22 @@ class Animator():
                                               vmin=self.image_vmin,
                                               vmax=self.image_vmax,
                                               cmap='seismic')
-        ax1.imshow(observation.sources['Earth'].shape_map, cmap=cmap)
+
+        axins = zoomed_inset_axes(ax1, 10, loc=1)
+
+        image2 = axins.imshow(np.zeros((grid_size, grid_size)),
+                              vmin=self.image_vmin,
+                              vmax=self.image_vmax,
+                              cmap='seismic')
 
         max = int(np.max(observation.sources[self.source_name].sky_coordinate_maps[0][0, :]).value * 1000)
         labels = np.linspace(-max, max, grid_size // 10 + 1)
         ticks = np.linspace(0, grid_size, grid_size // 10 + 1)
+        source_position_coordinate = (
+                observation.sources['Earth'].shape_map * observation.sources['Earth'].sky_coordinate_maps[0])
+        y_index, x_index = np.nonzero(source_position_coordinate)
+        x_index = x_index[0]
+        y_index = y_index[0]
 
         cb = self.figure.colorbar(image_intensity_response)
         ax1.set_title(f'Differential Intensity Response', fontsize=10)
@@ -108,9 +109,14 @@ class Animator():
         ax1.set_xticks(ticks=ticks, labels=labels)
         ax1.set_yticks(ticks=ticks, labels=labels)
         ax1.tick_params(axis='both', which='major', labelsize=8)
+        axins.set_xlim(x_index - 0.5, x_index + 0.5)
+        axins.set_ylim(y_index - 0.5, y_index + 0.5)
+        axins.set_xticklabels([])
+        axins.set_yticklabels([])
         cb.ax.tick_params(labelsize=8)
+        mark_inset(ax1, axins, loc1=4, loc2=3, fc="none", ec="black")
 
-        return image_intensity_response
+        return image_intensity_response, image2
 
     def _prepare_photon_rates_plot(self, gs: matplotlib.gridspec.GridSpec,
                                    time_range: np.ndarray) -> matplotlib.image.AxesImage:
@@ -144,12 +150,12 @@ class Animator():
         :param time_range: The time range
         :param grid_size: The grid size
         """
-        cmap = self._get_overlay_cmap()
         self.writer = FFMpegWriter(fps=15)
         self.figure = plt.figure(1)
         gs = self.figure.add_gridspec(2, 2)
 
-        image_intensity_response = self._prepare_differential_intensity_response_plot(gs, observation, grid_size, cmap)
+        image_intensity_response, image2 = self._prepare_differential_intensity_response_plot(gs, observation,
+                                                                                              grid_size)
         image_collector_positions = self._prepare_collector_position_image(gs, grid_size)
         image_photon_rates = self._prepare_photon_rates_plot(gs, time_range)
 
@@ -161,7 +167,7 @@ class Animator():
                             wspace=0,
                             hspace=0.4)
         plt.close()
-        self.images = (image_collector_positions, image_intensity_response, image_photon_rates)
+        self.images = (image_collector_positions, image_intensity_response, image2, image_photon_rates)
 
     def update_collector_position(self, time, observation):
         """Get the collector positions and update the frame.
@@ -179,6 +185,7 @@ class Animator():
         :param differential_intensity_responses: The differential intensity responses
         """
         self.images[1].set_data(differential_intensity_responses[self.differential_intensity_response_index])
+        self.images[2].set_data(differential_intensity_responses[self.differential_intensity_response_index])
 
     def update_photon_rate(self, output: SimulationOutput, index_time: int):
         """Update the photon rate frame.
@@ -191,4 +198,4 @@ class Animator():
         self.photon_rate_list.append(
             output.photon_rate_time_series[self.source_name][self.closest_wavelength][
                 self.differential_intensity_response_index][index_time])
-        self.images[2].set_data(self.time_index_list, self.photon_rate_list)
+        self.images[3].set_data(self.time_index_list, self.photon_rate_list)
