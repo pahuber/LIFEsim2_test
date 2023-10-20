@@ -102,7 +102,8 @@ class EmmaXDoubleStretch(ArrayConfiguration):
     def get_collector_positions(self, time: float) -> np.ndarray:
         emma_x_static = self.baseline / 2 * np.array(
             [[self.baseline_ratio, self.baseline_ratio, -self.baseline_ratio, -self.baseline_ratio], [1, -1, -1, 1]])
-        return emma_x_static * (1 + self.baseline_maximum / self.baseline * np.sin(
+        # TODO: fix calculations
+        return emma_x_static * (1 + (2 * self.baseline) / self.baseline * np.sin(
             2 * np.pi * u.rad / self.modulation_period * time))
 
     def get_optimal_baseline(self, wavelength: astropy.units.Quantity,
