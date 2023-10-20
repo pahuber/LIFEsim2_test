@@ -4,8 +4,6 @@ from typing import Any
 import astropy
 import numpy as np
 from astropy import units as u
-from matplotlib import pyplot as plt
-from matplotlib.animation import FFMpegWriter
 from pydantic import BaseModel, field_validator
 from pydantic_core.core_schema import ValidationInfo
 from tqdm import tqdm
@@ -73,29 +71,13 @@ class Simulation():
         self.animator = None
 
     def _create_animation(self):
-        """Prepare the image and create the animation during the time loop.
+        """Prepare the animation writer and run the time loop.
         """
-        writer = FFMpegWriter(fps=15)
-        fig = plt.figure()
-        image = plt.imshow(np.zeros((self.config.grid_size, self.config.grid_size)), vmin=self.animator.image_vmin,
-                           vmax=self.animator.image_vmax)
-        plt.colorbar()
-        plt.title(f'Differential Intensity Response')
-        plt.xlabel(f'Sky Coordinates (arcsec)')
-        plt.ylabel(f'Sky Coordinates (arcsec)')
-        xlabels = [np.round(value, 3) for value in
-                   self.observation.sources[self.animator.source_name].sky_coordinate_maps[0][0, :][0::10].value]
-        ylabels = [np.round(value, 3) for value in
-                   self.observation.sources[self.animator.source_name].sky_coordinate_maps[1][:, 0][0::10].value]
-        plt.xticks(ticks=range(self.config.grid_size)[0::10],
-                   labels=xlabels)
-        plt.yticks(ticks=range(self.config.grid_size)[0::10],
-                   labels=ylabels)
-        plt.close()
-        with writer.saving(fig,
-                           f'intensity_response_{self.animator.source_name}_{np.round(self.animator.closest_wavelength.to(u.um).value, 3)}um.gif',
-                           100):
-            self._run_time_loop(image, writer)
+        self.animator.prepare_animation_writer(self.observation, self.config.time_range, self.config.grid_size)
+        with self.animator.writer.saving(self.animator.figure,
+                                         f'{self.animator.source_name}_{np.round(self.animator.closest_wavelength.to(u.um).value, 3)}um.gif',
+                                         300):
+            self._run_time_loop()
 
     def _initialize_array_configuration_from_config(self) -> ArrayConfiguration:
         """Return an ArrayConfiguration object.
@@ -176,7 +158,7 @@ class Simulation():
             self.observation.observatory.instrument_parameters.wavelength_bin_centers,
             self.observation.sources)
 
-    def _run_time_loop(self, image=None, writer=None):
+    def _run_time_loop(self):
         """Run the main simulation time loop and calculate the photon rates time series.
 
         :param image: The image if an animation should be created
@@ -192,20 +174,26 @@ class Simulation():
                                                                                             self.observation.observatory,
                                                                                             source.sky_coordinate_maps,
                                                                                             self.config.grid_size)
-                    if self.animator:
-                        if source.name == self.animator.source_name and wavelength == self.animator.closest_wavelength:
-                            image.set_data(differential_intensity_responses[0])
-                            writer.grab_frame()
 
                     for index_response, differential_intensity_response in enumerate(differential_intensity_responses):
                         self.output.photon_rate_time_series[source.name][wavelength][index_response][index_time] = \
                             (np.sum(differential_intensity_response * source.flux[
                                 index_wavelength] * source.shape_map)).value
 
+                        if self.animator and (
+                                source.name == self.animator.source_name and
+                                wavelength == self.animator.closest_wavelength and
+                                index_response == self.animator.differential_intensity_response_index):
+                            self.animator.update_collector_position(time, self.observation)
+                            self.animator.update_differential_intensity_response(differential_intensity_responses)
+                            self.animator.update_photon_rate(self.output, index_time)
+                            self.animator.writer.grab_frame()
+
     def animate(self,
                 output_path: str,
                 source_name: str,
                 wavelength: astropy.units.Quantity,
+                differential_intensity_response_index: int,
                 image_vmin: float = -0.5,
                 image_vmax: float = 0.5):
         """Initiate the animator object and set its attributes accordingly.
@@ -213,13 +201,15 @@ class Simulation():
         :param output_path: Output path for the animation file
         :param source_name: Name of the source for which the animation should be made
         :param wavelength: Wavelength at which the animation should be made
+        :param differential_intensity_response_index: Index specifying which of the differential outputs to animate
         :param image_vmin: Minimum value of the colormap
         :param image_vmax: Maximum value of the colormap
         """
         closest_wavelength = self.observation.observatory.instrument_parameters.wavelength_bin_centers[
             get_index_of_closest_value(self.observation.observatory.instrument_parameters.wavelength_bin_centers,
                                        wavelength)]
-        self.animator = Animator(output_path, source_name, closest_wavelength, image_vmin, image_vmax)
+        self.animator = Animator(output_path, source_name, closest_wavelength, differential_intensity_response_index,
+                                 image_vmin, image_vmax)
 
     def import_data(self, type: DataType, path_to_data_file: str):
         """Import the data of a specific type.
