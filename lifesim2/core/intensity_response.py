@@ -124,7 +124,7 @@ def get_perturbation_matrix(observatory: Observatory) -> np.ndarray:
     diagonal_of_matrix = []
     for index in range(observatory.beam_combination_scheme.number_of_inputs):
         diagonal_of_matrix.append(
-            np.random.uniform(0.4, 0.6) * np.exp(1j * np.random.uniform(-0.4, 0.4)))
+            np.random.uniform(0.4, 0.6) * np.exp(1j * np.random.uniform(-0.00000000000001, 0.00000000000001)))
 
     perturbation_matrix = np.diag(diagonal_of_matrix)
     # perturbation_matrix = np.diag([1, 1, 1, 1])

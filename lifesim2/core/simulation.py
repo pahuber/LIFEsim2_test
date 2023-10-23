@@ -79,6 +79,11 @@ class Simulation():
                                          300):
             self._run_time_loop()
 
+    def _finish_run(self):
+        """Finish the run by calculating the total photon rate time series.
+        """
+        self.output._calculate_total_photon_rate_time_series()
+
     def _initialize_array_configuration_from_config(self) -> ArrayConfiguration:
         """Return an ArrayConfiguration object.
 
@@ -188,6 +193,7 @@ class Simulation():
                             self.animator.update_differential_intensity_response(differential_intensity_responses)
                             self.animator.update_photon_rate(self.output, index_time)
                             self.animator.writer.grab_frame()
+        self._finish_run()
 
     def animate(self,
                 output_path: str,
