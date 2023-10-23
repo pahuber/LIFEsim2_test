@@ -18,8 +18,8 @@ simulation.load_config(path_to_config_file=path_to_config_file)
 simulation.import_data(type=DataType.PLANETARY_SYSTEM_CONFIGURATION, path_to_data_file=path_to_data_file)
 
 # Create animations during simulation
-simulation.animate(output_path='.', source_name='Earth', wavelength=4.2 * u.um, differential_intensity_response_index=0,
-                   photon_rate_limits=0.2, collector_position_limits=100)
+# simulation.animate(output_path='.', source_name='Earth', wavelength=4.2 * u.um, differential_intensity_response_index=0,
+#                    photon_rate_limits=0.2, collector_position_limits=100)
 
 # Run simulation
 simulation.run()

@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Any
+from typing import Any, Optional
 
 import astropy
 import numpy as np
@@ -9,6 +9,7 @@ from pydantic_core.core_schema import ValidationInfo
 from tqdm import tqdm
 
 from lifesim2.core.intensity_response import get_differential_intensity_responses
+from lifesim2.core.noise_contributions import NoiseContributions
 from lifesim2.core.observation import Observation
 from lifesim2.core.observatory.array_configurations import ArrayConfigurationEnum, EmmaXCircularRotation, \
     EmmaXDoubleStretch, EquilateralTriangleCircularRotation, RegularPentagonCircularRotation, ArrayConfiguration
@@ -41,6 +42,7 @@ class SimulationConfiguration(BaseModel):
     """
     grid_size: int
     time_step: Any
+    noise_contributions: Optional[NoiseContributions]
     time_range: Any = None
 
     @field_validator('time_step')
@@ -178,7 +180,8 @@ class Simulation():
                                                                                             wavelength,
                                                                                             self.observation.observatory,
                                                                                             source.sky_coordinate_maps,
-                                                                                            self.config.grid_size)
+                                                                                            self.config.grid_size,
+                                                                                            self.config.noise_contributions)
 
                     for index_response, differential_intensity_response in enumerate(differential_intensity_responses):
                         self.output.photon_rate_time_series[source.name][wavelength][index_response][index_time] = \

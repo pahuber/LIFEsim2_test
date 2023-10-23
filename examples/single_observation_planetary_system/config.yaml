@@ -11,6 +11,12 @@
 simulation:
   grid_size: 80
   time_step: 10 min
+  noise_contributions:
+    stellar_leakage: true
+    local_zodi_leakage: false
+    exozodi_leakage: false
+    fiber_injection_variability: false
+    optical_path_difference_variability: false
 # -------------------------------------------
 # Observation Configuration
 # -------------------------------------------
@@ -34,14 +40,4 @@ observatory:
     wavelength_range_lower_limit: 4 um
     wavelength_range_upper_limit: 18 um
     spectral_resolving_power: 20
-# -------------------------------------------
-# Noise Configuration
-# -------------------------------------------
-noise:
-  stellar_leakage: true
-  local_zodi: true
-  exozodi: true
-  exozodi_level: 3
-  fiber_injection_variability: true
-  optical_path_difference_variability: true
 ...

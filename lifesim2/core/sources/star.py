@@ -20,6 +20,7 @@ class Star(Source):
     mass: Any
     distance: Any
     luminosity: Any
+    zodi_level: int
     number_of_wavelength_bins: int
     grid_size: int
 
