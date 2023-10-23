@@ -183,7 +183,7 @@ class Simulation():
                     for index_response, differential_intensity_response in enumerate(differential_intensity_responses):
                         self.output.photon_rate_time_series[source.name][wavelength][index_response][index_time] = \
                             (np.sum(differential_intensity_response * source.flux[
-                                index_wavelength] * source.shape_map)).value
+                                index_wavelength] * source.shape_map * wavelength))
 
                         if self.animator and (
                                 source.name == self.animator.source_name and
@@ -200,8 +200,8 @@ class Simulation():
                 source_name: str,
                 wavelength: astropy.units.Quantity,
                 differential_intensity_response_index: int,
-                image_vmin: float = -0.5,
-                image_vmax: float = 0.5,
+                image_vmin: float = -1,
+                image_vmax: float = 1,
                 photon_rate_limits: float = 0.1,
                 collector_position_limits: float = 50):
         """Initiate the animator object and set its attributes accordingly.

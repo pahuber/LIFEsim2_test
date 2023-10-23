@@ -147,6 +147,7 @@ class Animator():
         axins.set_xticklabels([])
         axins.set_yticklabels([])
         cb.ax.tick_params(labelsize=6)
+        cb.set_label('Diff. Intensity Response (m$^2$)')
         mark_inset(ax1, axins, loc1=4, loc2=3, fc="none", ec="black")
 
         return image_intensity_response, image2
@@ -167,7 +168,7 @@ class Animator():
 
         ax2.set_title(f'Photon Rate', fontsize=10)
         ax2.set_xlabel(f'Time (h)', fontsize=8)
-        ax2.set_ylabel(f'Photon Rate (a.u.)', fontsize=8)
+        ax2.set_ylabel('Photon Rate (photons / s)', fontsize=8)
         ax2.set_xlim(0, len(time_range))
         ax2.set_ylim(-self.photon_rate_limits, self.photon_rate_limits)
         ax2.set_xticks(ticks=np.linspace(0, len(time_range), len(labels)), labels=labels)
@@ -191,8 +192,8 @@ class Animator():
 
         :param differential_intensity_responses: The differential intensity responses
         """
-        self.images[1].set_data(differential_intensity_responses[self.differential_intensity_response_index])
-        self.images[2].set_data(differential_intensity_responses[self.differential_intensity_response_index])
+        self.images[1].set_data(differential_intensity_responses[self.differential_intensity_response_index].value)
+        self.images[2].set_data(differential_intensity_responses[self.differential_intensity_response_index].value)
 
     def update_photon_rate(self, output: SimulationOutput, index_time: int):
         """Update the photon rate frame.
@@ -204,5 +205,5 @@ class Animator():
         self.time_index_list.append(index_time)
         self.photon_rate_list.append(
             output.photon_rate_time_series[self.source_name][self.closest_wavelength][
-                self.differential_intensity_response_index][index_time])
+                self.differential_intensity_response_index][index_time].value)
         self.images[3].set_data(self.time_index_list, self.photon_rate_list)

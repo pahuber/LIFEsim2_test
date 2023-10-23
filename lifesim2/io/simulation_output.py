@@ -2,6 +2,7 @@ from typing import Tuple
 
 import astropy.units
 import numpy as np
+from astropy import units as u
 
 from lifesim2.util.grid import get_index_of_closest_value
 
@@ -27,10 +28,11 @@ class SimulationOutput():
         self.wavelength_bin_centers = wavelength_bin_centers
         self.photon_rate_time_series = dict((sources[key].name, dict(
             (wavelength_bin_center,
-             np.zeros((number_of_differential_intensity_responses, number_of_time_steps), dtype=float)) for
+             np.zeros((number_of_differential_intensity_responses, number_of_time_steps), dtype=float) * u.ph / u.s) for
             wavelength_bin_center in wavelength_bin_centers)) for key in sources.keys())
         self.photon_rate_time_series_total = dict((wavelength_bin_center, np.zeros(
-            (number_of_differential_intensity_responses, number_of_time_steps), dtype=float)) for wavelength_bin_center
+            (number_of_differential_intensity_responses, number_of_time_steps), dtype=float) * u.ph / u.s) for
+                                                  wavelength_bin_center
                                                   in wavelength_bin_centers)
 
     def _calculate_total_photon_rate_time_series(self):

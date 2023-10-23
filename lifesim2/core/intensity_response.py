@@ -20,11 +20,11 @@ def get_differential_intensity_responses(time,
     :param grid_size: The grid size
     :return: An array containing the differential intensity responses
     """
-    # TODO: fix units
     intensity_response_vector = get_intensity_responses(time, wavelength, observatory, source_sky_coordinate_maps,
                                                         grid_size)
     differential_indices = observatory.beam_combination_scheme.get_differential_intensity_response_indices()
-    differential_intensity_responses = np.zeros((len(differential_indices), grid_size, grid_size))
+    differential_intensity_responses = np.zeros(
+        (len(differential_indices), grid_size, grid_size)) * intensity_response_vector.unit
     for index_index, index_pair in enumerate(differential_indices):
         differential_intensity_responses[index_index] = intensity_response_vector[index_pair[0]] - \
                                                         intensity_response_vector[
@@ -57,12 +57,12 @@ def get_intensity_responses(time: astropy.units.Quantity,
 
     beam_combination_matrix = observatory.beam_combination_scheme.get_beam_combination_transfer_matrix()
 
-    intensity_response_unperturbed_vector = np.reshape(abs(
-        np.dot(beam_combination_matrix, input_complex_amplitude_unperturbed_vector)) ** 2,
-                                                       (
-                                                           observatory.beam_combination_scheme.number_of_outputs,
-                                                           grid_size,
-                                                           grid_size))
+    # intensity_response_unperturbed_vector = np.reshape(abs(
+    #     np.dot(beam_combination_matrix, input_complex_amplitude_unperturbed_vector)) ** 2,
+    #                                                    (
+    #                                                        observatory.beam_combination_scheme.number_of_outputs,
+    #                                                        grid_size,
+    #                                                        grid_size))
 
     intensity_response_perturbed_vector = np.reshape(abs(
         np.dot(beam_combination_matrix, input_complex_amplitude_perturbed_vector)) ** 2,
@@ -72,8 +72,8 @@ def get_intensity_responses(time: astropy.units.Quantity,
                                                          grid_size))
 
     # Normalize perturbed intensity response vector
-    for index in range(len(intensity_response_perturbed_vector)):
-        intensity_response_perturbed_vector[index] /= np.max(intensity_response_unperturbed_vector[index])
+    # for index in range(len(intensity_response_perturbed_vector)):
+    #     intensity_response_perturbed_vector[index] /= np.max(intensity_response_unperturbed_vector[index]).value
     return intensity_response_perturbed_vector
 
 
@@ -95,7 +95,7 @@ def get_input_complex_amplitude_vector(time: astropy.units.Quantity,
         time)
     input_complex_amplitude_vector = np.zeros((observatory.beam_combination_scheme.number_of_inputs,
                                                grid_size, grid_size),
-                                              dtype=complex)
+                                              dtype=complex) * observatory.instrument_parameters.aperture_radius.unit
 
     for index_input in range(observatory.beam_combination_scheme.number_of_inputs):
         input_complex_amplitude_vector[index_input] = observatory.instrument_parameters.aperture_radius * np.exp(
@@ -113,9 +113,9 @@ def get_perturbation_matrix(observatory: Observatory) -> np.ndarray:
     diagonal_of_matrix = []
     for index in range(observatory.beam_combination_scheme.number_of_inputs):
         diagonal_of_matrix.append(
-            np.random.uniform(0.4, 0.6) * np.exp(1j * np.random.uniform(-0.00000000000001, 0.00000000000001)))
+            np.random.uniform(0.8, 0.9) * np.exp(1j * np.random.uniform(-0.00000000000001, 0.00000000000001)))
 
     perturbation_matrix = np.diag(diagonal_of_matrix)
-    # perturbation_matrix = np.diag([1, 1, 1, 1])
+    perturbation_matrix = np.diag([1, 1, 1, 1])
 
     return perturbation_matrix
