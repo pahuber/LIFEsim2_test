@@ -19,8 +19,14 @@ planets:
     temperature: 288 K
 #  planet_2:
 #    name: Mars
-#    mass: 0.3 Mearth
-#    radius: 0.3 Rearth
-#    star_separation: 2 au
-#    temperature: 200 K
+#    mass: 0.1 Mearth
+#    radius: 0.5 Rearth
+#    star_separation: 1.6 au
+#    temperature: 210 K
+#  planet_3:
+#    name: Venus
+#    mass: 0.8 Mearth
+#    radius: 0.9 Rearth
+#    star_separation: 0.7 au
+#    temperature: 230 K
 ...
