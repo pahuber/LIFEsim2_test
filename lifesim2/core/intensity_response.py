@@ -93,26 +93,15 @@ def get_input_complex_amplitude_vector(time: astropy.units.Quantity,
     """
     x_observatory_coordinates, y_observatory_coordinates = observatory.array_configuration.get_collector_positions(
         time)
-
-    # plt.plot(x_observatory_coordinates[0].value, y_observatory_coordinates[0].value, 'bo')
-    # plt.plot(x_observatory_coordinates[1].value, y_observatory_coordinates[1].value, 'bo')
-    # plt.plot(x_observatory_coordinates[2].value, y_observatory_coordinates[2].value, 'bo')
-    # # plt.plot(x_observatory_coordinates[3].value, y_observatory_coordinates[3].value, 'bo')
-    # plt.gca().set_aspect('equal')
-    # plt.xlim(-40, 40)
-    # plt.ylim(-40, 40)
-    # plt.savefig(f'array_{time}.png')
-    # plt.close()
-
     input_complex_amplitude_vector = np.zeros((observatory.beam_combination_scheme.number_of_inputs,
                                                grid_size, grid_size),
                                               dtype=complex)
 
     for index_input in range(observatory.beam_combination_scheme.number_of_inputs):
-        input_complex_amplitude_vector[index_input] = (observatory.instrument_parameters.aperture_radius * np.exp(
+        input_complex_amplitude_vector[index_input] = observatory.instrument_parameters.aperture_radius * np.exp(
             1j * 2 * np.pi / wavelength * (
                     x_observatory_coordinates[index_input] * source_sky_coordinate_maps[0].to(u.rad).value +
-                    y_observatory_coordinates[index_input] * source_sky_coordinate_maps[1].to(u.rad).value)))
+                    y_observatory_coordinates[index_input] * source_sky_coordinate_maps[1].to(u.rad).value))
     return input_complex_amplitude_vector
 
 
