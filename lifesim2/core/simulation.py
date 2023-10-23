@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Any
+from typing import Any, Optional
 
 import astropy
 import numpy as np
@@ -9,6 +9,7 @@ from pydantic_core.core_schema import ValidationInfo
 from tqdm import tqdm
 
 from lifesim2.core.intensity_response import get_differential_intensity_responses
+from lifesim2.core.noise_contributions import NoiseContributions
 from lifesim2.core.observation import Observation
 from lifesim2.core.observatory.array_configurations import ArrayConfigurationEnum, EmmaXCircularRotation, \
     EmmaXDoubleStretch, EquilateralTriangleCircularRotation, RegularPentagonCircularRotation, ArrayConfiguration
@@ -41,6 +42,7 @@ class SimulationConfiguration(BaseModel):
     """
     grid_size: int
     time_step: Any
+    noise_contributions: Optional[NoiseContributions]
     time_range: Any = None
 
     @field_validator('time_step')
@@ -78,6 +80,11 @@ class Simulation():
                                          f'{self.animator.source_name}_{np.round(self.animator.closest_wavelength.to(u.um).value, 3)}um.gif',
                                          300):
             self._run_time_loop()
+
+    def _finish_run(self):
+        """Finish the run by calculating the total photon rate time series.
+        """
+        self.output._calculate_total_photon_rate_time_series()
 
     def _initialize_array_configuration_from_config(self) -> ArrayConfiguration:
         """Return an ArrayConfiguration object.
@@ -173,12 +180,13 @@ class Simulation():
                                                                                             wavelength,
                                                                                             self.observation.observatory,
                                                                                             source.sky_coordinate_maps,
-                                                                                            self.config.grid_size)
+                                                                                            self.config.grid_size,
+                                                                                            self.config.noise_contributions)
 
                     for index_response, differential_intensity_response in enumerate(differential_intensity_responses):
                         self.output.photon_rate_time_series[source.name][wavelength][index_response][index_time] = \
                             (np.sum(differential_intensity_response * source.flux[
-                                index_wavelength] * source.shape_map)).value
+                                index_wavelength] * source.shape_map * wavelength))
 
                         if self.animator and (
                                 source.name == self.animator.source_name and
@@ -188,14 +196,15 @@ class Simulation():
                             self.animator.update_differential_intensity_response(differential_intensity_responses)
                             self.animator.update_photon_rate(self.output, index_time)
                             self.animator.writer.grab_frame()
+        self._finish_run()
 
     def animate(self,
                 output_path: str,
                 source_name: str,
                 wavelength: astropy.units.Quantity,
                 differential_intensity_response_index: int,
-                image_vmin: float = -0.5,
-                image_vmax: float = 0.5,
+                image_vmin: float = -1,
+                image_vmax: float = 1,
                 photon_rate_limits: float = 0.1,
                 collector_position_limits: float = 50):
         """Initiate the animator object and set its attributes accordingly.
