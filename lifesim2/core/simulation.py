@@ -8,7 +8,7 @@ from pydantic import BaseModel, field_validator
 from pydantic_core.core_schema import ValidationInfo
 from tqdm import tqdm
 
-from lifesim2.core.intensity_response import get_differential_intensity_responses
+from lifesim2.core.differential_intensity_response import get_differential_intensity_responses
 from lifesim2.core.noise_contributions import NoiseContributions
 from lifesim2.core.observation import Observation
 from lifesim2.core.observatory.array_configurations import ArrayConfigurationEnum, EmmaXCircularRotation, \
