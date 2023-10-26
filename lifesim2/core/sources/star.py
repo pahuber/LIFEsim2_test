@@ -8,10 +8,12 @@ from pydantic_core.core_schema import ValidationInfo
 
 from lifesim2.core.sources.source import Source
 from lifesim2.io.validators import validate_quantity_units
+from lifesim2.util.blackbody import create_blackbody_spectrum
+from lifesim2.util.configured_base_model import ConfiguredBaseModel
 from lifesim2.util.grid import get_meshgrid
 
 
-class Star(Source):
+class Star(Source, ConfiguredBaseModel):
     """Class representation of a star.
     """
     name: str
@@ -21,8 +23,24 @@ class Star(Source):
     distance: Any
     luminosity: Any
     zodi_level: int
-    number_of_wavelength_bins: int
+    wavelength_range_lower_limit: Any
+    wavelength_range_upper_limit: Any
+    wavelength_bin_centers: Any
+    wavelength_bin_widths: Any
     grid_size: int
+
+    def __init__(self, **data):
+        """Constructor method.
+
+        :param data: Data to initialize the star class.
+        """
+        super().__init__(**data)
+        self.flux = create_blackbody_spectrum(self.temperature,
+                                              self.wavelength_range_lower_limit,
+                                              self.wavelength_range_upper_limit,
+                                              self.wavelength_bin_centers,
+                                              self.wavelength_bin_widths,
+                                              self.solid_angle)
 
     @field_validator('radius')
     def validate_radius(cls, value: Any, info: ValidationInfo) -> astropy.units.Quantity:

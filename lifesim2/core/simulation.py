@@ -132,14 +132,14 @@ class Simulation():
         :param path_to_data_file: Path to the data file
         """
         planetary_system_dict = ConfigReader(path_to_config_file=path_to_data_file).get_config_from_file()
-        star = Star(**planetary_system_dict['star'], number_of_wavelength_bins=len(
-            self.observation.observatory.instrument_parameters.wavelength_bin_centers), grid_size=self.config.grid_size)
-        star.flux = create_blackbody_spectrum(star.temperature,
-                                              self.observation.observatory.instrument_parameters.wavelength_range_lower_limit,
-                                              self.observation.observatory.instrument_parameters.wavelength_range_upper_limit,
-                                              self.observation.observatory.instrument_parameters.wavelength_bin_centers,
-                                              self.observation.observatory.instrument_parameters.wavelength_bin_widths,
-                                              star.solid_angle)
+        star = Star(**planetary_system_dict['star'],
+                    wavelength_range_lower_limit=self.observation.observatory.instrument_parameters.wavelength_range_lower_limit,
+                    wavelength_range_upper_limit=self.observation.observatory.instrument_parameters.wavelength_range_lower_limit,
+                    wavelength_bin_centers=self.observation.observatory.instrument_parameters.wavelength_bin_centers,
+                    wavelength_bin_widths=self.observation.observatory.instrument_parameters.wavelength_bin_widths,
+                    grid_size=self.config.grid_size)
+        # star.flux = create_blackbody_spectrum(star.temperature,
+        #                                       star.solid_angle)
         self.observation.sources[star.name] = star
         for key in planetary_system_dict['planets'].keys():
             planet = Planet(**planetary_system_dict['planets'][key],
