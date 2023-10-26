@@ -62,7 +62,6 @@ class Simulation():
         """
         self.output.photon_rate_time_series = self.processor.photon_rate_time_series
         self.output._calculate_total_photon_rate_time_series()
-        a = 0
 
     def _initialize_array_configuration_from_config(self) -> ArrayConfiguration:
         """Return an ArrayConfiguration object.

@@ -9,7 +9,16 @@ from lifesim2.util.animation import Animator
 
 
 class Processor():
+    """Class representing the processor. The processor makes the main calculation of the simulation.
+    """
+
     def __init__(self, simulation_config: SimulationConfiguration, observation: Observation, animator: Animator):
+        """Constructor method.
+
+        :param simulation_config: SimulationConfiguration object
+        :param observation: Observation object
+        :param animator: Animator object
+        """
         self.simulation_config = simulation_config
         self.observation = observation
         self.animator = animator
