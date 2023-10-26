@@ -36,7 +36,7 @@ class InstrumentParameters(BaseModel):
         :param info: ValidationInfo object
         :return: The lower wavelength range limit in units of length
         """
-        return validate_quantity_units(value=value, field_name=info.field_name, unit_equivalency=u.m)
+        return validate_quantity_units(value=value, field_name=info.field_name, unit_equivalency=u.m).to(u.um)
 
     @field_validator('wavelength_range_upper_limit')
     def validate_wavelength_range_upper_limit(cls, value: Any, info: ValidationInfo) -> astropy.units.Quantity:
@@ -46,7 +46,7 @@ class InstrumentParameters(BaseModel):
         :param info: ValidationInfo object
         :return: The upper wavelength range limit in units of length
         """
-        return validate_quantity_units(value=value, field_name=info.field_name, unit_equivalency=u.m)
+        return validate_quantity_units(value=value, field_name=info.field_name, unit_equivalency=u.m).to(u.um)
 
     @property
     def aperture_radius(self) -> astropy.units.Quantity:
@@ -73,41 +73,26 @@ class InstrumentParameters(BaseModel):
         return self._get_wavelength_bins()[1]
 
     def _get_wavelength_bins(self) -> Tuple[np.ndarray, np.ndarray]:
-        """Return the wavelength bin centers and widths. Implementation as in
-        https://github.com/jlustigy/coronagraph/blob/master/coronagraph/noise_routines.py.
+        """Return the wavelength bin centers and widths. The wavelength bin widths are calculated starting from the
+        wavelength lower range. As a consequence, the uppermost wavelength bin might be smaller than anticipated.
 
         :return: A tuple containing the wavelength bin centers and widths
         """
-        # TODO: clean up
-        minimum_bin_width = self.wavelength_range_lower_limit.value / self.spectral_resolving_power
-        maximum_bin_width = self.wavelength_range_upper_limit.value / self.spectral_resolving_power
-        wavelength = self.wavelength_range_lower_limit.value
+        current_minimum_wavelength = self.wavelength_range_lower_limit.value
+        wavelength_bin_centers = []
+        wavelength_bin_widths = []
 
-        number_of_wavelengths = 1
-
-        while (wavelength < self.wavelength_range_upper_limit.value + maximum_bin_width):
-            wavelength = wavelength + wavelength / self.spectral_resolving_power
-            number_of_wavelengths = number_of_wavelengths + 1
-
-        wavelengths = np.zeros(number_of_wavelengths)
-        wavelengths[0] = self.wavelength_range_lower_limit.value
-
-        for index in range(1, number_of_wavelengths):
-            wavelengths[index] = wavelengths[index - 1] + wavelengths[
-                index - 1] / self.spectral_resolving_power
-        number_of_wavelengths = len(wavelengths)
-        wavelength_bins = np.zeros(number_of_wavelengths)
-
-        # Set wavelength widths
-        for index in range(1, number_of_wavelengths - 1):
-            wavelength_bins[index] = 0.5 * (wavelengths[index + 1] + wavelengths[index]) - 0.5 * (
-                    wavelengths[index - 1] + wavelengths[index])
-
-        # Set edges to be same as neighbor
-        wavelength_bins[0] = minimum_bin_width
-        wavelength_bins[number_of_wavelengths - 1] = maximum_bin_width
-
-        wavelengths = wavelengths[:-1]
-        wavelength_bins = wavelength_bins[:-1]
-
-        return wavelengths * u.um, wavelength_bins * u.um
+        while current_minimum_wavelength <= self.wavelength_range_upper_limit.value:
+            center_wavelength = current_minimum_wavelength / (1 - 1 / (2 * self.spectral_resolving_power))
+            bin_width = 2 * (center_wavelength - current_minimum_wavelength)
+            if center_wavelength + bin_width / 2 <= self.wavelength_range_upper_limit.value:
+                wavelength_bin_centers.append(center_wavelength)
+                wavelength_bin_widths.append(bin_width)
+                current_minimum_wavelength = center_wavelength + bin_width / 2
+            else:
+                last_bin_width = self.wavelength_range_upper_limit.value - current_minimum_wavelength
+                last_center_wavelength = self.wavelength_range_upper_limit.value - last_bin_width / 2
+                wavelength_bin_centers.append(last_center_wavelength)
+                wavelength_bin_widths.append(last_bin_width)
+                break
+        return (np.array(wavelength_bin_centers) * u.um, np.array(wavelength_bin_widths) * u.um)

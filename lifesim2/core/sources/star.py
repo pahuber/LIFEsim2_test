@@ -79,8 +79,7 @@ class Star(Source):
         :param info: ValidationInfo object
         :return: The luminosity in units of luminosity
         """
-        # TODO: force Lsun units
-        return validate_quantity_units(value=value, field_name=info.field_name, unit_equivalency=u.Lsun)
+        return validate_quantity_units(value=value, field_name=info.field_name, unit_equivalency=u.Lsun).to(u.Lsun)
 
     @property
     def solid_angle(self) -> astropy.units.Quantity:
