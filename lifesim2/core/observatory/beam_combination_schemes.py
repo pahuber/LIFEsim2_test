@@ -23,7 +23,7 @@ class BeamCombinationScheme(ABC):
         super().__init__()
         self.number_of_inputs = self.get_beam_combination_transfer_matrix().shape[1]
         self.number_of_outputs = self.get_beam_combination_transfer_matrix().shape[0]
-        self.number_of_differential_intensity_respones = len(self.get_differential_intensity_response_indices())
+        self.number_of_differential_intensity_responses = len(self.get_differential_intensity_response_indices())
 
     @abstractmethod
     def get_beam_combination_transfer_matrix(self) -> np.ndarray:
