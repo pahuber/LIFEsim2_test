@@ -27,7 +27,7 @@ simulation.run()
 # Extract total photon rate time series for ~10 um and plot them
 photon_rate_time_series_total, closest_wavelength = simulation.output.get_total_photon_rate_time_series(10 * u.um)
 plt.plot(photon_rate_time_series_total, label=f'Total')
-plt.plot(simulation.output.get_photon_rate_time_series_for_source('Earth', 10 * u.um)[0], label='Earth')
+plt.plot(simulation.output.get_photon_rate_time_series_for_source('Earth', 10 * u.um)[0], label=f'Earth 10 um')
 plt.ylabel('photons / s')
 plt.xlabel('Time')
 plt.legend()

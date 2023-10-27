@@ -14,9 +14,10 @@ class Source(ABC, BaseModel):
     """Class representation of a photon source.
     """
 
-    number_of_wavelength_bins: int
+    # number_of_wavelength_bins: int
     name: str
     temperature: Any
+
     flux: Any = None
 
     @field_validator('temperature')

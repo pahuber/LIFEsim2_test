@@ -1,15 +1,9 @@
 from enum import Enum
-from typing import Any, Optional
 
 import astropy
 import numpy as np
 from astropy import units as u
-from pydantic import BaseModel, field_validator
-from pydantic_core.core_schema import ValidationInfo
-from tqdm import tqdm
 
-from lifesim2.core.intensity_response import get_differential_intensity_responses
-from lifesim2.core.noise_contributions import NoiseContributions
 from lifesim2.core.observation import Observation
 from lifesim2.core.observatory.array_configurations import ArrayConfigurationEnum, EmmaXCircularRotation, \
     EmmaXDoubleStretch, EquilateralTriangleCircularRotation, RegularPentagonCircularRotation, ArrayConfiguration
@@ -18,12 +12,13 @@ from lifesim2.core.observatory.beam_combination_schemes import BeamCombinationSc
     Kernel4, Kernel5, BeamCombinationScheme
 from lifesim2.core.observatory.instrument_parameters import InstrumentParameters
 from lifesim2.core.observatory.observatory import Observatory
+from lifesim2.core.simulation_configuration import SimulationConfiguration
 from lifesim2.core.sources.planet import Planet
 from lifesim2.core.sources.star import Star
 from lifesim2.io.config_reader import ConfigReader
 from lifesim2.io.data_type import DataType
 from lifesim2.io.simulation_output import SimulationOutput
-from lifesim2.io.validators import validate_quantity_units
+from lifesim2.processing.processor import Processor
 from lifesim2.util.animation import Animator
 from lifesim2.util.blackbody import create_blackbody_spectrum
 from lifesim2.util.grid import get_index_of_closest_value
@@ -34,26 +29,6 @@ class SimulationMode(Enum):
     """
     SINGLE_OBSERVATION = 1
     YIELD_ESTIMATE = 2
-
-
-class SimulationConfiguration(BaseModel):
-    """Class representation of the simulation configurations.
-
-    """
-    grid_size: int
-    time_step: Any
-    noise_contributions: Optional[NoiseContributions]
-    time_range: Any = None
-
-    @field_validator('time_step')
-    def validate_time_step(cls, value: Any, info: ValidationInfo) -> astropy.units.Quantity:
-        """Validate the time step input.
-
-        :param value: Value given as input
-        :param info: ValidationInfo object
-        :return: The time step in units of time
-        """
-        return validate_quantity_units(value=value, field_name=info.field_name, unit_equivalency=u.s)
 
 
 class Simulation():
@@ -68,9 +43,10 @@ class Simulation():
         """
         self.mode = mode
         self._config_dict = None
+        self.animator = None
         self.config = None
         self.observation = None
-        self.animator = None
+        self.processor = None
 
     def _create_animation(self):
         """Prepare the animation writer and run the time loop.
@@ -79,11 +55,12 @@ class Simulation():
         with self.animator.writer.saving(self.animator.figure,
                                          f'{self.animator.source_name}_{np.round(self.animator.closest_wavelength.to(u.um).value, 3)}um.gif',
                                          300):
-            self._run_time_loop()
+            self.processor.run()
 
     def _finish_run(self):
         """Finish the run by calculating the total photon rate time series.
         """
+        self.output.photon_rate_time_series = self.processor.photon_rate_time_series
         self.output._calculate_total_photon_rate_time_series()
 
     def _initialize_array_configuration_from_config(self) -> ArrayConfiguration:
@@ -132,14 +109,12 @@ class Simulation():
         :param path_to_data_file: Path to the data file
         """
         planetary_system_dict = ConfigReader(path_to_config_file=path_to_data_file).get_config_from_file()
-        star = Star(**planetary_system_dict['star'], number_of_wavelength_bins=len(
-            self.observation.observatory.instrument_parameters.wavelength_bin_centers), grid_size=self.config.grid_size)
-        star.flux = create_blackbody_spectrum(star.temperature,
-                                              self.observation.observatory.instrument_parameters.wavelength_range_lower_limit,
-                                              self.observation.observatory.instrument_parameters.wavelength_range_upper_limit,
-                                              self.observation.observatory.instrument_parameters.wavelength_bin_centers,
-                                              self.observation.observatory.instrument_parameters.wavelength_bin_widths,
-                                              star.solid_angle)
+        star = Star(**planetary_system_dict['star'],
+                    wavelength_range_lower_limit=self.observation.observatory.instrument_parameters.wavelength_range_lower_limit,
+                    wavelength_range_upper_limit=self.observation.observatory.instrument_parameters.wavelength_range_upper_limit,
+                    wavelength_bin_centers=self.observation.observatory.instrument_parameters.wavelength_bin_centers,
+                    wavelength_bin_widths=self.observation.observatory.instrument_parameters.wavelength_bin_widths,
+                    grid_size=self.config.grid_size)
         self.observation.sources[star.name] = star
         for key in planetary_system_dict['planets'].keys():
             planet = Planet(**planetary_system_dict['planets'][key],
@@ -158,45 +133,13 @@ class Simulation():
     def _prepare_run(self):
         """Prepare the main simulation run.
         """
+        self.processor = Processor(self.config, self.observation, self.animator)
         self.observation.set_optimal_baseline()
         self.output = SimulationOutput(
-            self.observation.observatory.beam_combination_scheme.number_of_differential_intensity_respones,
+            self.observation.observatory.beam_combination_scheme.number_of_differential_intensity_responses,
             len(self.config.time_range),
             self.observation.observatory.instrument_parameters.wavelength_bin_centers,
             self.observation.sources)
-
-    def _run_time_loop(self):
-        """Run the main simulation time loop and calculate the photon rates time series.
-
-        :param image: The image if an animation should be created
-        :param writer: The writer if an animation should be created
-        """
-        for index_time, time in enumerate(tqdm(self.config.time_range)):
-
-            for index_wavelength, wavelength in enumerate(
-                    self.observation.observatory.instrument_parameters.wavelength_bin_centers):
-                for _, source in self.observation.sources.items():
-                    differential_intensity_responses = get_differential_intensity_responses(time,
-                                                                                            wavelength,
-                                                                                            self.observation.observatory,
-                                                                                            source.sky_coordinate_maps,
-                                                                                            self.config.grid_size,
-                                                                                            self.config.noise_contributions)
-
-                    for index_response, differential_intensity_response in enumerate(differential_intensity_responses):
-                        self.output.photon_rate_time_series[source.name][wavelength][index_response][index_time] = \
-                            (np.sum(differential_intensity_response * source.flux[
-                                index_wavelength] * source.shape_map * wavelength))
-
-                        if self.animator and (
-                                source.name == self.animator.source_name and
-                                wavelength == self.animator.closest_wavelength and
-                                index_response == self.animator.differential_intensity_response_index):
-                            self.animator.update_collector_position(time, self.observation)
-                            self.animator.update_differential_intensity_response(differential_intensity_responses)
-                            self.animator.update_photon_rate(self.output, index_time)
-                            self.animator.writer.grab_frame()
-        self._finish_run()
 
     def animate(self,
                 output_path: str,
@@ -267,4 +210,5 @@ class Simulation():
         if self.animator:
             self._create_animation()
         else:
-            self._run_time_loop()
+            self.processor.run()
+        self._finish_run()
