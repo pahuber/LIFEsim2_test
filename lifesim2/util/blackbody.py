@@ -30,25 +30,25 @@ def create_blackbody_spectrum(temperature,
     blackbody_spectrum_binned = spectres.spectres(new_wavs=wavelength_bin_centers.to(u.um).value,
                                                   spec_wavs=wavelength_range.to(u.um).value,
                                                   spec_fluxes=blackbody_spectrum.value) * units
-    return convert_blackbody_to_flux(blackbody_spectrum_binned, wavelength_bin_centers, source_solid_angle)
+    return convert_blackbody_units(blackbody_spectrum_binned, wavelength_bin_centers, source_solid_angle)
 
 
-def convert_blackbody_to_flux(blackbody_spectrum_binned: np.ndarray,
-                              wavelength_bin_centers: np.ndarray,
-                              source_solid_angle: astropy.units.Quantity) -> np.ndarray:
+def convert_blackbody_units(blackbody_spectrum_binned: np.ndarray,
+                            wavelength_bin_centers: np.ndarray,
+                            source_solid_angle: astropy.units.Quantity) -> np.ndarray:
     """Convert the binned black body spectrum from units erg / (Hz s sr cm2) to units ph / (m2 s um)
 
     :param blackbody_spectrum_binned: The binned blackbody spectrum
     :param wavelength_bin_centers: The wavelength bin centers
     :param source_solid_angle: The solid angle of the source
-    :return: Array containing the spectrum in correct units
+    :return: Array containing the spectral flux density in correct units
     """
-    flux = np.zeros(len(blackbody_spectrum_binned)) * u.ph / u.m ** 2 / u.s / u.um
+    spectral_flux_density = np.zeros(len(blackbody_spectrum_binned)) * u.ph / u.m ** 2 / u.s / u.um
 
     for index in range(len(blackbody_spectrum_binned)):
-        current_flux = (blackbody_spectrum_binned[index] * (source_solid_angle).to(u.sr)).to(
+        current_spectral_flux_density = (blackbody_spectrum_binned[index] * (source_solid_angle).to(u.sr)).to(
             u.ph / u.m ** 2 / u.s / u.um,
             equivalencies=u.spectral_density(
                 wavelength_bin_centers[index]))
-        flux[index] = current_flux
-    return flux
+        spectral_flux_density[index] = current_spectral_flux_density
+    return spectral_flux_density
