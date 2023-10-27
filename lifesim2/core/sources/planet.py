@@ -22,7 +22,7 @@ class Planet(Source):
     star_distance: Any
     number_of_wavelength_bins: int
     grid_size: int
-    flux: Any = None
+    spectral_flux_density: Any = None
 
     @field_validator('radius')
     def validate_radius(cls, value: Any, info: ValidationInfo) -> astropy.units.Quantity:

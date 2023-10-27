@@ -18,7 +18,7 @@ class Source(ABC, BaseModel):
     name: str
     temperature: Any
 
-    flux: Any = None
+    spectral_flux_density: Any = None
 
     @field_validator('temperature')
     def validate_temperature(cls, value: Any, info: ValidationInfo) -> astropy.units.Quantity:

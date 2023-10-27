@@ -34,12 +34,12 @@ class Star(Source):
         :param data: Data to initialize the star class.
         """
         super().__init__(**data)
-        self.flux = create_blackbody_spectrum(self.temperature,
-                                              self.wavelength_range_lower_limit,
-                                              self.wavelength_range_upper_limit,
-                                              self.wavelength_bin_centers,
-                                              self.wavelength_bin_widths,
-                                              self.solid_angle)
+        self.spectral_flux_density = create_blackbody_spectrum(self.temperature,
+                                                               self.wavelength_range_lower_limit,
+                                                               self.wavelength_range_upper_limit,
+                                                               self.wavelength_bin_centers,
+                                                               self.wavelength_bin_widths,
+                                                               self.solid_angle)
 
     @field_validator('radius')
     def validate_radius(cls, value: Any, info: ValidationInfo) -> astropy.units.Quantity:

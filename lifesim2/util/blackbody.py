@@ -25,6 +25,7 @@ def create_blackbody_spectrum(temperature,
     wavelength_range = np.linspace(wavelength_range_lower_limit.value, wavelength_range_upper_limit.value,
                                    100) * wavelength_range_upper_limit.unit
     blackbody_spectrum = BlackBody(temperature=temperature)(wavelength_range)
+
     units = blackbody_spectrum.unit
     blackbody_spectrum_binned = spectres.spectres(new_wavs=wavelength_bin_centers.to(u.um).value,
                                                   spec_wavs=wavelength_range.to(u.um).value,

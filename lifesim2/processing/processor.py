@@ -147,7 +147,8 @@ class Processor():
                                                                                                   source.sky_coordinate_maps)
                     for index_response, differential_intensity_response in enumerate(differential_intensity_responses):
                         self.photon_rate_time_series[source.name][wavelength][index_response][index_time] = \
-                            (np.sum(differential_intensity_response * source.flux[index_wavelength] * source.shape_map *
+                            (np.sum(differential_intensity_response * source.spectral_flux_density[
+                                index_wavelength] * source.shape_map *
                                     self.observation.observatory.instrument_parameters.wavelength_bin_widths[
                                         index_wavelength]))
 
