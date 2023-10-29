@@ -122,12 +122,12 @@ class Simulation():
                             number_of_wavelength_bins=len(
                                 self.observation.observatory.instrument_parameters.wavelength_bin_centers),
                             grid_size=self.config.grid_size)
-            planet.spectral_flux_density = create_blackbody_spectrum(planet.temperature,
-                                                                     self.observation.observatory.instrument_parameters.wavelength_range_lower_limit,
-                                                                     self.observation.observatory.instrument_parameters.wavelength_range_upper_limit,
-                                                                     self.observation.observatory.instrument_parameters.wavelength_bin_centers,
-                                                                     self.observation.observatory.instrument_parameters.wavelength_bin_widths,
-                                                                     planet.solid_angle)
+            planet.mean_spectral_flux_density = create_blackbody_spectrum(planet.temperature,
+                                                                          self.observation.observatory.instrument_parameters.wavelength_range_lower_limit,
+                                                                          self.observation.observatory.instrument_parameters.wavelength_range_upper_limit,
+                                                                          self.observation.observatory.instrument_parameters.wavelength_bin_centers,
+                                                                          self.observation.observatory.instrument_parameters.wavelength_bin_widths,
+                                                                          planet.solid_angle)
             self.observation.sources[planet.name] = planet
 
     def _prepare_run(self):

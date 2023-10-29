@@ -1,6 +1,7 @@
 import astropy
 import numpy as np
 from astropy import units as u
+from numpy.random import poisson, normal
 from tqdm import tqdm
 
 from lifesim2.core.observation import Observation
@@ -25,9 +26,10 @@ class Processor():
         self.photon_rate_time_series = dict((self.observation.sources[key].name, dict(
             (wavelength_bin_center,
              np.zeros((self.observation.observatory.beam_combination_scheme.number_of_differential_intensity_responses,
-                       len(self.simulation_config.time_range)), dtype=float) * u.ph / u.s) for
+                       len(self.simulation_config.time_range)), dtype=float) * u.ph) for
             wavelength_bin_center in self.observation.observatory.instrument_parameters.wavelength_bin_centers)) for key
                                             in self.observation.sources.keys())
+        self.intensity_response_pairs = self.observation.observatory.beam_combination_scheme.get_intensity_response_pairs()
 
     def _get_differential_intensity_responses(self,
                                               time,
@@ -42,7 +44,7 @@ class Processor():
         :return: An array containing the differential intensity responses
         """
         intensity_response_vector = self._get_intensity_responses(time, wavelength, source_sky_coordinate_maps)
-        differential_indices = self.observation.observatory.beam_combination_scheme.get_differential_intensity_response_indices()
+        differential_indices = self.observation.observatory.beam_combination_scheme.get_intensity_response_pairs()
         differential_intensity_responses = np.zeros(
             (len(differential_indices), self.simulation_config.grid_size,
              self.simulation_config.grid_size)) * intensity_response_vector.unit
@@ -142,21 +144,56 @@ class Processor():
             for index_wavelength, wavelength in enumerate(
                     self.observation.observatory.instrument_parameters.wavelength_bin_centers):
                 for _, source in self.observation.sources.items():
-                    differential_intensity_responses = self._get_differential_intensity_responses(time,
-                                                                                                  wavelength,
-                                                                                                  source.sky_coordinate_maps)
-                    for index_response, differential_intensity_response in enumerate(differential_intensity_responses):
-                        self.photon_rate_time_series[source.name][wavelength][index_response][index_time] = \
-                            (np.sum(differential_intensity_response * source.spectral_flux_density[
-                                index_wavelength] * source.shape_map *
-                                    self.observation.observatory.instrument_parameters.wavelength_bin_widths[
-                                        index_wavelength]))
+                    intensity_responses = self._get_intensity_responses(time, wavelength, source.sky_coordinate_maps)
+
+                    for index_pair, pair_of_indices in enumerate(self.intensity_response_pairs):
+                        photon_counts_at_one_output = self._get_photon_counts(
+                            mean_spectral_flux_density=source.mean_spectral_flux_density[index_wavelength],
+                            source_shape_map=source.shape_map,
+                            wavelength_bin_width=
+                            self.observation.observatory.instrument_parameters.wavelength_bin_widths[
+                                index_wavelength],
+                            intensity_response=intensity_responses[pair_of_indices[0]])
+                        photon_counts_at_other_output = self._get_photon_counts(
+                            mean_spectral_flux_density=source.mean_spectral_flux_density[index_wavelength],
+                            source_shape_map=source.shape_map,
+                            wavelength_bin_width=
+                            self.observation.observatory.instrument_parameters.wavelength_bin_widths[
+                                index_wavelength],
+                            intensity_response=intensity_responses[pair_of_indices[1]])
+                        self.photon_rate_time_series[source.name][wavelength][index_pair][
+                            index_time] = photon_counts_at_one_output - photon_counts_at_other_output
 
                         if self.animator and (
                                 source.name == self.animator.source_name and
                                 wavelength == self.animator.closest_wavelength and
-                                index_response == self.animator.differential_intensity_response_index):
+                                index_pair == self.animator.differential_intensity_response_index):
                             self.animator.update_collector_position(time, self.observation)
-                            self.animator.update_differential_intensity_response(differential_intensity_responses)
-                            self.animator.update_photon_rate(self.output, index_time)
+                            self.animator.update_differential_intensity_response(
+                                intensity_responses[pair_of_indices[0]] - intensity_responses[pair_of_indices[1]])
+                            self.animator.update_photon_rate(
+                                self.photon_rate_time_series[source.name][wavelength][index_pair][
+                                    index_time], index_time)
                             self.animator.writer.grab_frame()
+
+    def _get_photon_counts(self,
+                           mean_spectral_flux_density: astropy.units.Quantity,
+                           source_shape_map: np.ndarray,
+                           wavelength_bin_width: astropy.units.Quantity,
+                           intensity_response: np.ndarray):
+        """Return the photon counts per output, i.e. for a given intensity response map, including photon noise.
+
+        :param mean_spectral_flux_density: Mean spectral density of the source at a given wavelength
+        :param source_shape_map: Shape map of the source
+        :param wavelength_bin_width: Wavelength bin width
+        :param intensity_response: Intensity response map
+        :return: Photon counts in units of photons
+        """
+        mean_photon_counts = np.sum((mean_spectral_flux_density * source_shape_map * wavelength_bin_width
+                                     * intensity_response * self.simulation_config.time_step.to(u.s)).value)
+
+        try:
+            photon_counts = poisson(mean_photon_counts, 1)
+        except ValueError:
+            photon_counts = normal(mean_photon_counts, 1)
+        return photon_counts * u.ph

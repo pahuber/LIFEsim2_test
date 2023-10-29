@@ -29,7 +29,8 @@ def create_blackbody_spectrum(temperature,
     units = blackbody_spectrum.unit
     blackbody_spectrum_binned = spectres.spectres(new_wavs=wavelength_bin_centers.to(u.um).value,
                                                   spec_wavs=wavelength_range.to(u.um).value,
-                                                  spec_fluxes=blackbody_spectrum.value) * units
+                                                  spec_fluxes=blackbody_spectrum.value,
+                                                  fill=0) * units
     return convert_blackbody_units(blackbody_spectrum_binned, wavelength_bin_centers, source_solid_angle)
 
 

@@ -28,10 +28,10 @@ class SimulationOutput():
         self.wavelength_bin_centers = wavelength_bin_centers
         self.photon_rate_time_series = dict((sources[key].name, dict(
             (wavelength_bin_center,
-             np.zeros((number_of_differential_intensity_responses, number_of_time_steps), dtype=float) * u.ph / u.s) for
+             np.zeros((number_of_differential_intensity_responses, number_of_time_steps), dtype=float) * u.ph) for
             wavelength_bin_center in wavelength_bin_centers)) for key in sources.keys())
         self.photon_rate_time_series_total = dict((wavelength_bin_center, np.zeros(
-            (number_of_differential_intensity_responses, number_of_time_steps), dtype=float) * u.ph / u.s) for
+            (number_of_differential_intensity_responses, number_of_time_steps), dtype=float) * u.ph) for
                                                   wavelength_bin_center
                                                   in wavelength_bin_centers)
 

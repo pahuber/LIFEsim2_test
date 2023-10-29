@@ -7,7 +7,6 @@ from matplotlib.animation import FFMpegWriter
 from mpl_toolkits.axes_grid1.inset_locator import zoomed_inset_axes, mark_inset
 
 from lifesim2.core.observation import Observation
-from lifesim2.io.simulation_output import SimulationOutput
 
 
 class Animator():
@@ -187,15 +186,15 @@ class Animator():
             time)
         self.images[0].set_data(x_observatory_coordinates.value, y_observatory_coordinates.value)
 
-    def update_differential_intensity_response(self, differential_intensity_responses: np.ndarray):
+    def update_differential_intensity_response(self, differential_intensity_response: np.ndarray):
         """Update the differential_intensity_response frame
 
-        :param differential_intensity_responses: The differential intensity responses
+        :param differential_intensity_response: The differential intensity response
         """
-        self.images[1].set_data(differential_intensity_responses[self.differential_intensity_response_index].value)
-        self.images[2].set_data(differential_intensity_responses[self.differential_intensity_response_index].value)
+        self.images[1].set_data(differential_intensity_response.value)
+        self.images[2].set_data(differential_intensity_response.value)
 
-    def update_photon_rate(self, output: SimulationOutput, index_time: int):
+    def update_photon_rate(self, photon_rate_time_series: np.ndarray, index_time: int):
         """Update the photon rate frame.
 
         :param output: The output object
@@ -203,7 +202,5 @@ class Animator():
         :return:
         """
         self.time_index_list.append(index_time)
-        self.photon_rate_list.append(
-            output.photon_rate_time_series[self.source_name][self.closest_wavelength][
-                self.differential_intensity_response_index][index_time].value)
+        self.photon_rate_list.append(photon_rate_time_series.value)
         self.images[3].set_data(self.time_index_list, self.photon_rate_list)
