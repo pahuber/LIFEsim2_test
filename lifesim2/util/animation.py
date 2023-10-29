@@ -44,7 +44,7 @@ class Animator():
         self.writer = None
         self.images = None
         self.figure = None
-        self.photon_rate_list = []
+        self.photon_counts_list = []
         self.time_index_list = []
 
     def prepare_animation_writer(self, observation: Observation, time_range: np.ndarray, grid_size: int):
@@ -61,7 +61,7 @@ class Animator():
         image_intensity_response, image2 = self._prepare_differential_intensity_response_plot(gs, observation,
                                                                                               grid_size)
         image_collector_positions = self._prepare_collector_position_image(gs, grid_size)
-        image_photon_rates = self._prepare_photon_rates_plot(gs, time_range)
+        image_photon_rates = self._prepare_photon_counts_plot(gs, time_range)
 
         self.figure.tight_layout()
         plt.subplots_adjust(left=0.1,
@@ -151,8 +151,8 @@ class Animator():
 
         return image_intensity_response, image2
 
-    def _prepare_photon_rates_plot(self, gs: matplotlib.gridspec.GridSpec,
-                                   time_range: np.ndarray) -> matplotlib.image.AxesImage:
+    def _prepare_photon_counts_plot(self, gs: matplotlib.gridspec.GridSpec,
+                                    time_range: np.ndarray) -> matplotlib.image.AxesImage:
         """Prepare the plot for the photon rates.
 
         :param gs: The GirdSpec object
@@ -165,9 +165,9 @@ class Animator():
         labels = time_range.to(u.h)[0::10]
         labels = [int(x.value) for x in labels]
 
-        ax2.set_title(f'Photon Rate', fontsize=10)
+        ax2.set_title(f'Photon Counts', fontsize=10)
         ax2.set_xlabel(f'Time (h)', fontsize=8)
-        ax2.set_ylabel('Photon Rate (photons / s)', fontsize=8)
+        ax2.set_ylabel('Photon Counts', fontsize=8)
         ax2.set_xlim(0, len(time_range))
         ax2.set_ylim(-self.photon_rate_limits, self.photon_rate_limits)
         ax2.set_xticks(ticks=np.linspace(0, len(time_range), len(labels)), labels=labels)
@@ -194,13 +194,13 @@ class Animator():
         self.images[1].set_data(differential_intensity_response.value)
         self.images[2].set_data(differential_intensity_response.value)
 
-    def update_photon_rate(self, photon_rate_time_series: np.ndarray, index_time: int):
-        """Update the photon rate frame.
+    def update_photon_counts(self, photon_count_time_series: np.ndarray, index_time: int):
+        """Update the photon counts frame.
 
         :param output: The output object
         :param index_time: The time index
         :return:
         """
         self.time_index_list.append(index_time)
-        self.photon_rate_list.append(photon_rate_time_series.value)
-        self.images[3].set_data(self.time_index_list, self.photon_rate_list)
+        self.photon_counts_list.append(photon_count_time_series.value)
+        self.images[3].set_data(self.time_index_list, self.photon_counts_list)

@@ -23,12 +23,12 @@ class Processor():
         self.simulation_config = simulation_config
         self.observation = observation
         self.animator = animator
-        self.photon_rate_time_series = dict((self.observation.sources[key].name, dict(
+        self.photon_count_time_series = dict((self.observation.sources[key].name, dict(
             (wavelength_bin_center,
              np.zeros((self.observation.observatory.beam_combination_scheme.number_of_differential_intensity_responses,
                        len(self.simulation_config.time_range)), dtype=float) * u.ph) for
             wavelength_bin_center in self.observation.observatory.instrument_parameters.wavelength_bin_centers)) for key
-                                            in self.observation.sources.keys())
+                                             in self.observation.sources.keys())
         self.intensity_response_pairs = self.observation.observatory.beam_combination_scheme.get_intensity_response_pairs()
 
     def _get_differential_intensity_responses(self,
@@ -161,7 +161,7 @@ class Processor():
                             self.observation.observatory.instrument_parameters.wavelength_bin_widths[
                                 index_wavelength],
                             intensity_response=intensity_responses[pair_of_indices[1]])
-                        self.photon_rate_time_series[source.name][wavelength][index_pair][
+                        self.photon_count_time_series[source.name][wavelength][index_pair][
                             index_time] = photon_counts_at_one_output - photon_counts_at_other_output
 
                         if self.animator and (
@@ -171,8 +171,8 @@ class Processor():
                             self.animator.update_collector_position(time, self.observation)
                             self.animator.update_differential_intensity_response(
                                 intensity_responses[pair_of_indices[0]] - intensity_responses[pair_of_indices[1]])
-                            self.animator.update_photon_rate(
-                                self.photon_rate_time_series[source.name][wavelength][index_pair][
+                            self.animator.update_photon_counts(
+                                self.photon_count_time_series[source.name][wavelength][index_pair][
                                     index_time], index_time)
                             self.animator.writer.grab_frame()
 

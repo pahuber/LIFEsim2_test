@@ -18,17 +18,17 @@ simulation.load_config(path_to_config_file=path_to_config_file)
 simulation.import_data(type=DataType.PLANETARY_SYSTEM_CONFIGURATION, path_to_data_file=path_to_data_file)
 
 # Create animations during simulation
-simulation.animate(output_path='.', source_name='Earth', wavelength=4.2 * u.um, differential_intensity_response_index=0,
-                   photon_rate_limits=0.2, collector_position_limits=100)
+simulation.animate(output_path='.', source_name='Earth', wavelength=10 * u.um, differential_intensity_response_index=0,
+                   photon_counts_limits=4000, collector_position_limits=50, image_vmin=-4, image_vmax=4)
 
 # Run simulation
 simulation.run()
 
 # Extract total photon rate time series for ~10 um and plot them
-photon_rate_time_series_total, closest_wavelength = simulation.output.get_total_photon_rate_time_series(10 * u.um)
+photon_rate_time_series_total, closest_wavelength = simulation.output.get_total_photon_count_time_series(10 * u.um)
 plt.plot(photon_rate_time_series_total, 'b-o', label=f'Total')
 plt.plot(simulation.output.get_photon_rate_time_series_for_source('Earth', 10 * u.um)[0], color='r',
-         label=f'Earth 10 um')
+         label=f'Earth {closest_wavelength}')
 plt.ylabel('Photon Counts')
 plt.xlabel('Time')
 plt.legend()

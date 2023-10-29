@@ -60,8 +60,8 @@ class Simulation():
     def _finish_run(self):
         """Finish the run by calculating the total photon rate time series.
         """
-        self.output.photon_rate_time_series = self.processor.photon_rate_time_series
-        self.output._calculate_total_photon_rate_time_series()
+        self.output.photon_count_time_series = self.processor.photon_count_time_series
+        self.output._calculate_total_photon_count_time_series()
 
     def _initialize_array_configuration_from_config(self) -> ArrayConfiguration:
         """Return an ArrayConfiguration object.
@@ -148,7 +148,7 @@ class Simulation():
                 differential_intensity_response_index: int,
                 image_vmin: float = -1,
                 image_vmax: float = 1,
-                photon_rate_limits: float = 0.1,
+                photon_counts_limits: float = 0.1,
                 collector_position_limits: float = 50):
         """Initiate the animator object and set its attributes accordingly.
 
@@ -158,14 +158,14 @@ class Simulation():
         :param differential_intensity_response_index: Index specifying which of the differential outputs to animate
         :param image_vmin: Minimum value of the colormap
         :param image_vmax: Maximum value of the colormap
-        :param photon_rate_limits: Limits of the photon rate plot
+        :param photon_counts_limits: Limits of the photon counts plot
         :param collector_position_limits: Limits of the collector position plot
         """
         closest_wavelength = self.observation.observatory.instrument_parameters.wavelength_bin_centers[
             get_index_of_closest_value(self.observation.observatory.instrument_parameters.wavelength_bin_centers,
                                        wavelength)]
         self.animator = Animator(output_path, source_name, closest_wavelength, differential_intensity_response_index,
-                                 image_vmin, image_vmax, photon_rate_limits, collector_position_limits)
+                                 image_vmin, image_vmax, photon_counts_limits, collector_position_limits)
 
     def import_data(self, type: DataType, path_to_data_file: str):
         """Import the data of a specific type.
