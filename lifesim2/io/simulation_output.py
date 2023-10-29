@@ -26,11 +26,23 @@ class SimulationOutput():
         self.number_of_differential_intensity_responses = number_of_differential_intensity_responses
         self.number_of_time_steps = number_of_time_steps
         self.wavelength_bin_centers = wavelength_bin_centers
+        self.sources = sources
         self.photon_count_time_series = None
         self.photon_count_time_series_total = dict((wavelength_bin_center, np.zeros(
             (number_of_differential_intensity_responses, number_of_time_steps), dtype=float) * u.ph) for
                                                    wavelength_bin_center
                                                    in wavelength_bin_centers)
+        self.photon_counts_per_wavelength_bin = dict((sources[key].name, dict(
+            (wavelength_bin_center,
+             np.zeros(len(wavelength_bin_centers), dtype=int) * u.ph) for
+            wavelength_bin_center in wavelength_bin_centers)) for key
+                                                     in sources.keys())
+
+    def _calculate_photon_counts_per_wavelength_bin(self):
+        for source_name in self.sources.keys():
+            for wavelength in self.wavelength_bin_centers:
+                self.photon_counts_per_wavelength_bin[source_name][wavelength] = np.sum(np.abs(
+                    self.photon_count_time_series[source_name][wavelength]))
 
     def _calculate_total_photon_count_time_series(self):
         """Calculate the total photon count time series by summing the photon rates of all sources.

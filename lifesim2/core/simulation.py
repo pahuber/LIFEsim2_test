@@ -62,6 +62,7 @@ class Simulation():
         """
         self.output.photon_count_time_series = self.processor.photon_count_time_series
         self.output._calculate_total_photon_count_time_series()
+        self.output._calculate_photon_counts_per_wavelength_bin()
 
     def _initialize_array_configuration_from_config(self) -> ArrayConfiguration:
         """Return an ArrayConfiguration object.
