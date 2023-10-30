@@ -1,6 +1,7 @@
 from typing import Tuple
 
 import astropy.units
+import matplotlib
 import numpy as np
 from astropy import units as u
 from matplotlib import pyplot as plt
@@ -90,24 +91,29 @@ class SimulationOutput():
             differential_intensity_response_index], np.round(closest_wavelength, 1)
 
     def plot_photon_count_time_series(self,
-                                      source_name: str,
+                                      source_names: list[str],
                                       wavelength: astropy.units.Quantity,
+                                      plot_total_counts: bool = True,
                                       differential_intensity_response_index: int = 0):
         """Plot the photon count time series for the total signal and for an additional source at a given wavelength.
 
-        :param source_name: Name of the source
+        :param source_names: Names of the sources to plot
         :param wavelength: Wavelength to return the time series for
+        :param plot_total_counts: Whether or notthe total photon counts should be plotted as well
         :param differential_intensity_response_index: Index describing for which of the potentially multiple
         differential intensity responses the photon rates should be returned
         """
         photon_rate_time_series_total, closest_wavelength = self.get_total_photon_count_time_series(wavelength,
                                                                                                     differential_intensity_response_index)
         labels = (int(label.to(u.h).value) for label in self.time_range[::10])
-        plt.plot(photon_rate_time_series_total, 'b-o', label=f'Total')
-        plt.plot(self.get_photon_count_time_series_for_source(source_name, wavelength,
-                                                              differential_intensity_response_index)[0],
-                 'r-o',
-                 label=f'{source_name} at {closest_wavelength}')
+        matplotlib.rcParams['axes.prop_cycle'] = matplotlib.cycler(color=["r", "k", "c"])
+        if plot_total_counts:
+            plt.plot(photon_rate_time_series_total, 'b-o', label=f'Total')
+        for source_name in source_names:
+            plt.plot(self.get_photon_count_time_series_for_source(source_name, wavelength,
+                                                                  differential_intensity_response_index)[0],
+                     '-o',
+                     label=f'{source_name} at {closest_wavelength}')
         plt.title('Photon Count Time Series')
         plt.ylabel('Photon Counts')
         plt.xlabel('Time (h)')
