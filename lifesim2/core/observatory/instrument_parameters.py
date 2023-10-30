@@ -13,9 +13,10 @@ class InstrumentParameters(BaseModel):
     """Class representation of instrument parameters.
     """
     aperture_diameter: Any
+    spectral_resolving_power: int
     wavelength_range_lower_limit: Any
     wavelength_range_upper_limit: Any
-    spectral_resolving_power: int
+    unperturbed_instrument_throughput: float
     field_of_view: Any = None
 
     @field_validator('aperture_diameter')
