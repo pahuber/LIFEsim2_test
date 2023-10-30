@@ -16,7 +16,10 @@ simulation:
     local_zodi_leakage: false
     exozodi_leakage: false
     fiber_injection_variability: false
-    optical_path_difference_variability: false
+    optical_path_difference_variability:
+      apply: true
+      power_law_exponent: 1
+      rms: 0.1 nm
 # -------------------------------------------
 # Observation Configuration
 # -------------------------------------------
