@@ -1,6 +1,8 @@
+from random import choice
 from typing import Tuple
 
 import astropy
+import colorednoise as cn
 import numpy as np
 from astropy import units as u
 from numpy.random import poisson, normal
@@ -33,6 +35,8 @@ class Processor():
             wavelength_bin_center in self.observation.observatory.instrument_parameters.wavelength_bin_centers)) for key
                                              in self.observation.sources.keys())
         self.intensity_response_pairs = self.observation.observatory.beam_combination_scheme.get_intensity_response_pairs()
+
+        self.phase_difference_distribution = self._get_phase_difference_distribution()
 
     def _get_differential_photon_counts(self,
                                         index_wavelength: int,
@@ -135,19 +139,30 @@ class Processor():
             for index in range(self.observation.observatory.beam_combination_scheme.number_of_inputs):
                 amplitude_factor = 1
                 phase_difference = 0
-                # TODO: Use more realistic distributions
 
+                # TODO: Use more realistic distributions
                 if self.simulation_config.noise_contributions.fiber_injection_variability:
-                    amplitude_factor = np.random.uniform(0.4, 0.6)
-                if self.simulation_config.noise_contributions.optical_path_difference_variability:
-                    phase_difference = np.random.uniform(-1 / 10000 * wavelength.value,
-                                                         1 / 10000 * wavelength.value) * wavelength.unit
+                    amplitude_factor = np.random.uniform(0.7, 0.9)
+                if self.simulation_config.noise_contributions.optical_path_difference_variability.apply:
+                    phase_difference = choice(self.phase_difference_distribution).to(u.um)
 
                 diagonal_of_matrix.append(amplitude_factor * np.exp(2j * np.pi / wavelength * phase_difference))
 
             return np.diag(diagonal_of_matrix)
 
         return np.diag(np.ones(self.observation.observatory.beam_combination_scheme.number_of_inputs))
+
+    def _get_phase_difference_distribution(self) -> np.ndarray:
+        """Return a distribution that phase differences should be drawn from. The distribution is created using a power
+        law as 1/f^exponent.
+
+        :return: The distribution
+        """
+        phase_difference_distribution = cn.powerlaw_psd_gaussian(1, 1000,
+                                                                 1 / self.simulation_config.time_step.to(u.s).value)
+        phase_difference_distribution *= self.simulation_config.noise_contributions.optical_path_difference_variability.rms.value / np.sqrt(
+            np.mean(phase_difference_distribution ** 2))
+        return phase_difference_distribution * self.simulation_config.noise_contributions.optical_path_difference_variability.rms.unit
 
     def _get_photon_counts(self,
                            mean_spectral_flux_density: astropy.units.Quantity,
