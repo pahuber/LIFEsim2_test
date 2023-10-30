@@ -1,3 +1,5 @@
+from typing import Tuple
+
 import astropy
 import numpy as np
 from astropy import units as u
@@ -6,6 +8,7 @@ from tqdm import tqdm
 
 from lifesim2.core.observation import Observation
 from lifesim2.core.simulation import SimulationConfiguration
+from lifesim2.core.sources.source import Source
 from lifesim2.util.animation import Animator
 
 
@@ -31,28 +34,34 @@ class Processor():
                                              in self.observation.sources.keys())
         self.intensity_response_pairs = self.observation.observatory.beam_combination_scheme.get_intensity_response_pairs()
 
-    def _get_differential_intensity_responses(self,
-                                              time,
-                                              wavelength,
-                                              source_sky_coordinate_maps: np.ndarray) -> np.ndarray:
-        """Return an array containing the differential intensity responses (differential virtual transmission maps), given an intensity response
-         vector. For certain beam combination schemes, multiple differential intensity responses exist.
+    def _get_differential_photon_counts(self,
+                                        index_wavelength: int,
+                                        source: Source,
+                                        intensity_responses: np.ndarray,
+                                        pair_of_indices: Tuple) -> astropy.units.Quantity:
+        """Return the differential photon counts for a given wavelength, source and differential intensity response.
 
-        :param time: The time for which the intensity response is calculated
-        :param wavelength: The wavelength for which the intensity response is calculated
-        :param source_sky_coordinate_maps: The sky coordinates of the source for which the intensity response is calculated
-        :return: An array containing the differential intensity responses
+        :param index_wavelength: Index corresponding to the wavelength bin center
+        :param source: Source object
+        :param intensity_responses: Intensity response vector
+        :param pair_of_indices: A pair of indices making up a differential intensity response
+        :return: THe differential photon counts in units  of photons
         """
-        intensity_response_vector = self._get_intensity_responses(time, wavelength, source_sky_coordinate_maps)
-        differential_indices = self.observation.observatory.beam_combination_scheme.get_intensity_response_pairs()
-        differential_intensity_responses = np.zeros(
-            (len(differential_indices), self.simulation_config.grid_size,
-             self.simulation_config.grid_size)) * intensity_response_vector.unit
-        for index_index, index_pair in enumerate(differential_indices):
-            differential_intensity_responses[index_index] = intensity_response_vector[index_pair[0]] - \
-                                                            intensity_response_vector[
-                                                                index_pair[1]]
-        return differential_intensity_responses
+        photon_counts_at_one_output = self._get_photon_counts(
+            mean_spectral_flux_density=source.mean_spectral_flux_density[index_wavelength],
+            source_shape_map=source.shape_map,
+            wavelength_bin_width=
+            self.observation.observatory.instrument_parameters.wavelength_bin_widths[
+                index_wavelength],
+            intensity_response=intensity_responses[pair_of_indices[0]])
+        photon_counts_at_other_output = self._get_photon_counts(
+            mean_spectral_flux_density=source.mean_spectral_flux_density[index_wavelength],
+            source_shape_map=source.shape_map,
+            wavelength_bin_width=
+            self.observation.observatory.instrument_parameters.wavelength_bin_widths[
+                index_wavelength],
+            intensity_response=intensity_responses[pair_of_indices[1]])
+        return photon_counts_at_one_output - photon_counts_at_other_output
 
     def _get_input_complex_amplitude_vector(self,
                                             time: astropy.units.Quantity,
@@ -137,45 +146,6 @@ class Processor():
 
         return np.diag(np.ones(self.observation.observatory.beam_combination_scheme.number_of_inputs))
 
-    def run(self):
-        """Run the main simulation time loop and calculate the photon rates time series.
-        """
-        for index_time, time in enumerate(tqdm(self.simulation_config.time_range)):
-            for index_wavelength, wavelength in enumerate(
-                    self.observation.observatory.instrument_parameters.wavelength_bin_centers):
-                for _, source in self.observation.sources.items():
-                    intensity_responses = self._get_intensity_responses(time, wavelength, source.sky_coordinate_maps)
-
-                    for index_pair, pair_of_indices in enumerate(self.intensity_response_pairs):
-                        photon_counts_at_one_output = self._get_photon_counts(
-                            mean_spectral_flux_density=source.mean_spectral_flux_density[index_wavelength],
-                            source_shape_map=source.shape_map,
-                            wavelength_bin_width=
-                            self.observation.observatory.instrument_parameters.wavelength_bin_widths[
-                                index_wavelength],
-                            intensity_response=intensity_responses[pair_of_indices[0]])
-                        photon_counts_at_other_output = self._get_photon_counts(
-                            mean_spectral_flux_density=source.mean_spectral_flux_density[index_wavelength],
-                            source_shape_map=source.shape_map,
-                            wavelength_bin_width=
-                            self.observation.observatory.instrument_parameters.wavelength_bin_widths[
-                                index_wavelength],
-                            intensity_response=intensity_responses[pair_of_indices[1]])
-                        self.photon_count_time_series[source.name][wavelength][index_pair][
-                            index_time] = photon_counts_at_one_output - photon_counts_at_other_output
-
-                        if self.animator and (
-                                source.name == self.animator.source_name and
-                                wavelength == self.animator.closest_wavelength and
-                                index_pair == self.animator.differential_intensity_response_index):
-                            self.animator.update_collector_position(time, self.observation)
-                            self.animator.update_differential_intensity_response(
-                                intensity_responses[pair_of_indices[0]] - intensity_responses[pair_of_indices[1]])
-                            self.animator.update_photon_counts(
-                                self.photon_count_time_series[source.name][wavelength][index_pair][
-                                    index_time], index_time)
-                            self.animator.writer.grab_frame()
-
     def _get_photon_counts(self,
                            mean_spectral_flux_density: astropy.units.Quantity,
                            source_shape_map: np.ndarray,
@@ -199,3 +169,29 @@ class Processor():
         except ValueError:
             photon_counts = normal(mean_photon_counts, 1)
         return photon_counts * u.ph
+
+    def run(self):
+        """Run the main simulation time loop and calculate the photon rates time series.
+        """
+        for index_time, time in enumerate(tqdm(self.simulation_config.time_range)):
+            for index_wavelength, wavelength in enumerate(
+                    self.observation.observatory.instrument_parameters.wavelength_bin_centers):
+                for _, source in self.observation.sources.items():
+                    intensity_responses = self._get_intensity_responses(time, wavelength, source.sky_coordinate_maps)
+
+                    for index_pair, pair_of_indices in enumerate(self.intensity_response_pairs):
+                        self.photon_count_time_series[source.name][wavelength][index_pair][
+                            index_time] = self._get_differential_photon_counts(index_wavelength, source,
+                                                                               intensity_responses, pair_of_indices)
+
+                        if self.animator and (
+                                source.name == self.animator.source_name and
+                                wavelength == self.animator.closest_wavelength and
+                                index_pair == self.animator.differential_intensity_response_index):
+                            self.animator.update_collector_position(time, self.observation)
+                            self.animator.update_differential_intensity_response(
+                                intensity_responses[pair_of_indices[0]] - intensity_responses[pair_of_indices[1]])
+                            self.animator.update_photon_counts(
+                                self.photon_count_time_series[source.name][wavelength][index_pair][
+                                    index_time], index_time)
+                            self.animator.writer.grab_frame()
