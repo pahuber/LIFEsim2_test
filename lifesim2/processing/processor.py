@@ -139,10 +139,10 @@ class Processor():
             for index in range(self.observation.observatory.beam_combination_scheme.number_of_inputs):
                 amplitude_factor = 1
                 phase_difference = 0
-                
+
                 # TODO: Use more realistic distributions
                 if self.simulation_config.noise_contributions.fiber_injection_variability:
-                    amplitude_factor = np.random.uniform(0.6, 0.8)
+                    amplitude_factor = np.random.uniform(0.7, 0.9)
                 if self.simulation_config.noise_contributions.optical_path_difference_variability.apply:
                     phase_difference = choice(self.phase_difference_distribution).to(u.um)
 

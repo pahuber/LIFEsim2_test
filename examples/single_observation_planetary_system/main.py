@@ -18,7 +18,7 @@ simulation.import_data(type=DataType.PLANETARY_SYSTEM_CONFIGURATION, path_to_dat
 
 # Create animations during simulation
 # simulation.animate(output_path='.', source_name='Earth', wavelength=10 * u.um, differential_intensity_response_index=0,
-#                    photon_counts_limits=100, collector_position_limits=50, image_vmin=-8, image_vmax=8)
+#                    photon_counts_limits=150, collector_position_limits=50, image_vmin=-10, image_vmax=10)
 
 # Run simulation
 simulation.run()
