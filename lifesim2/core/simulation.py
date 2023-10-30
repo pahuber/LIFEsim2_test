@@ -140,7 +140,8 @@ class Simulation():
             self.observation.observatory.beam_combination_scheme.number_of_differential_intensity_responses,
             len(self.config.time_range),
             self.observation.observatory.instrument_parameters.wavelength_bin_centers,
-            self.observation.sources)
+            self.observation.sources,
+            self.config.time_range)
 
     def animate(self,
                 output_path: str,
