@@ -178,12 +178,10 @@ class Processor():
                     self.observation.observatory.instrument_parameters.wavelength_bin_centers):
                 for _, source in self.observation.sources.items():
                     intensity_responses = self._get_intensity_responses(time, wavelength, source.sky_coordinate_maps)
-
                     for index_pair, pair_of_indices in enumerate(self.intensity_response_pairs):
                         self.photon_count_time_series[source.name][wavelength][index_pair][
                             index_time] = self._get_differential_photon_counts(index_wavelength, source,
                                                                                intensity_responses, pair_of_indices)
-
                         if self.animator and (
                                 source.name == self.animator.source_name and
                                 wavelength == self.animator.closest_wavelength and
