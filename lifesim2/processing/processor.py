@@ -105,7 +105,7 @@ class Processor():
                 self.observation.observatory.beam_combination_scheme.number_of_inputs,
                 self.simulation_config.grid_size ** 2))
 
-        perturbation_matrix = self._get_perturbation_matrix()
+        perturbation_matrix = self._get_perturbation_matrix(wavelength)
 
         input_complex_amplitude_perturbed_vector = np.dot(perturbation_matrix,
                                                           input_complex_amplitude_unperturbed_vector)
@@ -121,9 +121,10 @@ class Processor():
 
         return intensity_response_perturbed_vector
 
-    def _get_perturbation_matrix(self) -> np.ndarray:
+    def _get_perturbation_matrix(self, wavelength: astropy.units.Quantity) -> np.ndarray:
         """Return the perturbation matrix with randomly generated noise.
 
+        :param: Wavelength to calculate the phase error for
         :return: The perturbation matrix
         """
         if (self.simulation_config.noise_contributions.fiber_injection_variability
@@ -134,13 +135,15 @@ class Processor():
             for index in range(self.observation.observatory.beam_combination_scheme.number_of_inputs):
                 amplitude_factor = 1
                 phase_difference = 0
+                # TODO: Use more realistic distributions
 
                 if self.simulation_config.noise_contributions.fiber_injection_variability:
                     amplitude_factor = np.random.uniform(0.4, 0.6)
                 if self.simulation_config.noise_contributions.optical_path_difference_variability:
-                    phase_difference = np.random.uniform(-0.0000000001, 0.0000000001)
+                    phase_difference = np.random.uniform(-1 / 10000 * wavelength.value,
+                                                         1 / 10000 * wavelength.value) * wavelength.unit
 
-                diagonal_of_matrix.append(amplitude_factor * np.exp(1j * phase_difference))
+                diagonal_of_matrix.append(amplitude_factor * np.exp(2j * np.pi / wavelength * phase_difference))
 
             return np.diag(diagonal_of_matrix)
 
