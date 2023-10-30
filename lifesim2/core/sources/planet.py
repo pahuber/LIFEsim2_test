@@ -3,6 +3,7 @@ from typing import Any, Tuple
 import astropy
 import numpy as np
 from astropy import units as u
+from numpy.random import poisson
 from pydantic import field_validator
 from pydantic_core.core_schema import ValidationInfo
 
@@ -22,7 +23,7 @@ class Planet(Source):
     star_distance: Any
     number_of_wavelength_bins: int
     grid_size: int
-    flux: Any = None
+    mean_spectral_flux_density: Any = None
 
     @field_validator('radius')
     def validate_radius(cls, value: Any, info: ValidationInfo) -> astropy.units.Quantity:
@@ -95,3 +96,9 @@ class Planet(Source):
 
         position_map[index_y][index_x] = 1
         return position_map
+
+    def get_spectral_flux_density(self) -> np.ndarray:
+        spectral_flux_density = np.zeros(self.mean_spectral_flux_density.shape, dtype=float)
+        for index_mean, mean_spectral_flux_density in enumerate(self.mean_spectral_flux_density):
+            spectral_flux_density[index_mean] = poisson(lam=mean_spectral_flux_density.value, size=1)
+        return spectral_flux_density

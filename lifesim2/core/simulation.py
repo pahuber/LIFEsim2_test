@@ -60,8 +60,9 @@ class Simulation():
     def _finish_run(self):
         """Finish the run by calculating the total photon rate time series.
         """
-        self.output.photon_rate_time_series = self.processor.photon_rate_time_series
-        self.output._calculate_total_photon_rate_time_series()
+        self.output.photon_count_time_series = self.processor.photon_count_time_series
+        self.output._calculate_total_photon_count_time_series()
+        self.output._calculate_photon_counts_per_wavelength_bin()
 
     def _initialize_array_configuration_from_config(self) -> ArrayConfiguration:
         """Return an ArrayConfiguration object.
@@ -122,12 +123,12 @@ class Simulation():
                             number_of_wavelength_bins=len(
                                 self.observation.observatory.instrument_parameters.wavelength_bin_centers),
                             grid_size=self.config.grid_size)
-            planet.flux = create_blackbody_spectrum(planet.temperature,
-                                                    self.observation.observatory.instrument_parameters.wavelength_range_lower_limit,
-                                                    self.observation.observatory.instrument_parameters.wavelength_range_upper_limit,
-                                                    self.observation.observatory.instrument_parameters.wavelength_bin_centers,
-                                                    self.observation.observatory.instrument_parameters.wavelength_bin_widths,
-                                                    planet.solid_angle)
+            planet.mean_spectral_flux_density = create_blackbody_spectrum(planet.temperature,
+                                                                          self.observation.observatory.instrument_parameters.wavelength_range_lower_limit,
+                                                                          self.observation.observatory.instrument_parameters.wavelength_range_upper_limit,
+                                                                          self.observation.observatory.instrument_parameters.wavelength_bin_centers,
+                                                                          self.observation.observatory.instrument_parameters.wavelength_bin_widths,
+                                                                          planet.solid_angle)
             self.observation.sources[planet.name] = planet
 
     def _prepare_run(self):
@@ -139,7 +140,8 @@ class Simulation():
             self.observation.observatory.beam_combination_scheme.number_of_differential_intensity_responses,
             len(self.config.time_range),
             self.observation.observatory.instrument_parameters.wavelength_bin_centers,
-            self.observation.sources)
+            self.observation.sources,
+            self.config.time_range)
 
     def animate(self,
                 output_path: str,
@@ -148,7 +150,7 @@ class Simulation():
                 differential_intensity_response_index: int,
                 image_vmin: float = -1,
                 image_vmax: float = 1,
-                photon_rate_limits: float = 0.1,
+                photon_counts_limits: float = 0.1,
                 collector_position_limits: float = 50):
         """Initiate the animator object and set its attributes accordingly.
 
@@ -158,14 +160,14 @@ class Simulation():
         :param differential_intensity_response_index: Index specifying which of the differential outputs to animate
         :param image_vmin: Minimum value of the colormap
         :param image_vmax: Maximum value of the colormap
-        :param photon_rate_limits: Limits of the photon rate plot
+        :param photon_counts_limits: Limits of the photon counts plot
         :param collector_position_limits: Limits of the collector position plot
         """
         closest_wavelength = self.observation.observatory.instrument_parameters.wavelength_bin_centers[
             get_index_of_closest_value(self.observation.observatory.instrument_parameters.wavelength_bin_centers,
                                        wavelength)]
         self.animator = Animator(output_path, source_name, closest_wavelength, differential_intensity_response_index,
-                                 image_vmin, image_vmax, photon_rate_limits, collector_position_limits)
+                                 image_vmin, image_vmax, photon_counts_limits, collector_position_limits)
 
     def import_data(self, type: DataType, path_to_data_file: str):
         """Import the data of a specific type.

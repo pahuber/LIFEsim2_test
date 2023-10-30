@@ -3,6 +3,7 @@ from typing import Any, Tuple
 import astropy
 import numpy as np
 from astropy import units as u
+from numpy.random import poisson
 from pydantic import field_validator
 from pydantic_core.core_schema import ValidationInfo
 
@@ -34,12 +35,12 @@ class Star(Source):
         :param data: Data to initialize the star class.
         """
         super().__init__(**data)
-        self.flux = create_blackbody_spectrum(self.temperature,
-                                              self.wavelength_range_lower_limit,
-                                              self.wavelength_range_upper_limit,
-                                              self.wavelength_bin_centers,
-                                              self.wavelength_bin_widths,
-                                              self.solid_angle)
+        self.mean_spectral_flux_density = create_blackbody_spectrum(self.temperature,
+                                                                    self.wavelength_range_lower_limit,
+                                                                    self.wavelength_range_upper_limit,
+                                                                    self.wavelength_bin_centers,
+                                                                    self.wavelength_bin_widths,
+                                                                    self.solid_angle)
 
     @field_validator('radius')
     def validate_radius(cls, value: Any, info: ValidationInfo) -> astropy.units.Quantity:
@@ -133,3 +134,9 @@ class Star(Source):
 
     def get_shape_map(self) -> np.ndarray:
         return (np.sqrt(self.sky_coordinate_maps[0] ** 2 + self.sky_coordinate_maps[1] ** 2) <= self.angular_radius)
+
+    def get_spectral_flux_density(self) -> np.ndarray:
+        spectral_flux_density = np.zeros(self.mean_spectral_flux_density.shape, dtype=float)
+        for index_mean, mean_spectral_flux_density in enumerate(self.mean_spectral_flux_density):
+            spectral_flux_density[index_mean] = poisson(lam=mean_spectral_flux_density.value, size=1)
+        return spectral_flux_density

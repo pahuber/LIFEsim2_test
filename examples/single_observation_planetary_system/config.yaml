@@ -15,8 +15,8 @@ simulation:
     stellar_leakage: true
     local_zodi_leakage: false
     exozodi_leakage: false
-    fiber_injection_variability: true
-    optical_path_difference_variability: true
+    fiber_injection_variability: false
+    optical_path_difference_variability: false
 # -------------------------------------------
 # Observation Configuration
 # -------------------------------------------
@@ -37,7 +37,8 @@ observatory:
   beam_combination_scheme: double-bracewell
   instrument_parameters:
     aperture_diameter: 4 m
+    spectral_resolving_power: 20
     wavelength_range_lower_limit: 4 um
     wavelength_range_upper_limit: 18 um
-    spectral_resolving_power: 20
+    unperturbed_instrument_throughput: 0.05
 ...

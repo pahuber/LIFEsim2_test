@@ -18,7 +18,7 @@ class Source(ABC, BaseModel):
     name: str
     temperature: Any
 
-    flux: Any = None
+    mean_spectral_flux_density: Any = None
 
     @field_validator('temperature')
     def validate_temperature(cls, value: Any, info: ValidationInfo) -> astropy.units.Quantity:
@@ -61,5 +61,13 @@ class Source(ABC, BaseModel):
         """Return the shape map of the planets. Consists of zero everywhere, but at the planet position, where it is one.
 
         :return: The shape map
+        """
+        pass
+
+    @abstractmethod
+    def get_spectral_flux_density(self) -> np.ndarray:
+        """Return an array containing the spectral flux density per wavelength bin. This should include photon noise.
+
+        :return: An array containing the spectral flux density including photon noise
         """
         pass
