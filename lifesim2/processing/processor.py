@@ -190,7 +190,9 @@ class Processor():
         :return: Photon counts in units of photons
         """
         mean_photon_counts = np.sum((mean_spectral_flux_density * source_shape_map * wavelength_bin_width
-                                     * intensity_response * self.simulation_config.time_step.to(u.s)).value)
+                                     * intensity_response
+                                     * self.observation.observatory.instrument_parameters.unperturbed_instrument_throughput
+                                     * self.simulation_config.time_step.to(u.s)).value)
 
         try:
             photon_counts = poisson(mean_photon_counts, 1)
