@@ -24,23 +24,4 @@ simulation.import_data(type=DataType.PLANETARY_SYSTEM_CONFIGURATION, path_to_dat
 simulation.run()
 
 # Plot the photon count time series for the total signal and for Earth at 10 um
-simulation.output.plot_photon_count_time_series('Earth', 10 * u.um)
-
-# SNR
-# photon_counts_signal = simulation.output.get_photon_count_time_series_for_source('Earth', 10 * u.um)
-# photon_counts_noise = simulation.output.get_photon_count_time_series_for_source('Sun', 10 * u.um)
-#
-# signal = []
-# noise = []
-# for wavelength in simulation.observation.observatory.instrument_parameters.wavelength_bin_centers:
-#     signal.append(simulation.output.photon_counts_per_wavelength_bin['Earth'][wavelength].value)
-#     noise.append(simulation.output.photon_counts_per_wavelength_bin['Sun'][wavelength].value)
-# plt.step(range(len(simulation.observation.observatory.instrument_parameters.wavelength_bin_centers)),
-#          signal, label="Earth")
-# plt.step(range(len(simulation.observation.observatory.instrument_parameters.wavelength_bin_centers)),
-#          noise, label="Sun")
-# plt.step(range(len(simulation.observation.observatory.instrument_parameters.wavelength_bin_centers)),
-#          np.array(signal) / np.array(noise), label="SNR")
-# plt.legend()
-#
-# plt.show()
+simulation.output.plot_photon_count_time_series(['Earth'], 10 * u.um, plot_total_counts=True)
