@@ -8,8 +8,6 @@ from astropy import units as u
 from matplotlib import pyplot as plt
 from scipy.optimize import curve_fit
 
-from lifesim2.core.simulation.simulation import Simulation
-
 
 class DataProcessingMode(Enum):
     PHOTON_STATISTICS = 1
@@ -17,8 +15,8 @@ class DataProcessingMode(Enum):
 
 
 class DataProcessor():
-    def __init__(self, simulation: Simulation):
-        self.simulation = simulation
+    def __init__(self, photon_count_time_series):
+        self.photon_count_time_series = photon_count_time_series
 
     def plot_photon_count_time_series(self,
                                       source_names: list[str],

@@ -1,5 +1,3 @@
-from astropy import units as u
-
 from lifesim2.core.data_generation.data_generator import DataGenerator
 from lifesim2.core.data_processing.data_processor import DataProcessor
 from lifesim2.core.simulation.simulation import Simulation, SimulationMode
@@ -23,12 +21,5 @@ data_generator = DataGenerator(simulation=simulation, simulation_mode=Simulation
 data_generator.run()
 data_generator.save_to_fits(output_path=output_path)
 
-# Create data processor object for processing and analysis of synthetic data
+# Create data processor object for processing of synthetic data
 data_processor = DataProcessor(photon_count_time_series=data_generator.output.photon_count_time_series)
-data_processor.calibrate_data()
-
-# Plot the photon count time series for the total signal and for Earth at 10 um
-data_processor.plot_photon_count_time_series(['Earth'], 10 * u.um, plot_total_counts=True, time_units=u.d)
-
-# Plot the photon statistics-based SNR
-data_processor.plot_total_signal_to_noise_ratio_vs_time()
