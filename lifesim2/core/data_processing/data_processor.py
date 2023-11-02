@@ -10,13 +10,22 @@ from scipy.optimize import curve_fit
 
 
 class DataProcessingMode(Enum):
+    """Class representation of the data processing mode.
+    """
     PHOTON_STATISTICS = 1
     EXTRACTION = 2
 
 
 class DataProcessor():
-    def __init__(self, photon_count_time_series):
-        self.photon_count_time_series = photon_count_time_series
+    """Class representation of the data processor.
+    """
+
+    def __init__(self, differential_photon_counts):
+        """Constructor method.
+
+        :param differential_photon_counts: The differential photon counts
+        """
+        self.differential_photon_counts = differential_photon_counts
 
     def plot_photon_count_time_series(self,
                                       source_names: list[str],

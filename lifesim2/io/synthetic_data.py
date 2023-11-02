@@ -14,13 +14,13 @@ class SyntheticData():
                  number_of_differential_intensity_responses: int,
                  number_of_time_steps: int):
         self.wavelength_bin_centers = wavelength_bin_centers
-        self.photon_count_time_series = dict(
+        self.differential_photon_counts = dict(
             (index_response,
              dict((wavelength_bin_center, np.zeros(number_of_time_steps, dtype=float) * u.ph) for wavelength_bin_center
                   in
                   wavelength_bin_centers)) for index_response in
             range(number_of_differential_intensity_responses))
-        self.photon_count_time_series_by_source = dict(
+        self.differential_photon_counts_by_source = dict(
             (index_response, dict((sources[key].name, dict((wavelength_bin_center, np.zeros(
                 number_of_time_steps, dtype=float) * u.ph) for
                                                            wavelength_bin_center in
@@ -41,7 +41,7 @@ class SyntheticData():
         """
         index_of_closest_wavelength = get_index_of_closest_value(self.wavelength_bin_centers, wavelength)
         closest_wavelength = self.wavelength_bin_centers[index_of_closest_wavelength]
-        return self.photon_count_time_series[closest_wavelength][
+        return self.differential_photon_counts[closest_wavelength][
             differential_intensity_response_index], np.round(
             closest_wavelength, 1)
 
@@ -60,5 +60,5 @@ class SyntheticData():
         """
         index_of_closest_wavelength = get_index_of_closest_value(self.wavelength_bin_centers, wavelength)
         closest_wavelength = self.wavelength_bin_centers[index_of_closest_wavelength]
-        return self.photon_count_time_series_by_source[source_name][closest_wavelength][
+        return self.differential_photon_counts_by_source[source_name][closest_wavelength][
             differential_intensity_response_index], np.round(closest_wavelength, 1)
