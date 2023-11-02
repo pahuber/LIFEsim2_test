@@ -192,7 +192,8 @@ class DataGenerator():
                 if self.simulation.config.noise_contributions.fiber_injection_variability:
                     amplitude_factor = np.random.uniform(0.8, 0.9)
                 if self.simulation.config.noise_contributions.optical_path_difference_variability.apply:
-                    phase_difference = choice(self.phase_difference_distribution).to(u.um)
+                    phase_difference = choice(
+                        self.simulation.config.noise_contributions.optical_path_difference_distribution).to(u.um)
 
                 diagonal_of_matrix.append(amplitude_factor * np.exp(2j * np.pi / wavelength * phase_difference))
 

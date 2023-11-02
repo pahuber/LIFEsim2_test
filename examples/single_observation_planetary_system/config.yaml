@@ -15,9 +15,9 @@ simulation:
     stellar_leakage: true
     local_zodi_leakage: false
     exozodi_leakage: false
-    fiber_injection_variability: false
+    fiber_injection_variability: true
     optical_path_difference_variability:
-      apply: false
+      apply: true
       power_law_exponent: 1
       rms: 0.1 nm
 # -------------------------------------------
