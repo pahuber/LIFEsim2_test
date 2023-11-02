@@ -30,10 +30,12 @@ class DataGenerator():
     def _create_animation(self):
         """Prepare the animation writer and run the time loop.
         """
-        self.animator.prepare_animation_writer(self.observation, self.config.time_range, self.config.grid_size)
-        with self.animator.writer.saving(self.animator.figure,
-                                         f'{self.animator.source_name}_{np.round(self.animator.closest_wavelength.to(u.um).value, 3)}um.gif',
-                                         300):
+        self.simulation.animator.prepare_animation_writer(self.simulation.observation,
+                                                          self.simulation.config.time_range,
+                                                          self.simulation.config.grid_size)
+        with self.simulation.animator.writer.saving(self.simulation.animator.figure,
+                                                    f'{self.simulation.animator.source_name}_{np.round(self.simulation.animator.closest_wavelength.to(u.um).value, 3)}um.gif',
+                                                    300):
             self._generate_photon_count_time_series()
 
     def _finalize_data_generation(self):
@@ -57,17 +59,17 @@ class DataGenerator():
                         self.output.photon_count_time_series_by_source[source.name][wavelength][index_pair][
                             index_time] = self._get_differential_photon_counts(index_wavelength, source,
                                                                                intensity_responses, pair_of_indices)
-                        # if self.animator and (
-                        #         source.name == self.animator.source_name and
-                        #         wavelength == self.animator.closest_wavelength and
-                        #         index_pair == self.animator.differential_intensity_response_index):
-                        #     self.animator.update_collector_position(time, self.observation)
-                        #     self.animator.update_differential_intensity_response(
-                        #         intensity_responses[pair_of_indices[0]] - intensity_responses[pair_of_indices[1]])
-                        #     self.animator.update_photon_counts(
-                        #         self.photon_count_time_series[source.name][wavelength][index_pair][
-                        #             index_time], index_time)
-                        #     self.animator.writer.grab_frame()
+                        if self.simulation.animator and (
+                                source.name == self.simulation.animator.source_name and
+                                wavelength == self.simulation.animator.closest_wavelength and
+                                index_pair == self.simulation.animator.differential_intensity_response_index):
+                            self.simulation.animator.update_collector_position(time, self.simulation.observation)
+                            self.simulation.animator.update_differential_intensity_response(
+                                intensity_responses[pair_of_indices[0]] - intensity_responses[pair_of_indices[1]])
+                            self.simulation.animator.update_photon_counts(
+                                self.output.photon_count_time_series_by_source[source.name][wavelength][index_pair][
+                                    index_time], index_time)
+                            self.simulation.animator.writer.grab_frame()
 
     def _get_differential_photon_counts(self,
                                         index_wavelength: int,
@@ -220,8 +222,8 @@ class DataGenerator():
         """Prepare the data generation, generate the data and finalize the data generation.
         """
         self._prepare_data_generation()
-        # if self.animator:
-        #     self._create_animation()
-        # else:
-        self._generate_photon_count_time_series()
+        if self.simulation.animator:
+            self._create_animation()
+        else:
+            self._generate_photon_count_time_series()
         self._finalize_data_generation()
