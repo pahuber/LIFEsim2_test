@@ -1,6 +1,8 @@
 from typing import Any, Optional
 
 import astropy
+import colorednoise as cn
+import numpy as np
 from astropy import units as u
 from pydantic import BaseModel, field_validator
 from pydantic_core.core_schema import ValidationInfo
@@ -32,3 +34,16 @@ class NoiseContributions(BaseModel):
     exozodi_leakage: bool
     fiber_injection_variability: bool
     optical_path_difference_variability: Optional[OpticalPathDifferenceVariability]
+    optical_path_difference_distribution: Any = None
+
+    def get_optical_path_difference_distribution(self, time_step: astropy.units.Quantity) -> np.ndarray:
+        """Return a distribution that phase differences should be drawn from. The distribution is created using a power
+        law as 1/f^exponent.
+
+        :param time_step: The time step used to calculate the maximum frequency
+        :return: The distribution
+        """
+        phase_difference_distribution = cn.powerlaw_psd_gaussian(1, 1000, 1 / time_step.to(u.s).value)
+        phase_difference_distribution *= self.optical_path_difference_variability.rms.value / np.sqrt(
+            np.mean(phase_difference_distribution ** 2))
+        self.optical_path_difference_distribution = phase_difference_distribution * self.optical_path_difference_variability.rms.unit

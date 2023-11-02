@@ -10,14 +10,14 @@
 # -------------------------------------------
 simulation:
   grid_size: 80
-  time_step: 10 min
+  time_step: 5 min
   noise_contributions:
     stellar_leakage: true
     local_zodi_leakage: false
     exozodi_leakage: false
     fiber_injection_variability: false
     optical_path_difference_variability:
-      apply: true
+      apply: false
       power_law_exponent: 1
       rms: 0.1 nm
 # -------------------------------------------
@@ -25,7 +25,7 @@ simulation:
 # -------------------------------------------
 observation:
   adjust_baseline_to_habitable_zone: true
-  integration_time: 1 d
+  integration_time: 10 h
   optimized_wavelength: 10 um
 # -------------------------------------------
 # Observatory Configuration
@@ -36,7 +36,7 @@ observatory:
     baseline_maximum: 600 m
     baseline_minimum: 8 m
     baseline_ratio: 6
-    modulation_period: 1 d
+    modulation_period: 10 h
   beam_combination_scheme: double-bracewell
   instrument_parameters:
     aperture_diameter: 4 m
