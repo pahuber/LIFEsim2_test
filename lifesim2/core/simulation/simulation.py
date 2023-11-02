@@ -1,68 +1,80 @@
 from enum import Enum
+from typing import Any, Optional
 
 import astropy
 import numpy as np
 from astropy import units as u
+from pydantic import BaseModel, field_validator
+from pydantic_core.core_schema import ValidationInfo
 
-from lifesim2.core.observation import Observation
-from lifesim2.core.observatory.array_configurations import ArrayConfigurationEnum, EmmaXCircularRotation, \
+from lifesim2.core.simulation.noise_contributions import NoiseContributions
+from lifesim2.core.simulation.observation import Observation
+from lifesim2.core.simulation.observatory.array_configurations import ArrayConfigurationEnum, EmmaXCircularRotation, \
     EmmaXDoubleStretch, EquilateralTriangleCircularRotation, RegularPentagonCircularRotation, ArrayConfiguration
-from lifesim2.core.observatory.beam_combination_schemes import BeamCombinationSchemeEnum, DoubleBracewell, \
+from lifesim2.core.simulation.observatory.beam_combination_schemes import BeamCombinationSchemeEnum, DoubleBracewell, \
     Kernel3, \
     Kernel4, Kernel5, BeamCombinationScheme
-from lifesim2.core.observatory.instrument_parameters import InstrumentParameters
-from lifesim2.core.observatory.observatory import Observatory
-from lifesim2.core.simulation_configuration import SimulationConfiguration
-from lifesim2.core.sources.planet import Planet
-from lifesim2.core.sources.star import Star
+from lifesim2.core.simulation.observatory.instrument_parameters import InstrumentParameters
+from lifesim2.core.simulation.observatory.observatory import Observatory
+from lifesim2.core.simulation.sources.planet import Planet
+from lifesim2.core.simulation.sources.star import Star
 from lifesim2.io.config_reader import ConfigReader
 from lifesim2.io.data_type import DataType
-from lifesim2.io.simulation_output import SimulationOutput
-from lifesim2.processing.processor import Processor
+from lifesim2.io.validators import validate_quantity_units
 from lifesim2.util.animation import Animator
 from lifesim2.util.blackbody import create_blackbody_spectrum
 from lifesim2.util.grid import get_index_of_closest_value
+
+
+class SimulationConfiguration(BaseModel):
+    """Class representation of the simulation configurations.
+
+    """
+    grid_size: int
+    time_step: Any
+    noise_contributions: Optional[NoiseContributions]
+    time_range: Any = None
+
+    def __init__(self, **data):
+        """Constructor method.
+
+        :param data: Data to initialize the star class.
+        """
+        super().__init__(**data)
+        self.noise_contributions.get_optical_path_difference_distribution(self.time_step)
+
+    @field_validator('time_step')
+    def validate_time_step(cls, value: Any, info: ValidationInfo) -> astropy.units.Quantity:
+        """Validate the time step input.
+
+        :param value: Value given as input
+        :param info: ValidationInfo object
+        :return: The time step in units of time
+        """
+        return validate_quantity_units(value=value, field_name=info.field_name, unit_equivalency=u.s)
 
 
 class SimulationMode(Enum):
     """Enum to represent the different simulation modes.
     """
     SINGLE_OBSERVATION = 1
-    YIELD_ESTIMATE = 2
+    YIELD_CALCULATIONS = 2
 
 
 class Simulation():
     """Class representation of a simulation. This is the main object of this simulator.
     """
 
-    def __init__(self, mode: SimulationMode):
+    def __init__(self):
         """Constructor method.
 
         :param mode: Mode of the simulation. Determines which kinds of calculations are done and what results are
                      produced
         """
-        self.mode = mode
         self._config_dict = None
         self.animator = None
         self.config = None
         self.observation = None
-        self.processor = None
-
-    def _create_animation(self):
-        """Prepare the animation writer and run the time loop.
-        """
-        self.animator.prepare_animation_writer(self.observation, self.config.time_range, self.config.grid_size)
-        with self.animator.writer.saving(self.animator.figure,
-                                         f'{self.animator.source_name}_{np.round(self.animator.closest_wavelength.to(u.um).value, 3)}um.gif',
-                                         300):
-            self.processor.run()
-
-    def _finish_run(self):
-        """Finish the run by calculating the total photon rate time series.
-        """
-        self.output.photon_count_time_series = self.processor.photon_count_time_series
-        self.output._calculate_total_photon_count_time_series()
-        self.output._calculate_photon_counts_per_wavelength_bin()
 
     def _initialize_array_configuration_from_config(self) -> ArrayConfiguration:
         """Return an ArrayConfiguration object.
@@ -131,27 +143,15 @@ class Simulation():
                                                                           planet.solid_angle)
             self.observation.sources[planet.name] = planet
 
-    def _prepare_run(self):
-        """Prepare the main simulation run.
-        """
-        self.processor = Processor(self.config, self.observation, self.animator)
-        self.observation.set_optimal_baseline()
-        self.output = SimulationOutput(
-            self.observation.observatory.beam_combination_scheme.number_of_differential_intensity_responses,
-            len(self.config.time_range),
-            self.observation.observatory.instrument_parameters.wavelength_bin_centers,
-            self.observation.sources,
-            self.config.time_range)
-
-    def animate(self,
-                output_path: str,
-                source_name: str,
-                wavelength: astropy.units.Quantity,
-                differential_intensity_response_index: int,
-                image_vmin: float = -1,
-                image_vmax: float = 1,
-                photon_counts_limits: float = 0.1,
-                collector_position_limits: float = 50):
+    def add_animator(self,
+                     output_path: str,
+                     source_name: str,
+                     wavelength: astropy.units.Quantity,
+                     differential_intensity_response_index: int,
+                     image_vmin: float = -1,
+                     image_vmax: float = 1,
+                     photon_counts_limits: float = 0.1,
+                     collector_position_limits: float = 50):
         """Initiate the animator object and set its attributes accordingly.
 
         :param output_path: Output path for the animation file
@@ -169,14 +169,14 @@ class Simulation():
         self.animator = Animator(output_path, source_name, closest_wavelength, differential_intensity_response_index,
                                  image_vmin, image_vmax, photon_counts_limits, collector_position_limits)
 
-    def import_data(self, type: DataType, path_to_data_file: str):
-        """Import the data of a specific type.
+    def load_sources(self, data_type: DataType, path_to_data_file: str):
+        """Add the data of a specific type.
 
-        :param type: Type of the data
+        :param data_type: Type of the data
         :param path_to_data_file: Path to the data file
         """
 
-        match type:
+        match data_type:
             case DataType.PLANETARY_SYSTEM_CONFIGURATION:
                 self._initialize_sources_from_planetary_system_configuration(path_to_data_file=path_to_data_file)
             case DataType.SPECTRUM_DATA:
@@ -204,13 +204,3 @@ class Simulation():
             **self._config_dict['observatory']['instrument_parameters'])
         self.config.time_range = np.arange(0, self.observation.integration_time.to(
             u.s).value, self.config.time_step.to(u.s).value) * u.s
-
-    def run(self):
-        """Prepare and run the main simulation.
-        """
-        self._prepare_run()
-        if self.animator:
-            self._create_animation()
-        else:
-            self.processor.run()
-        self._finish_run()
