@@ -14,15 +14,19 @@ class SyntheticData():
                  number_of_differential_intensity_responses: int,
                  number_of_time_steps: int):
         self.wavelength_bin_centers = wavelength_bin_centers
-        self.photon_count_time_series_by_source = dict((sources[key].name, dict((wavelength_bin_center, np.zeros(
-            (number_of_differential_intensity_responses, number_of_time_steps), dtype=float) * u.ph) for
-                                                                                wavelength_bin_center in
-                                                                                wavelength_bin_centers)) for key in
-                                                       sources.keys())
-        self.photon_count_time_series = dict((wavelength_bin_center, np.zeros(
-            (number_of_differential_intensity_responses, number_of_time_steps), dtype=float) * u.ph) for
-                                             wavelength_bin_center
-                                             in wavelength_bin_centers)
+        self.photon_count_time_series = dict(
+            (index_response,
+             dict((wavelength_bin_center, np.zeros(number_of_time_steps, dtype=float) * u.ph) for wavelength_bin_center
+                  in
+                  wavelength_bin_centers)) for index_response in
+            range(number_of_differential_intensity_responses))
+        self.photon_count_time_series_by_source = dict(
+            (index_response, dict((sources[key].name, dict((wavelength_bin_center, np.zeros(
+                number_of_time_steps, dtype=float) * u.ph) for
+                                                           wavelength_bin_center in
+                                                           wavelength_bin_centers)) for key in
+                                  sources.keys())) for index_response in
+            range(number_of_differential_intensity_responses))
 
     def get_total_photon_count_time_series(self,
                                            wavelength: astropy.units.Quantity,

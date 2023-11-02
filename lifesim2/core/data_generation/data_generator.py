@@ -19,16 +19,19 @@ class DataGenerator():
     def __init__(self, simulation: Simulation, simulation_mode: SimulationMode):
         self.simulation = simulation
         self.simulation_mode = simulation_mode
-        self.output = SyntheticData
+        self.output = SyntheticData(self.simulation.observation.sources,
+                                    self.simulation.observation.observatory.instrument_parameters.wavelength_bin_centers,
+                                    self.simulation.observation.observatory.beam_combination_scheme.number_of_differential_intensity_responses,
+                                    len(self.simulation.config.time_range))
 
     def _calculate_total_photon_count_time_series(self):
         """Calculate the total photon count time series by summing over the photon rates of all sources.
         """
-        for source in self.output.photon_count_time_series_by_source.keys():
-            for wavelength in self.output.photon_count_time_series_by_source[source].keys():
-                self.output.photon_count_time_series[wavelength] += \
-                    self.output.photon_count_time_series_by_source[source][
-                        wavelength]
+        for index_response in self.output.photon_count_time_series_by_source.keys():
+            for source in self.output.photon_count_time_series_by_source[index_response].keys():
+                for wavelength in self.output.photon_count_time_series_by_source[index_response][source].keys():
+                    self.output.photon_count_time_series[index_response][wavelength] += \
+                        self.output.photon_count_time_series_by_source[index_response][source][wavelength]
 
     def _create_animation(self):
         """Prepare the animation writer and run the time loop.
@@ -61,7 +64,7 @@ class DataGenerator():
 
                     for index_pair, pair_of_indices in enumerate(
                             self.simulation.observation.observatory.beam_combination_scheme.get_intensity_response_pairs()):
-                        self.output.photon_count_time_series_by_source[source.name][wavelength][index_pair][
+                        self.output.photon_count_time_series_by_source[index_pair][source.name][wavelength][
                             index_time] = self._get_differential_photon_counts(index_wavelength, source,
                                                                                intensity_responses, pair_of_indices)
                         if self.simulation.animator and (
@@ -218,10 +221,6 @@ class DataGenerator():
         """Prepare the data generation.
         """
         self.simulation.observation.set_optimal_baseline()
-        self.output = SyntheticData(self.simulation.observation.sources,
-                                    self.simulation.observation.observatory.instrument_parameters.wavelength_bin_centers,
-                                    self.simulation.observation.observatory.beam_combination_scheme.number_of_differential_intensity_responses,
-                                    len(self.simulation.config.time_range))
 
     def run(self):
         """Prepare the data generation, generate the data and finalize the data generation.
@@ -234,9 +233,9 @@ class DataGenerator():
         self._finalize_data_generation()
 
     def save_to_fits(self, output_path: str):
-        photon_count_time_series = list(self.output.photon_count_time_series.values())
-        photon_count_time_series = np.array(photon_count_time_series)
-        photon_count_time_series = np.reshape(photon_count_time_series,
-                                              (photon_count_time_series.shape[0], photon_count_time_series.shape[2]))
-        hdu = fits.PrimaryHDU(photon_count_time_series)
-        hdu.writeto(f'photon_count_time_series_{datetime.now().strftime("%Y%m%d_%H%M%S")}.fits')
+        for index_response in self.output.photon_count_time_series.keys():
+            photon_count_time_series = list(self.output.photon_count_time_series[index_response].values())
+            photon_count_time_series = np.array(photon_count_time_series)
+            hdu = fits.PrimaryHDU(photon_count_time_series)
+            hdu.writeto(
+                f'photon_count_time_series_{index_response}_{datetime.now().strftime("%Y%m%d_%H%M%S")}.fits')
