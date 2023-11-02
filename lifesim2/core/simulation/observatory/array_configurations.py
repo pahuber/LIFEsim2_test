@@ -29,6 +29,7 @@ class ArrayConfiguration(ABC, BaseModel):
     baseline_ratio: int
     modulation_period: Any
     baseline: Any = None
+    type: Any = None
 
     @field_validator('baseline_minimum')
     def validate_baseline_minimum(cls, value: Any, info: ValidationInfo) -> astropy.units.Quantity:
@@ -83,6 +84,7 @@ class ArrayConfiguration(ABC, BaseModel):
 class EmmaXCircularRotation(ArrayConfiguration):
     """Class representation of the Emma-X array configuration with circular rotation of the array.
     """
+    type: Any = ArrayConfigurationEnum.EMMA_X_CIRCULAR_ROTATION
 
     def get_collector_positions(self, time: astropy.units.Quantity) -> np.ndarray:
         rotation_matrix = get_2d_rotation_matrix(time, self.modulation_period)
@@ -98,6 +100,7 @@ class EmmaXCircularRotation(ArrayConfiguration):
 class EmmaXDoubleStretch(ArrayConfiguration):
     """Class representation of the Emma-X array configuration with double stretching of the array.
     """
+    type: Any = ArrayConfigurationEnum.EMMA_X_DOUBLE_STRETCH
 
     def get_collector_positions(self, time: float) -> np.ndarray:
         emma_x_static = self.baseline / 2 * np.array(
@@ -115,6 +118,7 @@ class EmmaXDoubleStretch(ArrayConfiguration):
 class EquilateralTriangleCircularRotation(ArrayConfiguration):
     """Class representation of an equilateral triangle configuration with circular rotation of the array.
     """
+    type: Any = ArrayConfigurationEnum.EQUILATERAL_TRIANGLE_CIRCULAR_ROTATION
 
     def get_collector_positions(self, time: float) -> np.ndarray:
         height = np.sqrt(3) / 2 * self.baseline
@@ -136,6 +140,7 @@ class EquilateralTriangleCircularRotation(ArrayConfiguration):
 class RegularPentagonCircularRotation(ArrayConfiguration):
     """Class representation of a regular pentagon configuration with circular rotation of the array.
     """
+    type: Any = ArrayConfigurationEnum.REGULAR_PENTAGON_CIRCULAR_ROTATION
 
     def _x(self, angle) -> astropy.units.Quantity:
         """Return the x position.

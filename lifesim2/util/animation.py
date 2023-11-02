@@ -44,7 +44,7 @@ class Animator():
         self.writer = None
         self.images = None
         self.figure = None
-        self.photon_counts_list = []
+        self.differential_photon_counts_list = []
         self.time_index_list = []
 
     def prepare_animation_writer(self, observation: Observation, time_range: np.ndarray, grid_size: int):
@@ -194,13 +194,13 @@ class Animator():
         self.images[1].set_data(differential_intensity_response.value)
         self.images[2].set_data(differential_intensity_response.value)
 
-    def update_photon_counts(self, photon_count_time_series: np.ndarray, index_time: int):
-        """Update the photon counts frame.
+    def update_differential_photon_counts(self, differential_photon_counts: np.ndarray, index_time: int):
+        """Update the differential photon counts frame.
 
         :param output: The output object
         :param index_time: The time index
         :return:
         """
         self.time_index_list.append(index_time)
-        self.photon_counts_list.append(photon_count_time_series.value)
-        self.images[3].set_data(self.time_index_list, self.photon_counts_list)
+        self.differential_photon_counts_list.append(differential_photon_counts.value)
+        self.images[3].set_data(self.time_index_list, self.differential_photon_counts_list)

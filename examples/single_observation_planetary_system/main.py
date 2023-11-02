@@ -22,4 +22,4 @@ data_generator.run()
 data_generator.save_to_fits(output_path=output_path)
 
 # Create data processor object for processing of synthetic data
-data_processor = DataProcessor(photon_count_time_series=data_generator.output.photon_count_time_series)
+data_processor = DataProcessor(differential_photon_counts=data_generator.output.differential_photon_counts)

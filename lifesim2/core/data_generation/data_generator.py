@@ -1,22 +1,29 @@
-from datetime import datetime
 from random import choice
 from typing import Tuple
 
 import astropy
 import numpy as np
 from astropy import units as u
-from astropy.io import fits
 from numpy.random import poisson, normal
 from tqdm import tqdm
 
 from lifesim2.core.simulation.simulation import Simulation, SimulationMode
 from lifesim2.core.simulation.sources.source import Source
 from lifesim2.core.simulation.sources.star import Star
+from lifesim2.io.fits import write_fits
 from lifesim2.io.synthetic_data import SyntheticData
 
 
 class DataGenerator():
+    """Class representation of the data generator.
+    """
+
     def __init__(self, simulation: Simulation, simulation_mode: SimulationMode):
+        """Constructor method.
+
+        :param simulation: The simulation object
+        :param simulation_mode: The simulation mode
+        """
         self.simulation = simulation
         self.simulation_mode = simulation_mode
         self.output = SyntheticData(self.simulation.observation.sources,
@@ -24,14 +31,14 @@ class DataGenerator():
                                     self.simulation.observation.observatory.beam_combination_scheme.number_of_differential_intensity_responses,
                                     len(self.simulation.config.time_range))
 
-    def _calculate_total_photon_count_time_series(self):
-        """Calculate the total photon count time series by summing over the photon rates of all sources.
+    def _calculate_total_differential_photon_counts(self):
+        """Calculate the total differential photon counts by summing over the differential photon counts of all sources.
         """
-        for index_response in self.output.photon_count_time_series_by_source.keys():
-            for source in self.output.photon_count_time_series_by_source[index_response].keys():
-                for wavelength in self.output.photon_count_time_series_by_source[index_response][source].keys():
-                    self.output.photon_count_time_series[index_response][wavelength] += \
-                        self.output.photon_count_time_series_by_source[index_response][source][wavelength]
+        for index_response in self.output.differential_photon_counts_by_source.keys():
+            for source in self.output.differential_photon_counts_by_source[index_response].keys():
+                for wavelength in self.output.differential_photon_counts_by_source[index_response][source].keys():
+                    self.output.differential_photon_counts[index_response][wavelength] += \
+                        self.output.differential_photon_counts_by_source[index_response][source][wavelength]
 
     def _create_animation(self):
         """Prepare the animation writer and run the time loop.
@@ -42,15 +49,15 @@ class DataGenerator():
         with self.simulation.animator.writer.saving(self.simulation.animator.figure,
                                                     f'{self.simulation.animator.source_name}_{np.round(self.simulation.animator.closest_wavelength.to(u.um).value, 3)}um.gif',
                                                     300):
-            self._generate_photon_count_time_series()
+            self._generate_differential_photon_counts()
 
     def _finalize_data_generation(self):
         """Finalize the data generation by calculating the total photon count time series.
         """
-        self._calculate_total_photon_count_time_series()
+        self._calculate_total_differential_photon_counts()
 
-    def _generate_photon_count_time_series(self):
-        """Generate the photon count time series. This is the main method of the data generation.
+    def _generate_differential_photon_counts(self):
+        """Generate the differential photon counts. This is the main method of the data generation.
         """
         for index_time, time in enumerate(tqdm(self.simulation.config.time_range)):
 
@@ -64,7 +71,7 @@ class DataGenerator():
 
                     for index_pair, pair_of_indices in enumerate(
                             self.simulation.observation.observatory.beam_combination_scheme.get_intensity_response_pairs()):
-                        self.output.photon_count_time_series_by_source[index_pair][source.name][wavelength][
+                        self.output.differential_photon_counts_by_source[index_pair][source.name][wavelength][
                             index_time] = self._get_differential_photon_counts(index_wavelength, source,
                                                                                intensity_responses, pair_of_indices)
                         if self.simulation.animator and (
@@ -74,8 +81,8 @@ class DataGenerator():
                             self.simulation.animator.update_collector_position(time, self.simulation.observation)
                             self.simulation.animator.update_differential_intensity_response(
                                 intensity_responses[pair_of_indices[0]] - intensity_responses[pair_of_indices[1]])
-                            self.simulation.animator.update_photon_counts(
-                                self.output.photon_count_time_series_by_source[source.name][wavelength][index_pair][
+                            self.simulation.animator.update_differential_photon_counts(
+                                self.output.differential_photon_counts_by_source[source.name][wavelength][index_pair][
                                     index_time], index_time)
                             self.simulation.animator.writer.grab_frame()
 
@@ -185,7 +192,8 @@ class DataGenerator():
                 if self.simulation.config.noise_contributions.fiber_injection_variability:
                     amplitude_factor = np.random.uniform(0.8, 0.9)
                 if self.simulation.config.noise_contributions.optical_path_difference_variability.apply:
-                    phase_difference = choice(self.phase_difference_distribution).to(u.um)
+                    phase_difference = choice(
+                        self.simulation.config.noise_contributions.optical_path_difference_distribution).to(u.um)
 
                 diagonal_of_matrix.append(amplitude_factor * np.exp(2j * np.pi / wavelength * phase_difference))
 
@@ -229,13 +237,12 @@ class DataGenerator():
         if self.simulation.animator:
             self._create_animation()
         else:
-            self._generate_photon_count_time_series()
+            self._generate_differential_photon_counts()
         self._finalize_data_generation()
 
     def save_to_fits(self, output_path: str):
-        for index_response in self.output.photon_count_time_series.keys():
-            photon_count_time_series = list(self.output.photon_count_time_series[index_response].values())
-            photon_count_time_series = np.array(photon_count_time_series)
-            hdu = fits.PrimaryHDU(photon_count_time_series)
-            hdu.writeto(
-                f'photon_count_time_series_{index_response}_{datetime.now().strftime("%Y%m%d_%H%M%S")}.fits')
+        """Save the differential photon counts to a FITS file.
+
+        :param output_path: The output path of the FITS file
+        """
+        write_fits(output_path, self.simulation, self.output.differential_photon_counts)
