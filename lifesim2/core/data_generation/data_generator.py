@@ -1,14 +1,17 @@
+from datetime import datetime
 from random import choice
 from typing import Tuple
 
 import astropy
 import numpy as np
 from astropy import units as u
+from astropy.io import fits
 from numpy.random import poisson, normal
 from tqdm import tqdm
 
 from lifesim2.core.simulation.simulation import Simulation, SimulationMode
 from lifesim2.core.simulation.sources.source import Source
+from lifesim2.core.simulation.sources.star import Star
 from lifesim2.io.synthetic_data import SyntheticData
 
 
@@ -44,7 +47,7 @@ class DataGenerator():
         self._calculate_total_photon_count_time_series()
 
     def _generate_photon_count_time_series(self):
-        """Run the main simulation time loop and calculate the photon rates time series.
+        """Generate the photon count time series. This is the main method of the data generation.
         """
         for index_time, time in enumerate(tqdm(self.simulation.config.time_range)):
 
@@ -52,6 +55,8 @@ class DataGenerator():
                     self.simulation.observation.observatory.instrument_parameters.wavelength_bin_centers):
 
                 for _, source in self.simulation.observation.sources.items():
+                    if isinstance(source, Star) and not self.simulation.config.noise_contributions.stellar_leakage:
+                        continue
                     intensity_responses = self._get_intensity_responses(time, wavelength, source.sky_coordinate_maps)
 
                     for index_pair, pair_of_indices in enumerate(
@@ -227,3 +232,11 @@ class DataGenerator():
         else:
             self._generate_photon_count_time_series()
         self._finalize_data_generation()
+
+    def save_to_fits(self, output_path: str):
+        photon_count_time_series = list(self.output.photon_count_time_series.values())
+        photon_count_time_series = np.array(photon_count_time_series)
+        photon_count_time_series = np.reshape(photon_count_time_series,
+                                              (photon_count_time_series.shape[0], photon_count_time_series.shape[2]))
+        hdu = fits.PrimaryHDU(photon_count_time_series)
+        hdu.writeto(f'photon_count_time_series_{datetime.now().strftime("%Y%m%d_%H%M%S")}.fits')
