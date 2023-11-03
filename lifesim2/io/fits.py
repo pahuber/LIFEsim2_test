@@ -55,4 +55,4 @@ def write_fits(output_path: str, postfix: str, simulation: Simulation, different
         hdu = fits.ImageHDU(differential_photon_counts_array)
         hdu_list.append(hdu)
     hdul = fits.HDUList(hdu_list)
-    hdul.writeto(f'differential_photon_counts_{datetime.now().strftime("%Y%m%d_%H%M%S")}_{prefix}.fits')
+    hdul.writeto(f'differential_photon_counts_{datetime.now().strftime("%Y%m%d_%H%M%S")}_{postfix}.fits')
