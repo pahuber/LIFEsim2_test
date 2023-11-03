@@ -82,7 +82,7 @@ class DataGenerator():
                             self.simulation.animator.update_differential_intensity_response(
                                 intensity_responses[pair_of_indices[0]] - intensity_responses[pair_of_indices[1]])
                             self.simulation.animator.update_differential_photon_counts(
-                                self.output.differential_photon_counts_by_source[source.name][wavelength][index_pair][
+                                self.output.differential_photon_counts_by_source[index_pair][source.name][wavelength][
                                     index_time], index_time)
                             self.simulation.animator.writer.grab_frame()
 
@@ -240,9 +240,9 @@ class DataGenerator():
             self._generate_differential_photon_counts()
         self._finalize_data_generation()
 
-    def save_to_fits(self, output_path: str):
+    def save_to_fits(self, output_path: str, prefix: str = ''):
         """Save the differential photon counts to a FITS file.
 
         :param output_path: The output path of the FITS file
         """
-        write_fits(output_path, self.simulation, self.output.differential_photon_counts)
+        write_fits(output_path, prefix, self.simulation, self.output.differential_photon_counts)
