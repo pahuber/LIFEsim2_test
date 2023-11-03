@@ -1,12 +1,14 @@
+from pathlib import Path
+
 from lifesim2.core.data_generation.data_generator import DataGenerator
 from lifesim2.core.data_processing.data_processor import DataProcessor
 from lifesim2.core.simulation.simulation import Simulation, SimulationMode
 from lifesim2.io.data_type import DataType
 
 # Specify paths
-path_to_config_file = r'C:\Users\huber\Desktop\LIFEsim2\examples\single_observation_planetary_system\config.yaml'
-path_to_data_file = r'C:\Users\huber\Desktop\LIFEsim2\examples\single_observation_planetary_system\planetary_system.yaml'
-output_path = r'C:\Users\huber\Desktop\LIFEsim2\examples\single_observation_planetary_system'
+path_to_config_file = Path(r'C:\Users\huber\Desktop\LIFEsim2\examples\single_observation_planetary_system\config.yaml')
+path_to_data_file = Path(
+    r'C:\Users\huber\Desktop\LIFEsim2\examples\single_observation_planetary_system\planetary_system.yaml')
 
 # Create simulation object and load configuration and sources
 simulation = Simulation()
@@ -19,7 +21,8 @@ simulation.load_sources(data_type=DataType.PLANETARY_SYSTEM_CONFIGURATION, path_
 # Generate the photon count time series for a single observation
 data_generator = DataGenerator(simulation=simulation, simulation_mode=SimulationMode.SINGLE_OBSERVATION)
 data_generator.run()
-data_generator.save_to_fits(output_path=output_path)
+data_generator.save_to_fits(output_path=Path('.'))
 
 # Create data processor object for processing of synthetic data
-data_processor = DataProcessor(differential_photon_counts=data_generator.output.differential_photon_counts)
+data_processor = DataProcessor(simulation=simulation,
+                               differential_photon_counts=data_generator.output.differential_photon_counts)

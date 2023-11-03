@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import yaml
 from astropy import units as u
 
@@ -6,7 +8,7 @@ class ConfigReader():
     """Class to io configuration files.
     """
 
-    def __init__(self, path_to_config_file: str):
+    def __init__(self, path_to_config_file: Path):
         """Constructor method.
         :param path_to_config_file: Path to the configuration file.
         """

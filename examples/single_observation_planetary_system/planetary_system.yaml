@@ -1,6 +1,6 @@
-#############################################
-# LIFEsim 2 Planetary System File
-#############################################
+###############################################
+# LIFEsim 2 Planetary System Configuration File
+###############################################
 ---
 star:
   name: Sun
@@ -15,18 +15,21 @@ planets:
     name: Earth
     mass: 1 Mearth
     radius: 1 Rearth
-    star_separation: 1 au
+    star_separation_x: 1 au
+    star_separation_y: 0 au
     temperature: 288 K
 #  planet_2:
 #    name: Mars
 #    mass: 0.1 Mearth
 #    radius: 0.5 Rearth
-#    star_separation: 1.6 au
+#    star_separation_x: 1.6 au
+#    star_separation_y: 0 au
 #    temperature: 210 K
 #  planet_3:
 #    name: Venus
 #    mass: 0.8 Mearth
 #    radius: 0.9 Rearth
-#    star_separation: 0.7 au
+#    star_separation_x: 0.7 au
+#    star_separation_y: 0 au
 #    temperature: 230 K
 ...

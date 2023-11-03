@@ -1,3 +1,4 @@
+from pathlib import Path
 from random import choice
 from typing import Tuple
 
@@ -10,7 +11,7 @@ from tqdm import tqdm
 from lifesim2.core.simulation.simulation import Simulation, SimulationMode
 from lifesim2.core.simulation.sources.source import Source
 from lifesim2.core.simulation.sources.star import Star
-from lifesim2.io.fits import write_fits
+from lifesim2.io.fits_writer import FITSWriter
 from lifesim2.io.synthetic_data import SyntheticData
 
 
@@ -82,7 +83,7 @@ class DataGenerator():
                             self.simulation.animator.update_differential_intensity_response(
                                 intensity_responses[pair_of_indices[0]] - intensity_responses[pair_of_indices[1]])
                             self.simulation.animator.update_differential_photon_counts(
-                                self.output.differential_photon_counts_by_source[source.name][wavelength][index_pair][
+                                self.output.differential_photon_counts_by_source[index_pair][source.name][wavelength][
                                     index_time], index_time)
                             self.simulation.animator.writer.grab_frame()
 
@@ -240,9 +241,10 @@ class DataGenerator():
             self._generate_differential_photon_counts()
         self._finalize_data_generation()
 
-    def save_to_fits(self, output_path: str):
+    def save_to_fits(self, output_path: Path, postfix: str = ''):
         """Save the differential photon counts to a FITS file.
 
         :param output_path: The output path of the FITS file
+        :param postfix: Postfix to be appended to the output file name
         """
-        write_fits(output_path, self.simulation, self.output.differential_photon_counts)
+        FITSWriter.write_fits(output_path, postfix, self.simulation, self.output.differential_photon_counts)

@@ -1,4 +1,5 @@
 from enum import Enum
+from pathlib import Path
 from typing import Any, Optional
 
 import astropy
@@ -116,7 +117,7 @@ class Simulation():
             case BeamCombinationSchemeEnum.KERNEL_5.value:
                 return Kernel5()
 
-    def _initialize_sources_from_planetary_system_configuration(self, path_to_data_file: str):
+    def _initialize_sources_from_planetary_system_configuration(self, path_to_data_file: Path):
         """Read the planetary system configuration file, extract the data and create the Star and Planet objects.
 
         :param path_to_data_file: Path to the data file
@@ -169,7 +170,7 @@ class Simulation():
         self.animator = Animator(output_path, source_name, closest_wavelength, differential_intensity_response_index,
                                  image_vmin, image_vmax, photon_counts_limits, collector_position_limits)
 
-    def load_sources(self, data_type: DataType, path_to_data_file: str):
+    def load_sources(self, data_type: DataType, path_to_data_file: Path):
         """Add the data of a specific type.
 
         :param data_type: Type of the data
@@ -189,7 +190,7 @@ class Simulation():
                 # TODO: import population catalog
                 pass
 
-    def load_config(self, path_to_config_file):
+    def load_config(self, path_to_config_file: Path):
         """Extract the configuration from the file, set the parameters and instantiate the objects.
 
         :param path_to_config_file: Path to the configuration file
