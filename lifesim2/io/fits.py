@@ -6,10 +6,11 @@ from astropy.io import fits
 from lifesim2.core.simulation.simulation import Simulation
 
 
-def write_fits(output_path: str, simulation: Simulation, differential_photon_counts):
+def write_fits(output_path: str, postfix: str, simulation: Simulation, differential_photon_counts):
     """Write the differential photon counts to a FITS file.
 
     :param output_path: The output path of the FITS file
+    :param postfix: Postfix that is appended to the output file name
     :param simulation: The simulation object
     :param differential_photon_counts: The differential photon counts
     """
@@ -54,4 +55,4 @@ def write_fits(output_path: str, simulation: Simulation, differential_photon_cou
         hdu = fits.ImageHDU(differential_photon_counts_array)
         hdu_list.append(hdu)
     hdul = fits.HDUList(hdu_list)
-    hdul.writeto(f'differential_photon_counts_{datetime.now().strftime("%Y%m%d_%H%M%S")}.fits')
+    hdul.writeto(f'differential_photon_counts_{datetime.now().strftime("%Y%m%d_%H%M%S")}_{prefix}.fits')
