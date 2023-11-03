@@ -36,7 +36,7 @@ class DataProcessor():
         """
         self.simulation = simulation
         self.differential_photon_counts = differential_photon_counts
-        self._generate_templates()
+        # self._generate_templates()
 
     def _generate_differential_photon_count_templates(self):
         # Create template simulation object

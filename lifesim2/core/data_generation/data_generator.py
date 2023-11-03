@@ -1,3 +1,4 @@
+from pathlib import Path
 from random import choice
 from typing import Tuple
 
@@ -240,9 +241,10 @@ class DataGenerator():
             self._generate_differential_photon_counts()
         self._finalize_data_generation()
 
-    def save_to_fits(self, output_path: str, prefix: str = ''):
+    def save_to_fits(self, output_path: Path, postfix: str = ''):
         """Save the differential photon counts to a FITS file.
 
         :param output_path: The output path of the FITS file
+        :param postfix: Postfix to be appended to the output file name
         """
-        write_fits(output_path, prefix, self.simulation, self.output.differential_photon_counts)
+        write_fits(output_path, postfix, self.simulation, self.output.differential_photon_counts)
