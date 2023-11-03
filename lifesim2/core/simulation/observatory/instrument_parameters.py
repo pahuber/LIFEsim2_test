@@ -17,7 +17,6 @@ class InstrumentParameters(BaseModel):
     wavelength_range_lower_limit: Any
     wavelength_range_upper_limit: Any
     unperturbed_instrument_throughput: float
-    field_of_view: Any = None
 
     @field_validator('aperture_diameter')
     def validate_aperture_diameter(cls, value: Any, info: ValidationInfo) -> astropy.units.Quantity:
@@ -27,7 +26,7 @@ class InstrumentParameters(BaseModel):
         :param info: ValidationInfo object
         :return: The aperture diameter in units of length
         """
-        return validate_quantity_units(value=value, field_name=info.field_name, unit_equivalency=u.m)
+        return validate_quantity_units(value=value, field_name=info.field_name, unit_equivalency=u.m).to(u.m)
 
     @field_validator('wavelength_range_lower_limit')
     def validate_wavelength_range_lower_limit(cls, value: Any, info: ValidationInfo) -> astropy.units.Quantity:
@@ -56,6 +55,14 @@ class InstrumentParameters(BaseModel):
         :return: The aperture radius
         """
         return self.aperture_diameter / 2
+
+    @property
+    def maximum_field_of_view(self) -> astropy.units.Quantity:
+        """Return the maximum field of view.
+
+        :return: The maximum field of view
+        """
+        return (np.max(self.wavelength_bin_centers.to(u.m)) / self.aperture_diameter * u.rad).to(u.arcsec)
 
     @property
     def wavelength_bin_centers(self) -> np.ndarray:
