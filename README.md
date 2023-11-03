@@ -1,4 +1,3 @@
-# LIFEsim 2
+# SYGN
 
-LIFEsim 2 is a synthetic data generation, processing and analysis tool to simulate measurements with the Large
-Interferometer For Exoplanets (LIFE) observatory.
+SYnthetic data Generator for space-based Nulling interferometers.
