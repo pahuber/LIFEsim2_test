@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools>=61.0.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "sygn"
+version = "0.0.1"
+authors = [
+    { name = "Philipp A. Huber", email = "huberph@phys.ethz.ch" },
+]
+description = "SYnthetic measurement Generator for space-based Nulling interferometers"
+readme = "README.md"
+requires-python = ">=3.10"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+]
+
+[project.urls]
+"Homepage" = "https://github.com/pahuber/sygn"
