@@ -1,9 +1,9 @@
 from pathlib import Path
 
-from lifesim2.core.data_generation.data_generator import DataGenerator
-from lifesim2.core.data_processing.data_processor import DataProcessor
-from lifesim2.core.simulation.simulation import Simulation, SimulationMode
-from lifesim2.io.data_type import DataType
+from sygn.core.data_generation.data_generator import DataGenerator
+from sygn.core.data_processing.data_processor import DataProcessor
+from sygn.core.simulation.simulation import Simulation, SimulationMode
+from sygn.io.data_type import DataType
 
 # Specify paths
 path_to_config_file = Path(r'C:\Users\huber\Desktop\LIFEsim2\examples\single_observation_planetary_system\config.yaml')
@@ -18,7 +18,7 @@ simulation.load_sources(data_type=DataType.PLANETARY_SYSTEM_CONFIGURATION, path_
 #                         differential_intensity_response_index=0, photon_counts_limits=150, collector_position_limits=50,
 #                         image_vmin=-10, image_vmax=10)
 
-# Generate the photon count time series for a single observation
+# Generate the differential photon counts for a single observation
 data_generator = DataGenerator(simulation=simulation, simulation_mode=SimulationMode.SINGLE_OBSERVATION)
 data_generator.run()
 data_generator.save_to_fits(output_path=Path('.'))

@@ -5,8 +5,8 @@ from astropy import units as u
 from pydantic import BaseModel, field_validator
 from pydantic_core.core_schema import ValidationInfo
 
-from lifesim2.core.simulation.sources.star import Star
-from lifesim2.io.validators import validate_quantity_units
+from sygn.core.simulation.sources.star import Star
+from sygn.io.validators import validate_quantity_units
 
 
 class Observation(BaseModel):

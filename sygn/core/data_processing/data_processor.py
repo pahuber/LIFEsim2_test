@@ -9,13 +9,13 @@ from astropy import units as u
 from matplotlib import pyplot as plt
 from scipy.optimize import curve_fit
 
-from lifesim2.core.data_generation.data_generator import DataGenerator
-from lifesim2.core.simulation.noise_contributions import NoiseContributions, OpticalPathDifferenceVariability
-from lifesim2.core.simulation.simulation import SimulationMode
-from lifesim2.core.simulation.sources.planet import Planet
-from lifesim2.core.simulation.sources.star import Star
-from lifesim2.util.blackbody import create_blackbody_spectrum
-from lifesim2.util.grid import get_meshgrid
+from sygn.core.data_generation.data_generator import DataGenerator
+from sygn.core.simulation.noise_contributions import NoiseContributions, OpticalPathDifferenceVariability
+from sygn.core.simulation.simulation import SimulationMode
+from sygn.core.simulation.sources.planet import Planet
+from sygn.core.simulation.sources.star import Star
+from sygn.util.blackbody import create_blackbody_spectrum
+from sygn.util.grid import get_meshgrid
 
 
 class DataProcessingMode(Enum):

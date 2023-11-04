@@ -8,11 +8,11 @@ from astropy import units as u
 from numpy.random import poisson, normal
 from tqdm import tqdm
 
-from lifesim2.core.simulation.simulation import Simulation, SimulationMode
-from lifesim2.core.simulation.sources.source import Source
-from lifesim2.core.simulation.sources.star import Star
-from lifesim2.io.fits_writer import FITSWriter
-from lifesim2.io.synthetic_data import SyntheticData
+from sygn.core.simulation.simulation import Simulation, SimulationMode
+from sygn.core.simulation.sources.source import Source
+from sygn.core.simulation.sources.star import Star
+from sygn.io.fits_writer import FITSWriter
+from sygn.io.synthetic_data import SyntheticData
 
 
 class DataGenerator():

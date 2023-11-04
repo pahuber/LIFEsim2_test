@@ -6,7 +6,7 @@ from matplotlib import pyplot as plt
 from matplotlib.animation import FFMpegWriter
 from mpl_toolkits.axes_grid1.inset_locator import zoomed_inset_axes, mark_inset
 
-from lifesim2.core.simulation.observation import Observation
+from sygn.core.simulation.observation import Observation
 
 
 class Animator():
