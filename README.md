@@ -1,3 +1,3 @@
 # SYGN
 
-SYnthetic data Generator for space-based Nulling interferometers.
+SYnthetic measurement Generator for space-based Nulling interferometers.
