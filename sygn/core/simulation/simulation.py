@@ -8,23 +8,23 @@ from astropy import units as u
 from pydantic import BaseModel, field_validator
 from pydantic_core.core_schema import ValidationInfo
 
-from lifesim2.core.simulation.noise_contributions import NoiseContributions
-from lifesim2.core.simulation.observation import Observation
-from lifesim2.core.simulation.observatory.array_configurations import ArrayConfigurationEnum, EmmaXCircularRotation, \
+from sygn.core.simulation.noise_contributions import NoiseContributions
+from sygn.core.simulation.observation import Observation
+from sygn.core.simulation.observatory.array_configurations import ArrayConfigurationEnum, EmmaXCircularRotation, \
     EmmaXDoubleStretch, EquilateralTriangleCircularRotation, RegularPentagonCircularRotation, ArrayConfiguration
-from lifesim2.core.simulation.observatory.beam_combination_schemes import BeamCombinationSchemeEnum, DoubleBracewell, \
+from sygn.core.simulation.observatory.beam_combination_schemes import BeamCombinationSchemeEnum, DoubleBracewell, \
     Kernel3, \
     Kernel4, Kernel5, BeamCombinationScheme
-from lifesim2.core.simulation.observatory.instrument_parameters import InstrumentParameters
-from lifesim2.core.simulation.observatory.observatory import Observatory
-from lifesim2.core.simulation.sources.planet import Planet
-from lifesim2.core.simulation.sources.star import Star
-from lifesim2.io.config_reader import ConfigReader
-from lifesim2.io.data_type import DataType
-from lifesim2.io.validators import validate_quantity_units
-from lifesim2.util.animation import Animator
-from lifesim2.util.blackbody import create_blackbody_spectrum
-from lifesim2.util.grid import get_index_of_closest_value
+from sygn.core.simulation.observatory.instrument_parameters import InstrumentParameters
+from sygn.core.simulation.observatory.observatory import Observatory
+from sygn.core.simulation.sources.planet import Planet
+from sygn.core.simulation.sources.star import Star
+from sygn.io.config_reader import ConfigReader
+from sygn.io.data_type import DataType
+from sygn.io.validators import validate_quantity_units
+from sygn.util.animation import Animator
+from sygn.util.blackbody import create_blackbody_spectrum
+from sygn.util.grid import get_index_of_closest_value
 
 
 class SimulationConfiguration(BaseModel):

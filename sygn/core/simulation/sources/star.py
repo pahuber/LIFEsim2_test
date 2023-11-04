@@ -7,10 +7,10 @@ from numpy.random import poisson
 from pydantic import field_validator
 from pydantic_core.core_schema import ValidationInfo
 
-from lifesim2.core.simulation.sources.source import Source
-from lifesim2.io.validators import validate_quantity_units
-from lifesim2.util.blackbody import create_blackbody_spectrum
-from lifesim2.util.grid import get_meshgrid
+from sygn.core.simulation.sources.source import Source
+from sygn.io.validators import validate_quantity_units
+from sygn.util.blackbody import create_blackbody_spectrum
+from sygn.util.grid import get_meshgrid
 
 
 class Star(Source):

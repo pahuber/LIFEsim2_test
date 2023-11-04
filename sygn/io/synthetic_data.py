@@ -4,7 +4,7 @@ import astropy
 import numpy as np
 from astropy import units as u
 
-from lifesim2.util.grid import get_index_of_closest_value
+from sygn.util.grid import get_index_of_closest_value
 
 
 class SyntheticData():

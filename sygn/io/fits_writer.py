@@ -4,9 +4,9 @@ from pathlib import Path
 import numpy as np
 from astropy.io import fits
 
-from lifesim2.core.simulation.simulation import Simulation
-from lifesim2.core.simulation.sources.planet import Planet
-from lifesim2.core.simulation.sources.star import Star
+from sygn.core.simulation.simulation import Simulation
+from sygn.core.simulation.sources.planet import Planet
+from sygn.core.simulation.sources.star import Star
 
 
 class FITSWriter():

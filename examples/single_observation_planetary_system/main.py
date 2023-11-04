@@ -1,9 +1,9 @@
 from pathlib import Path
 
-from lifesim2.core.data_generation.data_generator import DataGenerator
-from lifesim2.core.data_processing.data_processor import DataProcessor
-from lifesim2.core.simulation.simulation import Simulation, SimulationMode
-from lifesim2.io.data_type import DataType
+from sygn.core.data_generation.data_generator import DataGenerator
+from sygn.core.data_processing.data_processor import DataProcessor
+from sygn.core.simulation.simulation import Simulation, SimulationMode
+from sygn.io.data_type import DataType
 
 # Specify paths
 path_to_config_file = Path(r'C:\Users\huber\Desktop\LIFEsim2\examples\single_observation_planetary_system\config.yaml')
