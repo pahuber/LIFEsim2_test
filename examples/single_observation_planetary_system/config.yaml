@@ -1,14 +1,14 @@
 #############################################
-# LIFEsim 2 Configuration File
+# SYGN Configuration File
 # -------------------------------------------
 # For documentation see:
-# https://github.com/pahuber/LIFEsim2
-#############################################
+https://github.com/pahuber/SYGN
+############################################
 ---
 # -------------------------------------------
-# Simulation Configuration
+# Simulation Settings Configuration
 # -------------------------------------------
-simulation:
+settings:
   grid_size: 80
   time_step: 5 min
   noise_contributions:
