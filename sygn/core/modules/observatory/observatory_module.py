@@ -12,7 +12,14 @@ from sygn.io.config_reader import ConfigReader
 
 
 class ObservatoryModule(BaseModule):
+    """Class representation of the obsrvatory module.
+    """
+
     def __init__(self, path_to_config_file: Path):
+        """Constructor method.
+
+        :param path_to_config_file: Pth to the config file
+        """
         self.path_to_config_file = path_to_config_file
         self.observatory = None
 
@@ -57,6 +64,11 @@ class ObservatoryModule(BaseModule):
                 return Kernel5()
 
     def apply(self, context: Context) -> Context:
+        """Apply the module.
+
+        :param context: The context object of the pipeline
+        :return: The (updated) context object
+        """
         config_dict = ConfigReader(path_to_config_file=self.path_to_config_file).get_dictionary_from_file()
         self.observatory = Observatory()
         self.observatory.array_configuration = self._initialize_array_configuration_from_config(config_dict)

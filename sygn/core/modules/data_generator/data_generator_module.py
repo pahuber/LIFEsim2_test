@@ -4,11 +4,23 @@ from sygn.core.modules.data_generator.data_generator import DataGenerator, DataG
 
 
 class DataGeneratorModule(BaseModule):
+    """Class representation of the data generator module.
+    """
+
     def __init__(self, mode: DataGenerationMode):
+        """Constructor method.
+
+        :param mode: Data generation mode
+        """
         self.mode = mode
         self.data_generator = None
 
     def apply(self, context: Context) -> Context:
+        """Apply the module.
+
+        :param context: The context object of the pipeline
+        :return: The (updated) context object
+        """
         time_range = context.time_range
         self.data_generator = DataGenerator(mode=self.mode,
                                             settings=context.settings,

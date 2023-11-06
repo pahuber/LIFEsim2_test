@@ -10,7 +10,15 @@ from sygn.util.blackbody import create_blackbody_spectrum
 
 
 class TargetSystemModule(BaseModule):
+    """Class representation of the target system module.
+    """
+
     def __init__(self, path_to_data_file: Path, data_type: DataType):
+        """Constructor method.
+
+        :param path_to_data_file: Path to the data file
+        :param data_type: Data type
+        """
         self.path_to_data_file = path_to_data_file
         self.data_type = data_type
         self.target_system = {}
@@ -63,6 +71,11 @@ class TargetSystemModule(BaseModule):
                 pass
 
     def apply(self, context: Context) -> Context:
+        """Apply the module.
+
+        :param context: The context object of the pipeline
+        :return: The (updated) context object
+        """
         self._load_sources(context)
         context.target_systems.append(self.target_system)
         return context
