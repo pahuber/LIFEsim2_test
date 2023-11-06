@@ -26,7 +26,7 @@ class Settings(BaseModel):
         self.noise_contributions.get_optical_path_difference_distribution(self.time_step)
 
     @field_validator('time_step')
-    def validate_time_step(cls, value: Any, info: ValidationInfo) -> astropy.units.Quantity:
+    def _validate_time_step(cls, value: Any, info: ValidationInfo) -> astropy.units.Quantity:
         """Validate the time step input.
 
         :param value: Value given as input

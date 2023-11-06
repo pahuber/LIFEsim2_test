@@ -26,7 +26,7 @@ class Planet(Source):
     mean_spectral_flux_density: Any = None
 
     @field_validator('radius')
-    def validate_radius(cls, value: Any, info: ValidationInfo) -> astropy.units.Quantity:
+    def _validate_radius(cls, value: Any, info: ValidationInfo) -> astropy.units.Quantity:
         """Validate the radius input.
 
         :param value: Value given as input
@@ -36,7 +36,7 @@ class Planet(Source):
         return validate_quantity_units(value=value, field_name=info.field_name, unit_equivalency=u.m)
 
     @field_validator('mass')
-    def validate_mass(cls, value: Any, info: ValidationInfo) -> astropy.units.Quantity:
+    def _validate_mass(cls, value: Any, info: ValidationInfo) -> astropy.units.Quantity:
         """Validate the mass input.
 
         :param value: Value given as input
@@ -46,7 +46,7 @@ class Planet(Source):
         return validate_quantity_units(value=value, field_name=info.field_name, unit_equivalency=u.kg)
 
     @field_validator('star_separation_x')
-    def validate_star_separation_x(cls, value: Any, info: ValidationInfo) -> astropy.units.Quantity:
+    def _validate_star_separation_x(cls, value: Any, info: ValidationInfo) -> astropy.units.Quantity:
         """Validate the star separation x input.
 
         :param value: Value given as input
@@ -56,7 +56,7 @@ class Planet(Source):
         return validate_quantity_units(value=value, field_name=info.field_name, unit_equivalency=u.m)
 
     @field_validator('star_separation_y')
-    def validate_star_separation_y(cls, value: Any, info: ValidationInfo) -> astropy.units.Quantity:
+    def _validate_star_separation_y(cls, value: Any, info: ValidationInfo) -> astropy.units.Quantity:
         """Validate the star separation y input.
 
         :param value: Value given as input
@@ -66,7 +66,7 @@ class Planet(Source):
         return validate_quantity_units(value=value, field_name=info.field_name, unit_equivalency=u.m)
 
     @field_validator('star_distance')
-    def validate_star_distance(cls, value: Any, info: ValidationInfo) -> astropy.units.Quantity:
+    def _validate_star_distance(cls, value: Any, info: ValidationInfo) -> astropy.units.Quantity:
         """Validate the star distance input.
 
         :param value: Value given as input

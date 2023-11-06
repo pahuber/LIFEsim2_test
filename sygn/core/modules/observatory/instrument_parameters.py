@@ -19,7 +19,7 @@ class InstrumentParameters(BaseModel):
     unperturbed_instrument_throughput: float
 
     @field_validator('aperture_diameter')
-    def validate_aperture_diameter(cls, value: Any, info: ValidationInfo) -> astropy.units.Quantity:
+    def _validate_aperture_diameter(cls, value: Any, info: ValidationInfo) -> astropy.units.Quantity:
         """Validate the aperture diameter input.
 
         :param value: Value given as input
@@ -29,7 +29,7 @@ class InstrumentParameters(BaseModel):
         return validate_quantity_units(value=value, field_name=info.field_name, unit_equivalency=u.m).to(u.m)
 
     @field_validator('wavelength_range_lower_limit')
-    def validate_wavelength_range_lower_limit(cls, value: Any, info: ValidationInfo) -> astropy.units.Quantity:
+    def _validate_wavelength_range_lower_limit(cls, value: Any, info: ValidationInfo) -> astropy.units.Quantity:
         """Validate the wavelength range lower limit input.
 
         :param value: Value given as input
@@ -39,7 +39,7 @@ class InstrumentParameters(BaseModel):
         return validate_quantity_units(value=value, field_name=info.field_name, unit_equivalency=u.m).to(u.um)
 
     @field_validator('wavelength_range_upper_limit')
-    def validate_wavelength_range_upper_limit(cls, value: Any, info: ValidationInfo) -> astropy.units.Quantity:
+    def _validate_wavelength_range_upper_limit(cls, value: Any, info: ValidationInfo) -> astropy.units.Quantity:
         """Validate the wavelength range upper limit input.
 
         :param value: Value given as input

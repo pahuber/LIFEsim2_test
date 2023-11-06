@@ -33,7 +33,7 @@ class ArrayConfiguration(ABC, BaseModel):
     type: Any = None
 
     @field_validator('baseline_minimum')
-    def validate_baseline_minimum(cls, value: Any, info: ValidationInfo) -> astropy.units.Quantity:
+    def _validate_baseline_minimum(cls, value: Any, info: ValidationInfo) -> astropy.units.Quantity:
         """Validate the baseline minimum input.
 
         :param value: Value given as input
@@ -43,7 +43,7 @@ class ArrayConfiguration(ABC, BaseModel):
         return validate_quantity_units(value=value, field_name=info.field_name, unit_equivalency=u.m)
 
     @field_validator('baseline_maximum')
-    def validate_baseline_maximum(cls, value: Any, info: ValidationInfo) -> astropy.units.Quantity:
+    def _validate_baseline_maximum(cls, value: Any, info: ValidationInfo) -> astropy.units.Quantity:
         """Validate the baseline maximum input.
 
         :param value: Value given as input
@@ -53,7 +53,7 @@ class ArrayConfiguration(ABC, BaseModel):
         return validate_quantity_units(value=value, field_name=info.field_name, unit_equivalency=u.m)
 
     @field_validator('modulation_period')
-    def validate_modulation_period(cls, value: Any, info: ValidationInfo) -> astropy.units.Quantity:
+    def _validate_modulation_period(cls, value: Any, info: ValidationInfo) -> astropy.units.Quantity:
         """Validate the modulation period input.
 
         :param value: Value given as input

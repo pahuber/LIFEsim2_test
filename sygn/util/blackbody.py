@@ -31,12 +31,12 @@ def create_blackbody_spectrum(temperature,
                                                   spec_wavs=wavelength_range.to(u.um).value,
                                                   spec_fluxes=blackbody_spectrum.value,
                                                   fill=0) * units
-    return convert_blackbody_units(blackbody_spectrum_binned, wavelength_bin_centers, source_solid_angle)
+    return _convert_blackbody_units(blackbody_spectrum_binned, wavelength_bin_centers, source_solid_angle)
 
 
-def convert_blackbody_units(blackbody_spectrum_binned: np.ndarray,
-                            wavelength_bin_centers: np.ndarray,
-                            source_solid_angle: astropy.units.Quantity) -> np.ndarray:
+def _convert_blackbody_units(blackbody_spectrum_binned: np.ndarray,
+                             wavelength_bin_centers: np.ndarray,
+                             source_solid_angle: astropy.units.Quantity) -> np.ndarray:
     """Convert the binned black body spectrum from units erg / (Hz s sr cm2) to units ph / (m2 s um)
 
     :param blackbody_spectrum_binned: The binned blackbody spectrum

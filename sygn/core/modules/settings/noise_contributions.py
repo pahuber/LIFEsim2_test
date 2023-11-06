@@ -16,7 +16,7 @@ class OpticalPathDifferenceVariability(BaseModel):
     rms: Any
 
     @field_validator('rms')
-    def validate_optimized_wavelength(cls, value: Any, info: ValidationInfo) -> astropy.units.Quantity:
+    def _validate_optimized_wavelength(cls, value: Any, info: ValidationInfo) -> astropy.units.Quantity:
         """Validate the optimized wavelength input.
 
         :param value: Value given as input

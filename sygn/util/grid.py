@@ -26,4 +26,10 @@ def get_index_of_closest_value(array: np.ndarray, value: astropy.units.Quantity)
 
 
 def get_number_of_instances_in_list(list: list, instance_type: Any) -> int:
+    """Return the number of objects of a given instance in a list.
+
+    :param list: The list
+    :param instance_type: The type of instance
+    :return: The number of objects
+    """
     return len([value for value in list if isinstance(value, instance_type)])

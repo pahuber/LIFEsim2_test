@@ -21,7 +21,7 @@ class Source(ABC, BaseModel):
     mean_spectral_flux_density: Any = None
 
     @field_validator('temperature')
-    def validate_temperature(cls, value: Any, info: ValidationInfo) -> astropy.units.Quantity:
+    def _validate_temperature(cls, value: Any, info: ValidationInfo) -> astropy.units.Quantity:
         """Validate the temperature input.
 
         :param value: Value given as input

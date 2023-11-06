@@ -42,7 +42,7 @@ class Star(Source):
                                                                     self.solid_angle)
 
     @field_validator('radius')
-    def validate_radius(cls, value: Any, info: ValidationInfo) -> astropy.units.Quantity:
+    def _validate_radius(cls, value: Any, info: ValidationInfo) -> astropy.units.Quantity:
         """Validate the radius input.
 
         :param value: Value given as input
@@ -52,7 +52,7 @@ class Star(Source):
         return validate_quantity_units(value=value, field_name=info.field_name, unit_equivalency=u.m)
 
     @field_validator('mass')
-    def validate_mass(cls, value: Any, info: ValidationInfo) -> astropy.units.Quantity:
+    def _validate_mass(cls, value: Any, info: ValidationInfo) -> astropy.units.Quantity:
         """Validate the mass input.
 
         :param value: Value given as input
@@ -62,7 +62,7 @@ class Star(Source):
         return validate_quantity_units(value=value, field_name=info.field_name, unit_equivalency=u.kg)
 
     @field_validator('distance')
-    def validate_distance(cls, value: Any, info: ValidationInfo) -> astropy.units.Quantity:
+    def _validate_distance(cls, value: Any, info: ValidationInfo) -> astropy.units.Quantity:
         """Validate the distance input.
 
         :param value: Value given as input
@@ -72,7 +72,7 @@ class Star(Source):
         return validate_quantity_units(value=value, field_name=info.field_name, unit_equivalency=u.m)
 
     @field_validator('luminosity')
-    def validate_luminosity(cls, value: Any, info: ValidationInfo) -> astropy.units.Quantity:
+    def _validate_luminosity(cls, value: Any, info: ValidationInfo) -> astropy.units.Quantity:
         """Validate the luminosity input.
 
         :param value: Value given as input

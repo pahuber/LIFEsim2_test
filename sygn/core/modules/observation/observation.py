@@ -15,7 +15,7 @@ class Observation(BaseModel):
     optimized_wavelength: Any
 
     @field_validator('integration_time')
-    def validate_integration_time(cls, value: Any, info: ValidationInfo) -> astropy.units.Quantity:
+    def _validate_integration_time(cls, value: Any, info: ValidationInfo) -> astropy.units.Quantity:
         """Validate the integration time input.
 
         :param value: Value given as input
@@ -25,7 +25,7 @@ class Observation(BaseModel):
         return validate_quantity_units(value=value, field_name=info.field_name, unit_equivalency=u.s)
 
     @field_validator('optimized_wavelength')
-    def validate_optimized_wavelength(cls, value: Any, info: ValidationInfo) -> astropy.units.Quantity:
+    def _validate_optimized_wavelength(cls, value: Any, info: ValidationInfo) -> astropy.units.Quantity:
         """Validate the optimized wavelength input.
 
         :param value: Value given as input

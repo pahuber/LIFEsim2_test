@@ -23,8 +23,9 @@ class TargetSystemModule(BaseModule):
         self.data_type = data_type
         self.target_system = {}
 
-    def _initialize_sources_from_planetary_system_configuration(self, context):
-        """Read the planetary system configuration file, extract the data and create the Star and Planet objects.
+    def _initialize_target_system_from_planetary_system_configuration(self, context):
+        """Read the planetary system configuration file, extract the data and create the target system containing the
+         star and the planet(s).
 
         :param context: The context object
         """
@@ -50,15 +51,15 @@ class TargetSystemModule(BaseModule):
                                                                           planet.solid_angle)
             self.target_system[planet.name] = planet
 
-    def _load_sources(self, context):
-        """Add the data of a specific type.
+    def _load_target_system(self, context):
+        """Create a target system from the given input data.
 
         :param context: The context object
         """
 
         match self.data_type:
             case DataType.PLANETARY_SYSTEM_CONFIGURATION:
-                self._initialize_sources_from_planetary_system_configuration(context)
+                self._initialize_target_system_from_planetary_system_configuration(context)
             case DataType.SPECTRUM_DATA:
                 # TODO: import spectral data
                 pass
@@ -75,6 +76,6 @@ class TargetSystemModule(BaseModule):
         :param context: The context object of the pipeline
         :return: The (updated) context object
         """
-        self._load_sources(context)
+        self._load_target_system(context)
         context.target_systems.append(self.target_system)
         return context
