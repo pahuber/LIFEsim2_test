@@ -14,6 +14,7 @@ class Context():
         self.observatory = None
         self.target_systems = []
         self.differential_photon_counts = None
+        self.animator = None
 
     @property
     def time_range(self) -> np.ndarray:

@@ -28,7 +28,7 @@ class DataGeneratorModule(BaseModule):
                                             observatory=context.observatory,
                                             target_systems=context.target_systems,
                                             time_range=time_range,
-                                            animator=None)
+                                            animator=context.animator)
         # animator=animator)
         self.data_generator.run()
         context.differential_photon_counts = self.data_generator.output.differential_photon_counts

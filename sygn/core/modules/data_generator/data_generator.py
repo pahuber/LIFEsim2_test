@@ -66,12 +66,12 @@ class DataGenerator():
     def _create_animation(self):
         """Prepare the animation writer and run the time loop.
         """
-        self.simulation.animator.prepare_animation_writer(self.simulation.observation,
-                                                          self.simulation.config.time_range,
-                                                          self.simulation.config.grid_size)
-        with self.simulation.animator.writer.saving(self.simulation.animator.figure,
-                                                    f'{self.simulation.animator.source_name}_{np.round(self.simulation.animator.closest_wavelength.to(u.um).value, 3)}um.gif',
-                                                    300):
+        self.animator.prepare_animation_writer(self.target_systems,
+                                               self.time_range,
+                                               self.settings.grid_size)
+        with self.animator.writer.saving(self.animator.figure,
+                                         f'{self.animator.source_name}_{np.round(self.animator.closest_wavelength.to(u.um).value, 3)}um.gif',
+                                         300):
             self._generate_differential_photon_counts()
 
     def _finalize_data_generation(self):
@@ -102,7 +102,7 @@ class DataGenerator():
                                 body.name == self.animator.source_name and
                                 wavelength == self.animator.closest_wavelength and
                                 index_pair == self.animator.differential_intensity_response_index):
-                            self.animator.update_collector_position(time, self.observation)
+                            self.animator.update_collector_position(time, self.observatory)
                             self.animator.update_differential_intensity_response(
                                 intensity_responses[pair_of_indices[0]] - intensity_responses[pair_of_indices[1]])
                             self.animator.update_differential_photon_counts(

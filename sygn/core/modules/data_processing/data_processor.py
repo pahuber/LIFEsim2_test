@@ -8,12 +8,12 @@ import numpy as np
 from astropy import units as u
 from matplotlib import pyplot as plt
 from scipy.optimize import curve_fit
+from sygn.core.simulation.simulation import SimulationMode
 
 from sygn.core.modules.data_generator.data_generator import DataGenerator
 from sygn.core.modules.settings.noise_contributions import NoiseContributions, OpticalPathDifferenceVariability
 from sygn.core.modules.target_system.planet import Planet
 from sygn.core.modules.target_system.star import Star
-from sygn.core.simulation.simulation import SimulationMode
 from sygn.util.blackbody import create_blackbody_spectrum
 from sygn.util.grid import get_meshgrid
 
@@ -87,7 +87,7 @@ class DataProcessor():
                 data_generator = DataGenerator(simulation=self.template_simulation,
                                                simulation_mode=SimulationMode.SINGLE_OBSERVATION)
                 data_generator.run()
-                data_generator.save_to_fits(output_path='.', prefix=f'{str(x_position)}_{str(y_position)}')
+                data_generator.save_to_fits(output_path='', prefix=f'{str(x_position)}_{str(y_position)}')
 
     def plot_photon_count_time_series(self,
                                       source_names: list[str],

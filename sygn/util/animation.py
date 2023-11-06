@@ -6,7 +6,7 @@ from matplotlib import pyplot as plt
 from matplotlib.animation import FFMpegWriter
 from mpl_toolkits.axes_grid1.inset_locator import zoomed_inset_axes, mark_inset
 
-from sygn.core.modules.observation.observation import Observation
+from sygn.core.modules.observatory.observatory import Observatory
 
 
 class Animator():
@@ -47,7 +47,7 @@ class Animator():
         self.differential_photon_counts_list = []
         self.time_index_list = []
 
-    def prepare_animation_writer(self, observation: Observation, time_range: np.ndarray, grid_size: int):
+    def prepare_animation_writer(self, target_systems: list[dict], time_range: np.ndarray, grid_size: int):
         """Prepare the animation writer.
 
         :param observation: THe observation object
@@ -58,7 +58,7 @@ class Animator():
         self.figure = plt.figure(1)
         gs = self.figure.add_gridspec(2, 2)
 
-        image_intensity_response, image2 = self._prepare_differential_intensity_response_plot(gs, observation,
+        image_intensity_response, image2 = self._prepare_differential_intensity_response_plot(gs, target_systems,
                                                                                               grid_size)
         image_collector_positions = self._prepare_collector_position_image(gs, grid_size)
         image_photon_rates = self._prepare_photon_counts_plot(gs, time_range)
@@ -102,12 +102,12 @@ class Animator():
 
     def _prepare_differential_intensity_response_plot(self,
                                                       gs: matplotlib.gridspec.GridSpec,
-                                                      observation: Observation,
+                                                      target_systems: list[dict],
                                                       grid_size: int) -> matplotlib.image.AxesImage:
         """Prepare the plot for the differential intensity response.
 
         :param gs: The GridSpec object
-        :param observation: The observation object
+        :param target_systems: The target systems
         :param grid_size: Tge grid size
         :return: The image
         """
@@ -123,12 +123,12 @@ class Animator():
                               vmin=self.image_vmin,
                               vmax=self.image_vmax,
                               cmap='seismic')
-
-        max = int(np.max(observation.sources[self.source_name].sky_coordinate_maps[0][0, :]).value * 1000)
+        # TODO: for eveery target system
+        max = int(np.max(target_systems[0][self.source_name].sky_coordinate_maps[0][0, :]).value * 1000)
         labels = np.linspace(-max, max, grid_size // 10 + 1)
         ticks = np.linspace(0, grid_size, grid_size // 10 + 1)
         source_position_coordinate = (
-                observation.sources['Earth'].shape_map * observation.sources['Earth'].sky_coordinate_maps[0])
+                target_systems[0]['Earth'].shape_map * target_systems[0]['Earth'].sky_coordinate_maps[0])
         y_index, x_index = np.nonzero(source_position_coordinate)
         x_index = x_index[0]
         y_index = y_index[0]
@@ -176,13 +176,13 @@ class Animator():
 
         return image_photon_rates
 
-    def update_collector_position(self, time, observation):
+    def update_collector_position(self, time: astropy.units.Quantity, observatory: Observatory):
         """Get the collector positions and update the frame.
 
         :param time: The time
-        :param observation: The observation object
+        :param observatory: The observatory object
         """
-        x_observatory_coordinates, y_observatory_coordinates = observation.observatory.array_configuration.get_collector_positions(
+        x_observatory_coordinates, y_observatory_coordinates = observatory.array_configuration.get_collector_positions(
             time)
         self.images[0].set_data(x_observatory_coordinates.value, y_observatory_coordinates.value)
 
