@@ -1,4 +1,4 @@
-from typing import Tuple
+from typing import Tuple, Any
 
 import astropy.units
 import numpy as np
@@ -23,3 +23,7 @@ def get_index_of_closest_value(array: np.ndarray, value: astropy.units.Quantity)
     :return: The index of the closest value
     """
     return np.abs(array - value).argmin()
+
+
+def get_number_of_instances_in_list(list: list, instance_type: Any) -> int:
+    return len([value for value in list if isinstance(value, instance_type)])

@@ -4,9 +4,10 @@ from pathlib import Path
 import numpy as np
 from astropy.io import fits
 
+from sygn.core.context import Context
+from sygn.core.modules.target_system.planet import Planet
+from sygn.core.modules.target_system.star import Star
 from sygn.core.simulation.simulation import Simulation
-from sygn.core.simulation.sources.planet import Planet
-from sygn.core.simulation.sources.star import Star
 
 
 class FITSWriter():
@@ -75,7 +76,7 @@ class FITSWriter():
         return header
 
     @staticmethod
-    def write_fits(output_path: Path, postfix: str, simulation: Simulation, differential_photon_counts):
+    def write_fits(output_path: Path, postfix: str, context: Context):
         """Write the differential photon counts to a FITS file.
 
         :param output_path: The output path of the FITS file
@@ -85,10 +86,10 @@ class FITSWriter():
         """
         hdu_list = []
         primary = fits.PrimaryHDU()
-        header = FITSWriter._get_fits_header(primary, simulation)
+        # header = FITSWriter._get_fits_header(primary, context)
         hdu_list.append(primary)
-        for index_response in differential_photon_counts.keys():
-            differential_photon_counts_list = list(differential_photon_counts[index_response].values())
+        for index_response in context.differential_photon_counts.keys():
+            differential_photon_counts_list = list(context.differential_photon_counts[index_response].values())
             differential_photon_counts_array = np.array(differential_photon_counts_list)
             hdu = fits.ImageHDU(differential_photon_counts_array)
             hdu_list.append(hdu)

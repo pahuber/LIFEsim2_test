@@ -37,7 +37,7 @@ class ConfigReader():
                         except TypeError:
                             pass
 
-    def get_config_from_file(self) -> dict():
+    def get_dictionary_from_file(self) -> dict():
         """Return a dictionary containing the content of the configuration file.
 
         :return: A dictionary with the configurations.

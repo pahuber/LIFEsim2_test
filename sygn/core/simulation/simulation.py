@@ -8,19 +8,18 @@ from astropy import units as u
 from pydantic import BaseModel, field_validator
 from pydantic_core.core_schema import ValidationInfo
 
-from sygn.core.simulation.noise_contributions import NoiseContributions
-from sygn.core.simulation.observation import Observation
-from sygn.core.simulation.observatory.array_configurations import ArrayConfigurationEnum, EmmaXCircularRotation, \
+from sygn.core.modules.observation.observation import Observation
+from sygn.core.modules.observatory.array_configurations import ArrayConfigurationEnum, EmmaXCircularRotation, \
     EmmaXDoubleStretch, EquilateralTriangleCircularRotation, RegularPentagonCircularRotation, ArrayConfiguration
-from sygn.core.simulation.observatory.beam_combination_schemes import BeamCombinationSchemeEnum, DoubleBracewell, \
-    Kernel3, \
-    Kernel4, Kernel5, BeamCombinationScheme
-from sygn.core.simulation.observatory.instrument_parameters import InstrumentParameters
-from sygn.core.simulation.observatory.observatory import Observatory
-from sygn.core.simulation.sources.planet import Planet
-from sygn.core.simulation.sources.star import Star
+from sygn.core.modules.observatory.beam_combination_schemes import BeamCombinationScheme, BeamCombinationSchemeEnum, \
+    DoubleBracewell, Kernel3, Kernel4, Kernel5
+from sygn.core.modules.observatory.instrument_parameters import InstrumentParameters
+from sygn.core.modules.observatory.observatory import Observatory
+from sygn.core.modules.settings.noise_contributions import NoiseContributions
+from sygn.core.modules.target_system.data_type import DataType
+from sygn.core.modules.target_system.planet import Planet
+from sygn.core.modules.target_system.star import Star
 from sygn.io.config_reader import ConfigReader
-from sygn.io.data_type import DataType
 from sygn.io.validators import validate_quantity_units
 from sygn.util.animation import Animator
 from sygn.util.blackbody import create_blackbody_spectrum
@@ -122,7 +121,7 @@ class Simulation():
 
         :param path_to_data_file: Path to the data file
         """
-        planetary_system_dict = ConfigReader(path_to_config_file=path_to_data_file).get_config_from_file()
+        planetary_system_dict = ConfigReader(path_to_config_file=path_to_data_file).get_dictionary_from_file()
         star = Star(**planetary_system_dict['star'],
                     wavelength_range_lower_limit=self.observation.observatory.instrument_parameters.wavelength_range_lower_limit,
                     wavelength_range_upper_limit=self.observation.observatory.instrument_parameters.wavelength_range_upper_limit,
@@ -195,7 +194,7 @@ class Simulation():
 
         :param path_to_config_file: Path to the configuration file
         """
-        self._config_dict = ConfigReader(path_to_config_file=path_to_config_file).get_config_from_file()
+        self._config_dict = ConfigReader(path_to_config_file=path_to_config_file).get_dictionary_from_file()
         self.config = SimulationConfiguration(**self._config_dict['simulation'])
         self.observation = Observation(**self._config_dict['observation'])
         self.observation.observatory = Observatory()

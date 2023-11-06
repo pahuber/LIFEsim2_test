@@ -1,4 +1,4 @@
-from pathlib import Path
+from enum import Enum
 from random import choice
 from typing import Tuple
 
@@ -8,29 +8,51 @@ from astropy import units as u
 from numpy.random import poisson, normal
 from tqdm import tqdm
 
-from sygn.core.simulation.simulation import Simulation, SimulationMode
-from sygn.core.simulation.sources.source import Source
-from sygn.core.simulation.sources.star import Star
-from sygn.io.fits_writer import FITSWriter
-from sygn.io.synthetic_data import SyntheticData
+from sygn.core.modules.data_generator.synthetic_data import SyntheticData
+from sygn.core.modules.observation.observation import Observation
+from sygn.core.modules.observatory.observatory import Observatory
+from sygn.core.modules.settings.settings import Settings
+from sygn.core.modules.target_system.source import Source
+from sygn.core.modules.target_system.star import Star
+from sygn.util.animation import Animator
+
+
+class DataGenerationMode(Enum):
+    """Enum to represent the different data generation modes.
+    """
+    SINGLE_OBSERVATION = 1
+    YIELD_CALCULATIONS = 2
 
 
 class DataGenerator():
     """Class representation of the data generator.
     """
 
-    def __init__(self, simulation: Simulation, simulation_mode: SimulationMode):
+    def __init__(self,
+                 mode: DataGenerationMode,
+                 settings: Settings,
+                 observation: Observation,
+                 observatory: Observatory,
+                 target_systems: list[dict],
+                 time_range: np.ndarray,
+                 animator: Animator, ):
         """Constructor method.
 
         :param simulation: The simulation object
         :param simulation_mode: The simulation mode
         """
-        self.simulation = simulation
-        self.simulation_mode = simulation_mode
-        self.output = SyntheticData(self.simulation.observation.sources,
-                                    self.simulation.observation.observatory.instrument_parameters.wavelength_bin_centers,
-                                    self.simulation.observation.observatory.beam_combination_scheme.number_of_differential_intensity_responses,
-                                    len(self.simulation.config.time_range))
+        self.mode = mode
+        self.settings = settings
+        self.observation = observation
+        self.observatory = observatory
+        self.target_systems = target_systems
+        self.time_range = time_range
+        self.animator = animator
+        # TODO: extract every target system in list
+        self.output = SyntheticData(target_systems[0],
+                                    observatory.instrument_parameters.wavelength_bin_centers,
+                                    observatory.beam_combination_scheme.number_of_differential_intensity_responses,
+                                    len(time_range))
 
     def _calculate_total_differential_photon_counts(self):
         """Calculate the total differential photon counts by summing over the differential photon counts of all sources.
@@ -60,32 +82,33 @@ class DataGenerator():
     def _generate_differential_photon_counts(self):
         """Generate the differential photon counts. This is the main method of the data generation.
         """
-        for index_time, time in enumerate(tqdm(self.simulation.config.time_range)):
+        for index_time, time in enumerate(tqdm(self.time_range)):
 
             for index_wavelength, wavelength in enumerate(
-                    self.simulation.observation.observatory.instrument_parameters.wavelength_bin_centers):
+                    self.observatory.instrument_parameters.wavelength_bin_centers):
 
-                for _, source in self.simulation.observation.sources.items():
-                    if isinstance(source, Star) and not self.simulation.config.noise_contributions.stellar_leakage:
+                # TODO: do this for every target system
+                for body in self.target_systems[0].values():
+                    if isinstance(body, Star) and not self.settings.noise_contributions.stellar_leakage:
                         continue
-                    intensity_responses = self._get_intensity_responses(time, wavelength, source.sky_coordinate_maps)
+                    intensity_responses = self._get_intensity_responses(time, wavelength, body.sky_coordinate_maps)
 
                     for index_pair, pair_of_indices in enumerate(
-                            self.simulation.observation.observatory.beam_combination_scheme.get_intensity_response_pairs()):
-                        self.output.differential_photon_counts_by_source[index_pair][source.name][wavelength][
-                            index_time] = self._get_differential_photon_counts(index_wavelength, source,
+                            self.observatory.beam_combination_scheme.get_intensity_response_pairs()):
+                        self.output.differential_photon_counts_by_source[index_pair][body.name][wavelength][
+                            index_time] = self._get_differential_photon_counts(index_wavelength, body,
                                                                                intensity_responses, pair_of_indices)
-                        if self.simulation.animator and (
-                                source.name == self.simulation.animator.source_name and
-                                wavelength == self.simulation.animator.closest_wavelength and
-                                index_pair == self.simulation.animator.differential_intensity_response_index):
-                            self.simulation.animator.update_collector_position(time, self.simulation.observation)
-                            self.simulation.animator.update_differential_intensity_response(
+                        if self.animator and (
+                                body.name == self.animator.source_name and
+                                wavelength == self.animator.closest_wavelength and
+                                index_pair == self.animator.differential_intensity_response_index):
+                            self.animator.update_collector_position(time, self.observation)
+                            self.animator.update_differential_intensity_response(
                                 intensity_responses[pair_of_indices[0]] - intensity_responses[pair_of_indices[1]])
-                            self.simulation.animator.update_differential_photon_counts(
-                                self.output.differential_photon_counts_by_source[index_pair][source.name][wavelength][
+                            self.animator.update_differential_photon_counts(
+                                self.output.differential_photon_counts_by_source[index_pair][body.name][wavelength][
                                     index_time], index_time)
-                            self.simulation.animator.writer.grab_frame()
+                            self.animator.writer.grab_frame()
 
     def _get_differential_photon_counts(self,
                                         index_wavelength: int,
@@ -104,14 +127,14 @@ class DataGenerator():
             mean_spectral_flux_density=source.mean_spectral_flux_density[index_wavelength],
             source_shape_map=source.shape_map,
             wavelength_bin_width=
-            self.simulation.observation.observatory.instrument_parameters.wavelength_bin_widths[
+            self.observatory.instrument_parameters.wavelength_bin_widths[
                 index_wavelength],
             intensity_response=intensity_responses[pair_of_indices[0]])
         photon_counts_at_other_output = self._get_photon_counts(
             mean_spectral_flux_density=source.mean_spectral_flux_density[index_wavelength],
             source_shape_map=source.shape_map,
             wavelength_bin_width=
-            self.simulation.observation.observatory.instrument_parameters.wavelength_bin_widths[
+            self.observatory.instrument_parameters.wavelength_bin_widths[
                 index_wavelength],
             intensity_response=intensity_responses[pair_of_indices[1]])
         return photon_counts_at_one_output - photon_counts_at_other_output
@@ -127,16 +150,16 @@ class DataGenerator():
         :param source_sky_coordinate_maps: The sky coordinates of the source for which the intensity response is calculated
         :return: The input complex amplitude vector
         """
-        x_observatory_coordinates, y_observatory_coordinates = self.simulation.observation.observatory.array_configuration.get_collector_positions(
+        x_observatory_coordinates, y_observatory_coordinates = self.observatory.array_configuration.get_collector_positions(
             time)
         input_complex_amplitude_vector = np.zeros(
-            (self.simulation.observation.observatory.beam_combination_scheme.number_of_inputs,
-             self.simulation.config.grid_size, self.simulation.config.grid_size),
-            dtype=complex) * self.simulation.observation.observatory.instrument_parameters.aperture_radius.unit
+            (self.observatory.beam_combination_scheme.number_of_inputs,
+             self.settings.grid_size, self.settings.grid_size),
+            dtype=complex) * self.observatory.instrument_parameters.aperture_radius.unit
 
-        for index_input in range(self.simulation.observation.observatory.beam_combination_scheme.number_of_inputs):
+        for index_input in range(self.observatory.beam_combination_scheme.number_of_inputs):
             input_complex_amplitude_vector[
-                index_input] = self.simulation.observation.observatory.instrument_parameters.aperture_radius * np.exp(
+                index_input] = self.observatory.instrument_parameters.aperture_radius * np.exp(
                 1j * 2 * np.pi / wavelength * (
                         x_observatory_coordinates[index_input] * source_sky_coordinate_maps[0].to(u.rad).value +
                         y_observatory_coordinates[index_input] * source_sky_coordinate_maps[1].to(u.rad).value))
@@ -155,22 +178,22 @@ class DataGenerator():
         """
         input_complex_amplitude_unperturbed_vector = np.reshape(
             self._get_input_complex_amplitude_vector(time, wavelength, source_sky_coordinate_maps), (
-                self.simulation.observation.observatory.beam_combination_scheme.number_of_inputs,
-                self.simulation.config.grid_size ** 2))
+                self.observatory.beam_combination_scheme.number_of_inputs,
+                self.settings.grid_size ** 2))
 
         perturbation_matrix = self._get_perturbation_matrix(wavelength)
 
         input_complex_amplitude_perturbed_vector = np.dot(perturbation_matrix,
                                                           input_complex_amplitude_unperturbed_vector)
 
-        beam_combination_matrix = self.simulation.observation.observatory.beam_combination_scheme.get_beam_combination_transfer_matrix()
+        beam_combination_matrix = self.observatory.beam_combination_scheme.get_beam_combination_transfer_matrix()
 
         intensity_response_perturbed_vector = np.reshape(abs(
             np.dot(beam_combination_matrix, input_complex_amplitude_perturbed_vector)) ** 2,
                                                          (
-                                                             self.simulation.observation.observatory.beam_combination_scheme.number_of_outputs,
-                                                             self.simulation.config.grid_size,
-                                                             self.simulation.config.grid_size))
+                                                             self.observatory.beam_combination_scheme.number_of_outputs,
+                                                             self.settings.grid_size,
+                                                             self.settings.grid_size))
 
         return intensity_response_perturbed_vector
 
@@ -180,27 +203,27 @@ class DataGenerator():
         :param: Wavelength to calculate the phase error for
         :return: The perturbation matrix
         """
-        if (self.simulation.config.noise_contributions.fiber_injection_variability
-                or self.simulation.config.noise_contributions.optical_path_difference_variability):
+        if (self.settings.noise_contributions.fiber_injection_variability
+                or self.settings.noise_contributions.optical_path_difference_variability):
 
             diagonal_of_matrix = []
 
-            for index in range(self.simulation.observation.observatory.beam_combination_scheme.number_of_inputs):
+            for index in range(self.observatory.beam_combination_scheme.number_of_inputs):
                 amplitude_factor = 1
                 phase_difference = 0 * u.um
 
                 # TODO: Use more realistic distributions
-                if self.simulation.config.noise_contributions.fiber_injection_variability:
+                if self.settings.noise_contributions.fiber_injection_variability:
                     amplitude_factor = np.random.uniform(0.8, 0.9)
-                if self.simulation.config.noise_contributions.optical_path_difference_variability.apply:
+                if self.settings.noise_contributions.optical_path_difference_variability.apply:
                     phase_difference = choice(
-                        self.simulation.config.noise_contributions.optical_path_difference_distribution).to(u.um)
+                        self.settings.noise_contributions.optical_path_difference_distribution).to(u.um)
 
                 diagonal_of_matrix.append(amplitude_factor * np.exp(2j * np.pi / wavelength * phase_difference))
 
             return np.diag(diagonal_of_matrix)
 
-        return np.diag(np.ones(self.simulation.observation.observatory.beam_combination_scheme.number_of_inputs))
+        return np.diag(np.ones(self.observatory.beam_combination_scheme.number_of_inputs))
 
     def _get_photon_counts(self,
                            mean_spectral_flux_density: astropy.units.Quantity,
@@ -217,8 +240,8 @@ class DataGenerator():
         """
         mean_photon_counts = np.sum((mean_spectral_flux_density * source_shape_map * wavelength_bin_width
                                      * intensity_response
-                                     * self.simulation.observation.observatory.instrument_parameters.unperturbed_instrument_throughput
-                                     * self.simulation.config.time_step.to(u.s)).value)
+                                     * self.observatory.instrument_parameters.unperturbed_instrument_throughput
+                                     * self.settings.time_step.to(u.s)).value)
 
         try:
             photon_counts = poisson(mean_photon_counts, 1)
@@ -229,22 +252,15 @@ class DataGenerator():
     def _prepare_data_generation(self):
         """Prepare the data generation.
         """
-        self.simulation.observation.set_optimal_baseline()
+        self.observatory.array_configuration.set_optimal_baseline(self.target_systems,
+                                                                  self.observation.optimized_wavelength)
 
     def run(self):
         """Prepare the data generation, generate the data and finalize the data generation.
         """
         self._prepare_data_generation()
-        if self.simulation.animator:
+        if self.animator:
             self._create_animation()
         else:
             self._generate_differential_photon_counts()
         self._finalize_data_generation()
-
-    def save_to_fits(self, output_path: Path, postfix: str = ''):
-        """Save the differential photon counts to a FITS file.
-
-        :param output_path: The output path of the FITS file
-        :param postfix: Postfix to be appended to the output file name
-        """
-        FITSWriter.write_fits(output_path, postfix, self.simulation, self.output.differential_photon_counts)

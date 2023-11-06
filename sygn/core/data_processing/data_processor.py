@@ -9,11 +9,11 @@ from astropy import units as u
 from matplotlib import pyplot as plt
 from scipy.optimize import curve_fit
 
-from sygn.core.data_generation.data_generator import DataGenerator
-from sygn.core.simulation.noise_contributions import NoiseContributions, OpticalPathDifferenceVariability
+from sygn.core.modules.data_generator.data_generator import DataGenerator
+from sygn.core.modules.settings.noise_contributions import NoiseContributions, OpticalPathDifferenceVariability
+from sygn.core.modules.target_system.planet import Planet
+from sygn.core.modules.target_system.star import Star
 from sygn.core.simulation.simulation import SimulationMode
-from sygn.core.simulation.sources.planet import Planet
-from sygn.core.simulation.sources.star import Star
 from sygn.util.blackbody import create_blackbody_spectrum
 from sygn.util.grid import get_meshgrid
 

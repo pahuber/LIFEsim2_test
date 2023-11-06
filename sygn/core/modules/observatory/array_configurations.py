@@ -8,6 +8,7 @@ from astropy import units as u
 from pydantic import BaseModel, field_validator
 from pydantic_core.core_schema import ValidationInfo
 
+from sygn.core.modules.target_system.star import Star
 from sygn.io.validators import validate_quantity_units
 from sygn.util.matrix import get_2d_rotation_matrix
 
@@ -79,6 +80,22 @@ class ArrayConfiguration(ABC, BaseModel):
         :return: The baseline
         """
         pass
+
+    def set_optimal_baseline(self, target_systems: list[dict], optimized_wavelength: astropy.units.Quantity):
+        """Set the baseline to optimize for the habitable zone, if it is between the minimum and maximum allowed
+        baselines.
+        """
+        for target_system in target_systems:
+            star = [value for value in target_system.values() if isinstance(value, Star)][0]
+            optimal_baseline = self.get_optimal_baseline(wavelength=optimized_wavelength,
+                                                         optimal_angular_distance=star.habitable_zone_central_angular_radius).to(
+                u.m)
+
+            if self.baseline_minimum <= optimal_baseline and optimal_baseline <= self.baseline_maximum:
+                self.baseline = optimal_baseline
+            else:
+                raise ValueError(
+                    f'Optimal baseline of {optimal_baseline} is not within allowed ranges of baselines {self.baseline_minimum}-{self.baseline_maximum}')
 
 
 class EmmaXCircularRotation(ArrayConfiguration):
