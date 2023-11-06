@@ -50,7 +50,7 @@ class Animator():
     def prepare_animation_writer(self, target_systems: list[dict], time_range: np.ndarray, grid_size: int):
         """Prepare the animation writer.
 
-        :param observation: THe observation object
+        :param target_systems: The target systems
         :param time_range: The time range
         :param grid_size: The grid size
         """
@@ -108,7 +108,7 @@ class Animator():
 
         :param gs: The GridSpec object
         :param target_systems: The target systems
-        :param grid_size: Tge grid size
+        :param grid_size: The grid size
         :return: The image
         """
         ax1 = self.figure.add_subplot(gs[0, 1])

@@ -8,11 +8,22 @@ from sygn.util.grid import get_index_of_closest_value
 
 
 class SyntheticData():
+    """Class representation of synthetic data.
+    """
+
     def __init__(self,
                  sources: np.ndarray,
                  wavelength_bin_centers: np.ndarray,
                  number_of_differential_intensity_responses: int,
                  number_of_time_steps: int):
+        """
+        Constructor method.
+
+        :param sources: The sources
+        :param wavelength_bin_centers: The wavelength bin centers
+        :param number_of_differential_intensity_responses: The number of differential intensity responses
+        :param number_of_time_steps: The number of time steps
+        """
         self.wavelength_bin_centers = wavelength_bin_centers
         self.differential_photon_counts = dict(
             (index_response,

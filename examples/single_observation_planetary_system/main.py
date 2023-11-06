@@ -1,29 +1,55 @@
 from pathlib import Path
 
-from sygn.core.simulation.simulation import Simulation, SimulationMode
-
-from sygn.core.modules.data_generator.data_generator import DataGenerator
-from sygn.core.modules.data_processing.data_processor import DataProcessor
+from sygn.core.modules.data_generator.data_generator import DataGenerationMode
+from sygn.core.modules.data_generator.data_generator_module import DataGeneratorModule
+from sygn.core.modules.observation.observation_module import ObservationModule
+from sygn.core.modules.observatory.observatory_module import ObservatoryModule
+from sygn.core.modules.settings.settings_module import SettingsModule
 from sygn.core.modules.target_system.data_type import DataType
+from sygn.core.modules.target_system.target_system_module import TargetSystemModule
+from sygn.core.pipeline import Pipeline
 
 # Specify paths
 path_to_config_file = Path(r'C:\Users\huber\Desktop\LIFEsim2\examples\single_observation_planetary_system\config.yaml')
 path_to_data_file = Path(
     r'C:\Users\huber\Desktop\LIFEsim2\examples\single_observation_planetary_system\planetary_system.yaml')
 
-# Create simulation object and load configuration and sources
-simulation = Simulation()
-simulation.load_config(path_to_config_file=path_to_config_file)
-simulation.load_sources(data_type=DataType.PLANETARY_SYSTEM_CONFIGURATION, path_to_data_file=path_to_data_file)
-# simulation.add_animator(output_path='.', source_name='Earth', wavelength=10 * u.um,
-#                         differential_intensity_response_index=0, photon_counts_limits=150, collector_position_limits=50,
-#                         image_vmin=-10, image_vmax=10)
+# Instantiate pipeline
+pipeline = Pipeline()
 
-# Generate the differential photon counts for a single observation
-data_generator = DataGenerator(simulation=simulation, simulation_mode=SimulationMode.SINGLE_OBSERVATION)
-data_generator.run()
-data_generator.save_to_fits(output_path=Path('.'))
+# Load settings from config file and add settings module to pipeline
+module = SettingsModule(path_to_config_file=path_to_config_file)
+pipeline.add_module(module)
 
-# Create data processor object for processing of synthetic data
-data_processor = DataProcessor(simulation=simulation,
-                               differential_photon_counts=data_generator.output.differential_photon_counts)
+# Load observation from config file and add observation module to pipeline
+module = ObservationModule(path_to_config_file=path_to_config_file)
+pipeline.add_module(module)
+
+# Load observatory from config file and add observatory module to pipeline
+module = ObservatoryModule(path_to_config_file=path_to_config_file)
+pipeline.add_module(module)
+
+# Load sources from file and add sources module to pipeline
+module = TargetSystemModule(data_type=DataType.PLANETARY_SYSTEM_CONFIGURATION, path_to_data_file=path_to_data_file)
+pipeline.add_module(module)
+
+# # Instantiate animator module and add it to the pipeline
+# module = AnimatorModule(output_path='.',
+#                         source_name='Earth',
+#                         wavelength=10 * u.um,
+#                         differential_intensity_response_index=0,
+#                         photon_count_limits=150,
+#                         collector_position_limits=50,
+#                         image_vmin=-10,
+#                         image_vmax=10)
+# pipeline.add_module(module)
+
+# Instantiate data generator module and add it to the pipeline
+module = DataGeneratorModule(mode=DataGenerationMode.SINGLE_OBSERVATION)
+pipeline.add_module(module)
+
+# Run pipeline
+pipeline.run()
+
+# Save synthetic data to FITS file
+pipeline.save_data_to_fits('.')

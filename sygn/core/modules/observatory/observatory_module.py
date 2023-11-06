@@ -26,6 +26,7 @@ class ObservatoryModule(BaseModule):
     def _initialize_array_configuration_from_config(self, config_dict: dict) -> ArrayConfiguration:
         """Return an ArrayConfiguration object.
 
+        :param config_dict: The config dictionary
         :return: ArrayConfiguration object.
         """
         type = config_dict['observatory']['array_configuration']['type']
@@ -46,6 +47,7 @@ class ObservatoryModule(BaseModule):
     def _initialize_beam_combination_scheme_from_config(self, config_dict: dict) -> BeamCombinationScheme:
         """Return an BeamCombinationScheme object.
 
+        :param config_dict: The config dictionary
         :return: BeamCombinationScheme object.
         """
         beam_combination_scheme = config_dict['observatory']['beam_combination_scheme']

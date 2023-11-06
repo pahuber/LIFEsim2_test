@@ -1,8 +1,8 @@
 import astropy
 
 from sygn.core.context import Context
+from sygn.core.modules.animator.animator import Animator
 from sygn.core.modules.base_module import BaseModule
-from sygn.util.animation import Animator
 from sygn.util.grid import get_index_of_closest_value
 
 

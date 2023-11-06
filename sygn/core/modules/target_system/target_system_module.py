@@ -26,7 +26,7 @@ class TargetSystemModule(BaseModule):
     def _initialize_sources_from_planetary_system_configuration(self, context):
         """Read the planetary system configuration file, extract the data and create the Star and Planet objects.
 
-        :param path_to_data_file: Path to the data file
+        :param context: The context object
         """
         configuration_dict = ConfigReader(path_to_config_file=self.path_to_data_file).get_dictionary_from_file()
         star = Star(**configuration_dict['star'],
@@ -53,8 +53,7 @@ class TargetSystemModule(BaseModule):
     def _load_sources(self, context):
         """Add the data of a specific type.
 
-        :param data_type: Type of the data
-        :param path_to_data_file: Path to the data file
+        :param context: The context object
         """
 
         match self.data_type:

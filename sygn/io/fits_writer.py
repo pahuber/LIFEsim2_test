@@ -7,72 +7,72 @@ from astropy.io import fits
 from sygn.core.context import Context
 from sygn.core.modules.target_system.planet import Planet
 from sygn.core.modules.target_system.star import Star
-from sygn.core.simulation.simulation import Simulation
 
 
 class FITSWriter():
 
     @staticmethod
-    def _get_fits_header(primary: fits.PrimaryHDU, simulation: Simulation) -> fits.header.Header:
+    def _get_fits_header(primary: fits.PrimaryHDU, context: Context) -> fits.header.Header:
         """Return the FITS file header containing the information about the simulation and the sources.
 
         :param primary: The primary HDU object
-        :param simulation: THe simulation object
+        :param context: The context object
         :return: The header
         """
         header = primary.header
-        header['LIFESIM2_GRID_SIZE'] = simulation.config.grid_size
-        header['LIFESIM2_TIME_STEP'] = str(simulation.config.time_step)
-        header['LIFESIM2_STELLAR_LEAKAGE'] = simulation.config.noise_contributions.stellar_leakage
-        header['LIFESIM2_LOCAL_ZODI_LEAKAGE'] = simulation.config.noise_contributions.local_zodi_leakage
-        header['LIFESIM2_EXOZODI_LEAKAGE'] = simulation.config.noise_contributions.exozodi_leakage
+        header['SYGN_GRID_SIZE'] = context.settings.grid_size
+        header['SYGN_TIME_STEP'] = str(context.settings.time_step)
+        header['SYGN_STELLAR_LEAKAGE'] = context.settings.noise_contributions.stellar_leakage
+        header['SYGN_LOCAL_ZODI_LEAKAGE'] = context.settings.noise_contributions.local_zodi_leakage
+        header['SYGN_EXOZODI_LEAKAGE'] = context.settings.noise_contributions.exozodi_leakage
         header[
-            'LIFESIM2_FIBER_INJECTION_VARIABILITY'] = simulation.config.noise_contributions.fiber_injection_variability
+            'SYGN_FIBER_INJECTION_VARIABILITY'] = context.settings.noise_contributions.fiber_injection_variability
         header[
-            'LIFESIM2_OPD_VARIABILITY_APPLY'] = simulation.config.noise_contributions.optical_path_difference_variability.apply
+            'SYGN_OPD_VARIABILITY_APPLY'] = context.settings.noise_contributions.optical_path_difference_variability.apply
         header[
-            'LIFESIM2_OPD_VARIABILITY_POWER_LAW_EXPONENT'] = simulation.config.noise_contributions.optical_path_difference_variability.power_law_exponent
-        header['LIFESIM2_OPD_VARIABILITY_RMS'] = str(
-            simulation.config.noise_contributions.optical_path_difference_variability.rms)
-        header['LIFESIM2_ADJUST_BASELINE_TO_HABITABLE_ZONE'] = simulation.observation.adjust_baseline_to_habitable_zone
-        header['LIFESIM2_INTEGRATION_TIME'] = str(simulation.observation.integration_time)
-        header['LIFESIM2_OPTIMIZED_WAVELENGTH'] = str(simulation.observation.optimized_wavelength)
-        header['LIFESIM2_ARRAY_CONFIGURATION_TYPE'] = simulation.observation.observatory.array_configuration.type
-        header['LIFESIM2_BASELINE_MAXIMUM'] = str(
-            simulation.observation.observatory.array_configuration.baseline_maximum)
-        header['LIFESIM2_BASELINE_MINIMUM'] = str(
-            simulation.observation.observatory.array_configuration.baseline_minimum)
-        header['LIFESIM2_BASELINE_RATIO'] = simulation.observation.observatory.array_configuration.baseline_ratio
-        header['LIFESIM2_MODULATION_PERIOD'] = str(
-            simulation.observation.observatory.array_configuration.modulation_period)
+            'SYGN_OPD_VARIABILITY_POWER_LAW_EXPONENT'] = context.settings.noise_contributions.optical_path_difference_variability.power_law_exponent
+        header['SYGN_OPD_VARIABILITY_RMS'] = str(
+            context.settings.noise_contributions.optical_path_difference_variability.rms)
+        header['SYGN_ADJUST_BASELINE_TO_HABITABLE_ZONE'] = context.observation.adjust_baseline_to_habitable_zone
+        header['SYGN_INTEGRATION_TIME'] = str(context.observation.integration_time)
+        header['SYGN_OPTIMIZED_WAVELENGTH'] = str(context.observation.optimized_wavelength)
+        header['SYGN_ARRAY_CONFIGURATION_TYPE'] = context.observatory.array_configuration.type
+        header['SYGN_BASELINE_MAXIMUM'] = str(
+            context.observatory.array_configuration.baseline_maximum)
+        header['SYGN_BASELINE_MINIMUM'] = str(
+            context.observatory.array_configuration.baseline_minimum)
+        header['SYGN_BASELINE_RATIO'] = context.observatory.array_configuration.baseline_ratio
+        header['SYGN_MODULATION_PERIOD'] = str(
+            context.observatory.array_configuration.modulation_period)
         header[
-            'LIFESIM2_BEAM_COMBINATION_SCHEME'] = simulation.observation.observatory.beam_combination_scheme.type.value
-        header['LIFESIM2_APERTURE_DIAMETER'] = str(
-            simulation.observation.observatory.instrument_parameters.aperture_diameter)
+            'SYGN_BEAM_COMBINATION_SCHEME'] = context.observatory.beam_combination_scheme.type.value
+        header['SYGN_APERTURE_DIAMETER'] = str(
+            context.observatory.instrument_parameters.aperture_diameter)
         header[
-            'LIFESIM2_SPECTRAL_RESOLVING_POWER'] = simulation.observation.observatory.instrument_parameters.spectral_resolving_power
-        header['LIFESIM2_WAVELENGTH_RANGE_LOWER_LIMIT'] = str(
-            simulation.observation.observatory.instrument_parameters.wavelength_range_lower_limit)
-        header['LIFESIM2_WAVELENGTH_RANGE_UPPER_LIMIT'] = str(
-            simulation.observation.observatory.instrument_parameters.wavelength_range_upper_limit)
+            'SYGN_SPECTRAL_RESOLVING_POWER'] = context.observatory.instrument_parameters.spectral_resolving_power
+        header['SYGN_WAVELENGTH_RANGE_LOWER_LIMIT'] = str(
+            context.observatory.instrument_parameters.wavelength_range_lower_limit)
+        header['SYGN_WAVELENGTH_RANGE_UPPER_LIMIT'] = str(
+            context.observatory.instrument_parameters.wavelength_range_upper_limit)
         header[
-            'LIFESIM2_UNPERTURBED_INSTRUMENT_THROUGHPUT'] = simulation.observation.observatory.instrument_parameters.unperturbed_instrument_throughput
-        for index_source, source in enumerate(simulation.observation.sources.values()):
+            'SYGN_UNPERTURBED_INSTRUMENT_THROUGHPUT'] = context.observatory.instrument_parameters.unperturbed_instrument_throughput
+        # TODO: for all systems
+        for index_source, source in enumerate(context.target_systems[0].values()):
             if isinstance(source, Planet):
-                header[f'LIFESIM2_PLANET{index_source}_NAME'] = source.name
-                header[f'LIFESIM2_PLANET{index_source}_MASS'] = str(source.mass)
-                header[f'LIFESIM2_PLANET{index_source}_RADIUS'] = str(source.radius)
-                header[f'LIFESIM2_PLANET{index_source}_STAR_SEPARATION_X'] = str(source.star_separation_x)
-                header[f'LIFESIM2_PLANET{index_source}_STAR_SEPARATION_Y'] = str(source.star_separation_y)
-                header[f'LIFESIM2_PLANET{index_source}_TEMPERATURE'] = str(source.temperature)
+                header[f'SYGN_PLANET{index_source}_NAME'] = source.name
+                header[f'SYGN_PLANET{index_source}_MASS'] = str(source.mass)
+                header[f'SYGN_PLANET{index_source}_RADIUS'] = str(source.radius)
+                header[f'SYGN_PLANET{index_source}_STAR_SEPARATION_X'] = str(source.star_separation_x)
+                header[f'SYGN_PLANET{index_source}_STAR_SEPARATION_Y'] = str(source.star_separation_y)
+                header[f'SYGN_PLANET{index_source}_TEMPERATURE'] = str(source.temperature)
             if isinstance(source, Star):
-                header['LIFESIM2_STAR_NAME'] = source.name
-                header['LIFESIM2_STAR_DISTANCE'] = str(source.distance)
-                header['LIFESIM2_STAR_MASS'] = str(source.mass)
-                header['LIFESIM2_STAR_RADIUS'] = str(source.radius)
-                header['LIFESIM2_STAR_TEMPERATURE'] = str(source.temperature)
-                header['LIFESIM2_STAR_LUMINOSITY'] = str(source.luminosity)
-                header['LIFESIM2_STAR_ZODI_LEVEL'] = source.zodi_level
+                header['SYGN_STAR_NAME'] = source.name
+                header['SYGN_STAR_DISTANCE'] = str(source.distance)
+                header['SYGN_STAR_MASS'] = str(source.mass)
+                header['SYGN_STAR_RADIUS'] = str(source.radius)
+                header['SYGN_STAR_TEMPERATURE'] = str(source.temperature)
+                header['SYGN_STAR_LUMINOSITY'] = str(source.luminosity)
+                header['SYGN_STAR_ZODI_LEVEL'] = source.zodi_level
         return header
 
     @staticmethod
@@ -86,7 +86,7 @@ class FITSWriter():
         """
         hdu_list = []
         primary = fits.PrimaryHDU()
-        # header = FITSWriter._get_fits_header(primary, context)
+        header = FITSWriter._get_fits_header(primary, context)
         hdu_list.append(primary)
         for index_response in context.differential_photon_counts.keys():
             differential_photon_counts_list = list(context.differential_photon_counts[index_response].values())

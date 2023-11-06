@@ -8,13 +8,13 @@ from astropy import units as u
 from numpy.random import poisson, normal
 from tqdm import tqdm
 
+from sygn.core.modules.animator.animator import Animator
 from sygn.core.modules.data_generator.synthetic_data import SyntheticData
 from sygn.core.modules.observation.observation import Observation
 from sygn.core.modules.observatory.observatory import Observatory
 from sygn.core.modules.settings.settings import Settings
 from sygn.core.modules.target_system.source import Source
 from sygn.core.modules.target_system.star import Star
-from sygn.util.animation import Animator
 
 
 class DataGenerationMode(Enum):
@@ -38,8 +38,13 @@ class DataGenerator():
                  animator: Animator, ):
         """Constructor method.
 
-        :param simulation: The simulation object
-        :param simulation_mode: The simulation mode
+        :param mode: The data generation mode
+        :param settings: The settings object
+        :param observation: The observation object
+        :param observatory: The observatory object
+        :param target_systems: The target systems
+        :param time_range: The time range
+        :param animator: The animator object
         """
         self.mode = mode
         self.settings = settings
@@ -121,7 +126,7 @@ class DataGenerator():
         :param source: Source object
         :param intensity_responses: Intensity response vector
         :param pair_of_indices: A pair of indices making up a differential intensity response
-        :return: THe differential photon counts in units  of photons
+        :return: The differential photon counts in units  of photons
         """
         photon_counts_at_one_output = self._get_photon_counts(
             mean_spectral_flux_density=source.mean_spectral_flux_density[index_wavelength],

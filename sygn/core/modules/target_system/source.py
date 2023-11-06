@@ -63,11 +63,3 @@ class Source(ABC, BaseModel):
         :return: The shape map
         """
         pass
-
-    @abstractmethod
-    def get_spectral_flux_density(self) -> np.ndarray:
-        """Return an array containing the spectral flux density per wavelength bin. This should include photon noise.
-
-        :return: An array containing the spectral flux density including photon noise
-        """
-        pass

@@ -84,13 +84,15 @@ class ArrayConfiguration(ABC, BaseModel):
     def set_optimal_baseline(self, target_systems: list[dict], optimized_wavelength: astropy.units.Quantity):
         """Set the baseline to optimize for the habitable zone, if it is between the minimum and maximum allowed
         baselines.
+
+        :param target_systems: The target systems
+        :param optimized_wavelength: The optimized wavelength
         """
         for target_system in target_systems:
             star = [value for value in target_system.values() if isinstance(value, Star)][0]
             optimal_baseline = self.get_optimal_baseline(wavelength=optimized_wavelength,
                                                          optimal_angular_distance=star.habitable_zone_central_angular_radius).to(
                 u.m)
-
             if self.baseline_minimum <= optimal_baseline and optimal_baseline <= self.baseline_maximum:
                 self.baseline = optimal_baseline
             else:
