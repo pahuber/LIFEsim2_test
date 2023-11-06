@@ -33,3 +33,15 @@ def get_number_of_instances_in_list(list: list, instance_type: Any) -> int:
     :return: The number of objects
     """
     return len([value for value in list if isinstance(value, instance_type)])
+
+
+def get_dictionary_from_list_containing_key(key: str, list: list) -> dict:
+    """Given a list of dictionaries and a key, return the dictionary that contains the key.
+
+    :param key: The key
+    :param list: The list
+    :return: The dictionary containing the key
+    """
+    for dictionary in list:
+        if key in dictionary:
+            return dictionary

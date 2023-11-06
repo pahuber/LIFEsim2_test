@@ -47,32 +47,6 @@ class Animator():
         self.differential_photon_counts_list = []
         self.time_index_list = []
 
-    def prepare_animation_writer(self, target_systems: list[dict], time_range: np.ndarray, grid_size: int):
-        """Prepare the animation writer.
-
-        :param target_systems: The target systems
-        :param time_range: The time range
-        :param grid_size: The grid size
-        """
-        self.writer = FFMpegWriter(fps=15)
-        self.figure = plt.figure(1)
-        gs = self.figure.add_gridspec(2, 2)
-
-        image_intensity_response, image2 = self._prepare_differential_intensity_response_plot(gs, target_systems,
-                                                                                              grid_size)
-        image_collector_positions = self._prepare_collector_position_image(gs, grid_size)
-        image_photon_rates = self._prepare_photon_counts_plot(gs, time_range)
-
-        self.figure.tight_layout()
-        plt.subplots_adjust(left=0.1,
-                            bottom=0.1,
-                            right=0.9,
-                            top=0.9,
-                            wspace=0,
-                            hspace=0.6)
-        plt.close()
-        self.images = (image_collector_positions, image_intensity_response, image2, image_photon_rates)
-
     def _prepare_collector_position_image(self,
                                           gs: matplotlib.gridspec.GridSpec,
                                           grid_size: int) -> matplotlib.image.AxesImage:
@@ -102,7 +76,7 @@ class Animator():
 
     def _prepare_differential_intensity_response_plot(self,
                                                       gs: matplotlib.gridspec.GridSpec,
-                                                      target_systems: list[dict],
+                                                      target_system: dict,
                                                       grid_size: int) -> matplotlib.image.AxesImage:
         """Prepare the plot for the differential intensity response.
 
@@ -123,12 +97,12 @@ class Animator():
                               vmin=self.image_vmin,
                               vmax=self.image_vmax,
                               cmap='seismic')
-        # TODO: for eveery target system
-        max = int(np.max(target_systems[0][self.source_name].sky_coordinate_maps[0][0, :]).value * 1000)
+
+        max = int(np.max(target_system[self.source_name].sky_coordinate_maps[0][0, :]).value * 1000)
         labels = np.linspace(-max, max, grid_size // 10 + 1)
         ticks = np.linspace(0, grid_size, grid_size // 10 + 1)
         source_position_coordinate = (
-                target_systems[0]['Earth'].shape_map * target_systems[0]['Earth'].sky_coordinate_maps[0])
+                target_system[self.source_name].shape_map * target_system[self.source_name].sky_coordinate_maps[0])
         y_index, x_index = np.nonzero(source_position_coordinate)
         x_index = x_index[0]
         y_index = y_index[0]
@@ -175,6 +149,32 @@ class Animator():
         ax2.set_box_aspect(0.365)
 
         return image_photon_rates
+
+    def prepare_animation_writer(self, target_system: dict, time_range: np.ndarray, grid_size: int):
+        """Prepare the animation writer.
+
+        :param target_systems: The target systems
+        :param time_range: The time range
+        :param grid_size: The grid size
+        """
+        self.writer = FFMpegWriter(fps=15)
+        self.figure = plt.figure(1)
+        gs = self.figure.add_gridspec(2, 2)
+
+        image_intensity_response, image2 = self._prepare_differential_intensity_response_plot(gs, target_system,
+                                                                                              grid_size)
+        image_collector_positions = self._prepare_collector_position_image(gs, grid_size)
+        image_photon_rates = self._prepare_photon_counts_plot(gs, time_range)
+
+        self.figure.tight_layout()
+        plt.subplots_adjust(left=0.1,
+                            bottom=0.1,
+                            right=0.9,
+                            top=0.9,
+                            wspace=0,
+                            hspace=0.6)
+        plt.close()
+        self.images = (image_collector_positions, image_intensity_response, image2, image_photon_rates)
 
     def update_collector_position(self, time: astropy.units.Quantity, observatory: Observatory):
         """Get the collector positions and update the frame.

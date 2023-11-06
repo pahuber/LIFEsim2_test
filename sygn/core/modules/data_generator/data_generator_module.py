@@ -30,5 +30,7 @@ class DataGeneratorModule(BaseModule):
                                             time_range=time_range,
                                             animator=context.animator)
         self.data_generator.run()
-        context.differential_photon_counts = self.data_generator.output.differential_photon_counts
+        for index_target_system in range(len(self.data_generator.output)):
+            context.differential_photon_counts_list.append(
+                self.data_generator.output[index_target_system].differential_photon_counts)
         return context

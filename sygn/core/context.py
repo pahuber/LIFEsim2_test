@@ -13,7 +13,7 @@ class Context():
         self.observation = None
         self.observatory = None
         self.target_systems = []
-        self.differential_photon_counts = None
+        self.differential_photon_counts_list = []
         self.animator = None
 
     @property

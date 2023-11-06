@@ -15,6 +15,7 @@ from sygn.core.modules.observatory.observatory import Observatory
 from sygn.core.modules.settings.settings import Settings
 from sygn.core.modules.target_system.source import Source
 from sygn.core.modules.target_system.star import Star
+from sygn.util.grid import get_dictionary_from_list_containing_key
 
 
 class DataGenerationMode(Enum):
@@ -53,25 +54,30 @@ class DataGenerator():
         self.target_systems = target_systems
         self.time_range = time_range
         self.animator = animator
-        # TODO: extract every target system in list
-        self.output = SyntheticData(target_systems[0],
-                                    observatory.instrument_parameters.wavelength_bin_centers,
-                                    observatory.beam_combination_scheme.number_of_differential_intensity_responses,
-                                    len(time_range))
+        self.output = [SyntheticData(target_systems[i],
+                                     observatory.instrument_parameters.wavelength_bin_centers,
+                                     observatory.beam_combination_scheme.number_of_differential_intensity_responses,
+                                     len(time_range)) for i in range(len(target_systems))]
 
     def _calculate_total_differential_photon_counts(self):
         """Calculate the total differential photon counts by summing over the differential photon counts of all sources.
         """
-        for index_response in self.output.differential_photon_counts_by_source.keys():
-            for source in self.output.differential_photon_counts_by_source[index_response].keys():
-                for wavelength in self.output.differential_photon_counts_by_source[index_response][source].keys():
-                    self.output.differential_photon_counts[index_response][wavelength] += \
-                        self.output.differential_photon_counts_by_source[index_response][source][wavelength]
+        for index_target_system, target_system in enumerate(self.target_systems):
+            for index_response in self.output[index_target_system].differential_photon_counts_by_source.keys():
+                for source in self.output[index_target_system].differential_photon_counts_by_source[
+                    index_response].keys():
+                    for wavelength in \
+                            self.output[index_target_system].differential_photon_counts_by_source[index_response][
+                                source].keys():
+                        self.output[index_target_system].differential_photon_counts[index_response][wavelength] += \
+                            self.output[index_target_system].differential_photon_counts_by_source[index_response][
+                                source][wavelength]
 
     def _create_animation(self):
         """Prepare the animation writer and run the time loop.
         """
-        self.animator.prepare_animation_writer(self.target_systems,
+        target_system = get_dictionary_from_list_containing_key(self.animator.source_name, self.target_systems)
+        self.animator.prepare_animation_writer(target_system,
                                                self.time_range,
                                                self.settings.grid_size)
         with self.animator.writer.saving(self.animator.figure,
@@ -92,28 +98,33 @@ class DataGenerator():
             for index_wavelength, wavelength in enumerate(
                     self.observatory.instrument_parameters.wavelength_bin_centers):
 
-                # TODO: do this for every target system
-                for body in self.target_systems[0].values():
-                    if isinstance(body, Star) and not self.settings.noise_contributions.stellar_leakage:
-                        continue
-                    intensity_responses = self._get_intensity_responses(time, wavelength, body.sky_coordinate_maps)
+                for index_target_system, target_system in enumerate(self.target_systems):
 
-                    for index_pair, pair_of_indices in enumerate(
-                            self.observatory.beam_combination_scheme.get_intensity_response_pairs()):
-                        self.output.differential_photon_counts_by_source[index_pair][body.name][wavelength][
-                            index_time] = self._get_differential_photon_counts(index_wavelength, body,
-                                                                               intensity_responses, pair_of_indices)
-                        if self.animator and (
-                                body.name == self.animator.source_name and
-                                wavelength == self.animator.closest_wavelength and
-                                index_pair == self.animator.differential_intensity_response_index):
-                            self.animator.update_collector_position(time, self.observatory)
-                            self.animator.update_differential_intensity_response(
-                                intensity_responses[pair_of_indices[0]] - intensity_responses[pair_of_indices[1]])
-                            self.animator.update_differential_photon_counts(
-                                self.output.differential_photon_counts_by_source[index_pair][body.name][wavelength][
-                                    index_time], index_time)
-                            self.animator.writer.grab_frame()
+                    for source in target_system.values():
+                        if isinstance(source, Star) and not self.settings.noise_contributions.stellar_leakage:
+                            continue
+                        intensity_responses = self._get_intensity_responses(time, wavelength,
+                                                                            source.sky_coordinate_maps)
+
+                        for index_pair, pair_of_indices in enumerate(
+                                self.observatory.beam_combination_scheme.get_intensity_response_pairs()):
+                            self.output[index_target_system].differential_photon_counts_by_source[index_pair][
+                                source.name][wavelength][
+                                index_time] = self._get_differential_photon_counts(index_wavelength, source,
+                                                                                   intensity_responses, pair_of_indices)
+                            if self.animator and (
+                                    source.name == self.animator.source_name and
+                                    wavelength == self.animator.closest_wavelength and
+                                    index_pair == self.animator.differential_intensity_response_index):
+                                self.animator.update_collector_position(time, self.observatory)
+                                self.animator.update_differential_intensity_response(
+                                    intensity_responses[pair_of_indices[0]] - intensity_responses[pair_of_indices[1]])
+                                self.animator.update_differential_photon_counts(
+                                    self.output[index_target_system].differential_photon_counts_by_source[index_pair][
+                                        source.name][
+                                        wavelength][
+                                        index_time], index_time)
+                                self.animator.writer.grab_frame()
 
     def _get_differential_photon_counts(self,
                                         index_wavelength: int,

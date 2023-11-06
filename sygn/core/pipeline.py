@@ -42,7 +42,7 @@ class Pipeline():
 
         :return: The differential photon counts
         """
-        return self.context.differential_photon_counts
+        return self.context.differential_photon_counts_list
 
     def run(self):
         """Run the pipeline by calling the apply method of each module.
