@@ -63,12 +63,12 @@ class FITSWriter():
                 header[f'SYGN_PLANET{index_source}_MASS'] = str(source.mass)
                 header[f'SYGN_PLANET{index_source}_RADIUS'] = str(source.radius)
                 header[f'SYGN_PLANET{index_source}_TEMPERATURE'] = str(source.temperature)
-                header[f'SYGN_PLANET{index_source}_SEMI_MAJOR_AXIS'] = str(source.temperature)
-                header[f'SYGN_PLANET{index_source}_ECCENTRICITY'] = str(source.temperature)
-                header[f'SYGN_PLANET{index_source}_INCLINATION'] = str(source.temperature)
-                header[f'SYGN_PLANET{index_source}_RAAN'] = str(source.temperature)
-                header[f'SYGN_PLANET{index_source}_ARG_OF_PERIAPSIS'] = str(source.temperature)
-                header[f'SYGN_PLANET{index_source}_TRUE_ANOMALY'] = str(source.temperature)
+                header[f'SYGN_PLANET{index_source}_SEMI_MAJOR_AXIS'] = str(source.semi_major_axis)
+                header[f'SYGN_PLANET{index_source}_ECCENTRICITY'] = str(source.eccentricity)
+                header[f'SYGN_PLANET{index_source}_INCLINATION'] = str(source.inclination)
+                header[f'SYGN_PLANET{index_source}_RAAN'] = str(source.raan)
+                header[f'SYGN_PLANET{index_source}_ARG_OF_PERIAPSIS'] = str(source.argument_of_periapsis)
+                header[f'SYGN_PLANET{index_source}_TRUE_ANOMALY'] = str(source.true_anomaly)
             if isinstance(source, Star):
                 header['SYGN_STAR_NAME'] = source.name
                 header['SYGN_STAR_DISTANCE'] = str(source.distance)
