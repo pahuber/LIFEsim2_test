@@ -35,10 +35,10 @@ pipeline.add_module(module)
 
 # # Instantiate animator module and add it to the pipeline
 # module = AnimatorModule(output_path='.',
-#                         source_name='Earth 2',
+#                         source_name='Earth',
 #                         wavelength=10 * astropy.units.um,
 #                         differential_intensity_response_index=0,
-#                         photon_count_limits=150,
+#                         photon_count_limits=1000,
 #                         collector_position_limits=50,
 #                         image_vmin=-10,
 #                         image_vmax=10)

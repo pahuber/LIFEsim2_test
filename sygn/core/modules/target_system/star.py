@@ -41,26 +41,6 @@ class Star(Source):
                                                                     self.wavelength_bin_widths,
                                                                     self.solid_angle)
 
-    @field_validator('radius')
-    def _validate_radius(cls, value: Any, info: ValidationInfo) -> astropy.units.Quantity:
-        """Validate the radius input.
-
-        :param value: Value given as input
-        :param info: ValidationInfo object
-        :return: The radius in units of length
-        """
-        return validate_quantity_units(value=value, field_name=info.field_name, unit_equivalency=u.m)
-
-    @field_validator('mass')
-    def _validate_mass(cls, value: Any, info: ValidationInfo) -> astropy.units.Quantity:
-        """Validate the mass input.
-
-        :param value: Value given as input
-        :param info: ValidationInfo object
-        :return: The mass in units of weight
-        """
-        return validate_quantity_units(value=value, field_name=info.field_name, unit_equivalency=u.kg)
-
     @field_validator('distance')
     def _validate_distance(cls, value: Any, info: ValidationInfo) -> astropy.units.Quantity:
         """Validate the distance input.
@@ -81,13 +61,25 @@ class Star(Source):
         """
         return validate_quantity_units(value=value, field_name=info.field_name, unit_equivalency=u.Lsun).to(u.Lsun)
 
-    @property
-    def solid_angle(self) -> astropy.units.Quantity:
-        """Return the solid angle that the source object covers on the sky.
+    @field_validator('mass')
+    def _validate_mass(cls, value: Any, info: ValidationInfo) -> astropy.units.Quantity:
+        """Validate the mass input.
 
-        :return: The solid angle
+        :param value: Value given as input
+        :param info: ValidationInfo object
+        :return: The mass in units of weight
         """
-        return np.pi * (self.radius.to(u.m) / (self.distance.to(u.m)) * u.rad) ** 2
+        return validate_quantity_units(value=value, field_name=info.field_name, unit_equivalency=u.kg)
+
+    @field_validator('radius')
+    def _validate_radius(cls, value: Any, info: ValidationInfo) -> astropy.units.Quantity:
+        """Validate the radius input.
+
+        :param value: Value given as input
+        :param info: ValidationInfo object
+        :return: The radius in units of length
+        """
+        return validate_quantity_units(value=value, field_name=info.field_name, unit_equivalency=u.m)
 
     @property
     def angular_radius(self) -> astropy.units.Quantity:
@@ -96,6 +88,14 @@ class Star(Source):
         :return: The solid angle
         """
         return ((self.radius.to(u.m) / self.distance.to(u.m)) * u.rad).to(u.arcsec)
+
+    @property
+    def habitable_zone_central_angular_radius(self) -> astropy.units.Quantity:
+        """Return the central habitable zone radius in angular units.
+
+        :return: The central habitable zone radius in angular units
+        """
+        return (self.habitable_zone_central_radius / self.distance * u.rad).to(u.arcsec)
 
     @property
     def habitable_zone_central_radius(self) -> astropy.units.Quantity:
@@ -121,15 +121,23 @@ class Star(Source):
         return ((radius_outer + radius_inner) / 2 * u.au).to(u.m)
 
     @property
-    def habitable_zone_central_angular_radius(self) -> astropy.units.Quantity:
-        """Return the central habitable zone radius in angular units.
+    def solid_angle(self) -> astropy.units.Quantity:
+        """Return the solid angle that the source object covers on the sky.
 
-        :return: The central habitable zone radius in angular units
+        :return: The solid angle
         """
-        return (self.habitable_zone_central_radius / self.distance * u.rad).to(u.arcsec)
+        return np.pi * (self.radius.to(u.m) / (self.distance.to(u.m)) * u.rad) ** 2
 
-    def get_sky_coordinate_maps(self) -> Tuple:
+    def get_sky_coordinate_maps(self, time: astropy.units.Quantity) -> Tuple:
+        """Return the sky coordinate maps of the source. The intensity responses are calculated in a resolution that
+        allows the source to fill the grid, thus, each source needs to define its own sky coordinate map. Add 10% to the
+        angular radius to account for rounding issues and make sure the source is fully covered within the map.
+
+        :param time: The time
+        :return: A tuple containing the x- and y-sky coordinate maps
+        """
         return get_meshgrid(2 * (1.05 * self.angular_radius), self.grid_size)
 
-    def get_shape_map(self) -> np.ndarray:
-        return (np.sqrt(self.sky_coordinate_maps[0] ** 2 + self.sky_coordinate_maps[1] ** 2) <= self.angular_radius)
+    def get_sky_position_map(self, time: astropy.units.Quantity) -> np.ndarray:
+        sky_coordinate_maps = self.get_sky_coordinate_maps(time)
+        return (np.sqrt(sky_coordinate_maps[0] ** 2 + sky_coordinate_maps[1] ** 2) <= self.angular_radius)

@@ -15,6 +15,7 @@ class Settings(BaseModel):
     """
     grid_size: int
     time_step: Any
+    planet_orbital_motion: bool
     noise_contributions: Optional[NoiseContributions]
 
     def __init__(self, **data):

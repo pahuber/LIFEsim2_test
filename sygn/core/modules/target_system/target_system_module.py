@@ -39,6 +39,7 @@ class TargetSystemModule(BaseModule):
         self.target_system[star.name] = star
         for key in configuration_dict['planets'].keys():
             planet = Planet(**configuration_dict['planets'][key],
+                            star_mass=star.mass,
                             star_distance=star.distance,
                             number_of_wavelength_bins=len(
                                 context.observatory.instrument_parameters.wavelength_bin_centers),

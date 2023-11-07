@@ -1,3 +1,4 @@
+import copy
 from enum import Enum
 from random import choice
 from typing import Tuple
@@ -94,6 +95,7 @@ class DataGenerator():
         """Generate the differential photon counts. This is the main method of the data generation.
         """
         for index_time, time in enumerate(tqdm(self.time_range)):
+            time_initial = copy.deepcopy(time)
 
             for index_wavelength, wavelength in enumerate(
                     self.observatory.instrument_parameters.wavelength_bin_centers):
@@ -103,14 +105,19 @@ class DataGenerator():
                     for source in target_system.values():
                         if isinstance(source, Star) and not self.settings.noise_contributions.stellar_leakage:
                             continue
-                        intensity_responses = self._get_intensity_responses(time, wavelength,
-                                                                            source.sky_coordinate_maps)
+                        if not self.settings.planet_orbital_motion:
+                            time_initial = 0 * u.s
+                        intensity_responses = self._get_intensity_responses(time,
+                                                                            wavelength,
+                                                                            source.get_sky_coordinate_maps(
+                                                                                time_initial))
 
                         for index_pair, pair_of_indices in enumerate(
                                 self.observatory.beam_combination_scheme.get_intensity_response_pairs()):
                             self.output[index_target_system].differential_photon_counts_by_source[index_pair][
                                 source.name][wavelength][
-                                index_time] = self._get_differential_photon_counts(index_wavelength, source,
+                                index_time] = self._get_differential_photon_counts(time_initial, index_wavelength,
+                                                                                   source,
                                                                                    intensity_responses, pair_of_indices)
                             if self.animator and (
                                     source.name == self.animator.source_name and
@@ -127,6 +134,7 @@ class DataGenerator():
                                 self.animator.writer.grab_frame()
 
     def _get_differential_photon_counts(self,
+                                        time: astropy.units.Quantity,
                                         index_wavelength: int,
                                         source: Source,
                                         intensity_responses: np.ndarray,
@@ -141,14 +149,14 @@ class DataGenerator():
         """
         photon_counts_at_one_output = self._get_photon_counts(
             mean_spectral_flux_density=source.mean_spectral_flux_density[index_wavelength],
-            source_shape_map=source.shape_map,
+            source_shape_map=source.get_sky_position_map(time),
             wavelength_bin_width=
             self.observatory.instrument_parameters.wavelength_bin_widths[
                 index_wavelength],
             intensity_response=intensity_responses[pair_of_indices[0]])
         photon_counts_at_other_output = self._get_photon_counts(
             mean_spectral_flux_density=source.mean_spectral_flux_density[index_wavelength],
-            source_shape_map=source.shape_map,
+            source_shape_map=source.get_sky_position_map(time),
             wavelength_bin_width=
             self.observatory.instrument_parameters.wavelength_bin_widths[
                 index_wavelength],
