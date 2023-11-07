@@ -15,21 +15,22 @@ planets:
     name: Earth
     mass: 1 Mearth
     radius: 1 Rearth
-    star_separation_x: 1 au
-    star_separation_y: 0 au
     temperature: 288 K
+    semi_major_axis: 1 au
+    eccentricity: 0
+    inclination: 0 deg
+    raan: 0 deg
+    argument_of_periapsis: 0 deg
+    true_anomaly: 0 deg
 #  planet_2:
 #    name: Mars
 #    mass: 0.1 Mearth
 #    radius: 0.5 Rearth
-#    star_separation_x: 1.6 au
-#    star_separation_y: 0 au
 #    temperature: 210 K
-#  planet_3:
-#    name: Venus
-#    mass: 0.8 Mearth
-#    radius: 0.9 Rearth
-#    star_separation_x: 0.7 au
-#    star_separation_y: 0 au
-#    temperature: 230 K
+#    semi_major_axis: 0.1 au
+#    eccentricity: 0
+#    inclination: 0 deg
+#    raan: 0 deg
+#    argument_of_periapsis: 0 deg
+#    true_anomaly: 0 deg
 ...
