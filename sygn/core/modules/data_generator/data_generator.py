@@ -92,8 +92,12 @@ class DataGenerator():
         self._calculate_total_differential_photon_counts()
 
     def _generate_differential_photon_counts(self):
-        """Generate the differential photon counts. This is the main method of the data generation.
+        """Generate the differential photon counts. This is the main method of the data generation. The calculation
+        procedure is as follows: For each time step, for each wavelength bin, for each target system and for each source
+        in a target system, calculate once the current source position and the resulting intensity responses and then,
+        for each differential output, calculate the differential photon counts.
         """
+        intensity_response_pairs = self.observatory.beam_combination_scheme.get_intensity_response_pairs()
         for index_time, time in enumerate(tqdm(self.time_range)):
             time_initial = copy.deepcopy(time)
 
@@ -103,21 +107,28 @@ class DataGenerator():
                 for index_target_system, target_system in enumerate(self.target_systems):
 
                     for source in target_system.values():
+
                         if isinstance(source, Star) and not self.settings.noise_contributions.stellar_leakage:
                             continue
+
                         if not self.settings.planet_orbital_motion:
                             time_initial = 0 * u.s
+
+                        if index_wavelength == 0:
+                            source_sky_coordinate_maps = source.get_sky_coordinate_maps(time_initial)
+                            source_sky_position_map = source.get_sky_position_map(time)
+
                         intensity_responses = self._get_intensity_responses(time,
                                                                             wavelength,
-                                                                            source.get_sky_coordinate_maps(
-                                                                                time_initial))
+                                                                            source_sky_coordinate_maps)
 
                         for index_pair, pair_of_indices in enumerate(
-                                self.observatory.beam_combination_scheme.get_intensity_response_pairs()):
+                                intensity_response_pairs):
                             self.output[index_target_system].differential_photon_counts_by_source[index_pair][
                                 source.name][wavelength][
                                 index_time] = self._get_differential_photon_counts(time_initial, index_wavelength,
                                                                                    source,
+                                                                                   source_sky_position_map,
                                                                                    intensity_responses, pair_of_indices)
                             if self.animator and (
                                     source.name == self.animator.source_name and
@@ -137,6 +148,7 @@ class DataGenerator():
                                         time: astropy.units.Quantity,
                                         index_wavelength: int,
                                         source: Source,
+                                        source_sky_position_map: np.ndarray,
                                         intensity_responses: np.ndarray,
                                         pair_of_indices: Tuple) -> astropy.units.Quantity:
         """Return the differential photon counts for a given wavelength, source and differential intensity response.
@@ -147,19 +159,18 @@ class DataGenerator():
         :param pair_of_indices: A pair of indices making up a differential intensity response
         :return: The differential photon counts in units  of photons
         """
+        mean_source_flux_density = source.mean_spectral_flux_density[index_wavelength]
+        source_shape_map = source_sky_position_map
+        wavelength_bin_width = self.observatory.instrument_parameters.wavelength_bin_widths[index_wavelength]
         photon_counts_at_one_output = self._get_photon_counts(
-            mean_spectral_flux_density=source.mean_spectral_flux_density[index_wavelength],
-            source_shape_map=source.get_sky_position_map(time),
-            wavelength_bin_width=
-            self.observatory.instrument_parameters.wavelength_bin_widths[
-                index_wavelength],
+            mean_spectral_flux_density=mean_source_flux_density,
+            source_shape_map=source_shape_map,
+            wavelength_bin_width=wavelength_bin_width,
             intensity_response=intensity_responses[pair_of_indices[0]])
         photon_counts_at_other_output = self._get_photon_counts(
-            mean_spectral_flux_density=source.mean_spectral_flux_density[index_wavelength],
-            source_shape_map=source.get_sky_position_map(time),
-            wavelength_bin_width=
-            self.observatory.instrument_parameters.wavelength_bin_widths[
-                index_wavelength],
+            mean_spectral_flux_density=mean_source_flux_density,
+            source_shape_map=source_shape_map,
+            wavelength_bin_width=wavelength_bin_width,
             intensity_response=intensity_responses[pair_of_indices[1]])
         return photon_counts_at_one_output - photon_counts_at_other_output
 
@@ -200,8 +211,23 @@ class DataGenerator():
         :param source_sky_coordinate_maps: The sky coordinates of the source for which the intensity response is calculated
         :return: The intensity response vector
         """
+        # x_observatory_coordinates, y_observatory_coordinates = self.observatory.array_configuration.get_collector_positions(
+        #     time)
+        # input_complex_amplitude_vector = get_input_complex_amplitude_vector(wavelength.to(u.m).value,
+        #                                                                     x_observatory_coordinates.to(u.m).value,
+        #                                                                     y_observatory_coordinates.to(u.m).value,
+        #                                                                     source_sky_coordinate_maps[0].to(
+        #                                                                         u.rad).value,
+        #                                                                     source_sky_coordinate_maps[1].to(
+        #                                                                         u.rad).value,
+        #                                                                     self.observatory.instrument_parameters.aperture_radius.to(
+        #                                                                         u.m).value,
+        #                                                                     self.observatory.beam_combination_scheme.number_of_inputs,
+        #                                                                     self.settings.grid_size)
+        input_complex_amplitude_vector = self._get_input_complex_amplitude_vector(time, wavelength,
+                                                                                  source_sky_coordinate_maps)
         input_complex_amplitude_unperturbed_vector = np.reshape(
-            self._get_input_complex_amplitude_vector(time, wavelength, source_sky_coordinate_maps), (
+            input_complex_amplitude_vector, (
                 self.observatory.beam_combination_scheme.number_of_inputs,
                 self.settings.grid_size ** 2))
 
@@ -218,7 +244,6 @@ class DataGenerator():
                                                              self.observatory.beam_combination_scheme.number_of_outputs,
                                                              self.settings.grid_size,
                                                              self.settings.grid_size))
-
         return intensity_response_perturbed_vector
 
     def _get_perturbation_matrix(self, wavelength: astropy.units.Quantity) -> np.ndarray:
