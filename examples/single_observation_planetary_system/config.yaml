@@ -10,10 +10,10 @@
 # -------------------------------------------
 settings:
   grid_size: 80
-  time_step: 5 min
+  time_step: 1 d
   planet_orbital_motion: false
   noise_contributions:
-    stellar_leakage: false
+    stellar_leakage: true
     local_zodi_leakage: false
     exozodi_leakage: false
     fiber_injection_variability: false
@@ -26,7 +26,7 @@ settings:
 # -------------------------------------------
 observation:
   adjust_baseline_to_habitable_zone: true
-  integration_time: 10 h
+  integration_time: 100 d
   optimized_wavelength: 10 um
 # -------------------------------------------
 # Observatory Configuration
@@ -37,7 +37,7 @@ observatory:
     baseline_maximum: 600 m
     baseline_minimum: 8 m
     baseline_ratio: 6
-    modulation_period: 10 h
+    modulation_period: 100 d
   beam_combination_scheme: double-bracewell
   instrument_parameters:
     aperture_diameter: 4 m

@@ -1,4 +1,3 @@
-import copy
 from enum import Enum
 from random import choice
 from typing import Tuple
@@ -99,7 +98,7 @@ class DataGenerator():
         """
         intensity_response_pairs = self.observatory.beam_combination_scheme.get_intensity_response_pairs()
         for index_time, time in enumerate(tqdm(self.time_range)):
-            time_initial = copy.deepcopy(time)
+            time_initial = time
 
             for index_wavelength, wavelength in enumerate(
                     self.observatory.instrument_parameters.wavelength_bin_centers):
@@ -114,9 +113,8 @@ class DataGenerator():
                         if not self.settings.planet_orbital_motion:
                             time_initial = 0 * u.s
 
-                        if index_wavelength == 0:
-                            source_sky_coordinate_maps = source.get_sky_coordinate_maps(time_initial)
-                            source_sky_position_map = source.get_sky_position_map(time)
+                        source_sky_coordinate_maps = source.get_sky_coordinate_maps(time_initial)
+                        source_sky_position_map = source.get_sky_position_map(time_initial)
 
                         intensity_responses = self._get_intensity_responses(time,
                                                                             wavelength,
@@ -172,6 +170,7 @@ class DataGenerator():
             source_shape_map=source_shape_map,
             wavelength_bin_width=wavelength_bin_width,
             intensity_response=intensity_responses[pair_of_indices[1]])
+        a = photon_counts_at_one_output - photon_counts_at_other_output
         return photon_counts_at_one_output - photon_counts_at_other_output
 
     def _get_input_complex_amplitude_vector(self,
@@ -287,15 +286,18 @@ class DataGenerator():
         :param intensity_response: Intensity response map
         :return: Photon counts in units of photons
         """
-        mean_photon_counts = np.sum((mean_spectral_flux_density * source_shape_map * wavelength_bin_width
-                                     * intensity_response
-                                     * self.observatory.instrument_parameters.unperturbed_instrument_throughput
-                                     * self.settings.time_step.to(u.s)).value)
+        effective_area = np.sum(intensity_response * source_shape_map) / len(source_shape_map[source_shape_map == 1])
+
+        mean_photon_counts = (mean_spectral_flux_density
+                              * self.settings.time_step.to(u.s)
+                              * effective_area
+                              * wavelength_bin_width
+                              * self.observatory.instrument_parameters.unperturbed_instrument_throughput).value
 
         try:
             photon_counts = poisson(mean_photon_counts, 1)
         except ValueError:
-            photon_counts = normal(mean_photon_counts, 1)
+            photon_counts = round(normal(mean_photon_counts, 1))
         return photon_counts * u.ph
 
     def _prepare_data_generation(self):
