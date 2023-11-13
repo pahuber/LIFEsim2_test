@@ -13,7 +13,7 @@ settings:
   time_step: 1 d
   planet_orbital_motion: false
   noise_contributions:
-    stellar_leakage: false
+    stellar_leakage: true
     local_zodi_leakage: false
     exozodi_leakage: false
     fiber_injection_variability: false
