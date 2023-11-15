@@ -6,7 +6,7 @@ from astropy import units as u
 from pydantic import field_validator
 from pydantic_core.core_schema import ValidationInfo
 
-from sygn.core.modules.target_system.source import Source
+from sygn.core.module.target_system.source import Source
 from sygn.io.validators import validate_quantity_units
 from sygn.util.blackbody import create_blackbody_spectrum
 from sygn.util.grid import get_meshgrid

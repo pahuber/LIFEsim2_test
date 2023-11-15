@@ -1,6 +1,6 @@
-from sygn.core.context import Context
-from sygn.core.modules.base_module import BaseModule
-from sygn.core.modules.data_generator.data_generator import DataGenerator, DataGenerationMode
+from sygn.core.context.base_context import BaseContext
+from sygn.core.module.base_module import BaseModule
+from sygn.core.module.data_generator.data_generator import DataGenerator, DataGenerationMode
 
 
 class DataGeneratorModule(BaseModule):
@@ -15,7 +15,7 @@ class DataGeneratorModule(BaseModule):
         self.mode = mode
         self.data_generator = None
 
-    def apply(self, context: Context) -> Context:
+    def apply(self, context: BaseContext) -> BaseContext:
         """Apply the module.
 
         :param context: The context object of the pipeline

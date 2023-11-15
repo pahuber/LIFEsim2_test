@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-from sygn.core.context import Context
+from sygn.core.context.base_context import BaseContext
 
 
 class BaseModule(ABC):
@@ -8,7 +8,7 @@ class BaseModule(ABC):
     """
 
     @abstractmethod
-    def apply(self, context: Context) -> Context:
+    def apply(self, context: BaseContext) -> BaseContext:
         """Apply the module.
 
         :param context: The context object of the pipeline

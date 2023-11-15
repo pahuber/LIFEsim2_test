@@ -1,13 +1,13 @@
 from pathlib import Path
 
-from sygn.core.context import Context
-from sygn.core.modules.base_module import BaseModule
-from sygn.core.modules.observatory.array_configurations import ArrayConfiguration, ArrayConfigurationEnum, \
+from sygn.core.context.base_context import BaseContext
+from sygn.core.module.base_module import BaseModule
+from sygn.core.module.observatory.array_configurations import ArrayConfiguration, ArrayConfigurationEnum, \
     EmmaXCircularRotation, EmmaXDoubleStretch, EquilateralTriangleCircularRotation, RegularPentagonCircularRotation
-from sygn.core.modules.observatory.beam_combination_schemes import BeamCombinationScheme, BeamCombinationSchemeEnum, \
+from sygn.core.module.observatory.beam_combination_schemes import BeamCombinationScheme, BeamCombinationSchemeEnum, \
     DoubleBracewell, Kernel3, Kernel4, Kernel5
-from sygn.core.modules.observatory.instrument_parameters import InstrumentParameters
-from sygn.core.modules.observatory.observatory import Observatory
+from sygn.core.module.observatory.instrument_parameters import InstrumentParameters
+from sygn.core.module.observatory.observatory import Observatory
 from sygn.io.config_reader import ConfigReader
 
 
@@ -65,7 +65,7 @@ class ObservatoryModule(BaseModule):
             case BeamCombinationSchemeEnum.KERNEL_5.value:
                 return Kernel5()
 
-    def apply(self, context: Context) -> Context:
+    def apply(self, context: BaseContext) -> BaseContext:
         """Apply the module.
 
         :param context: The context object of the pipeline
