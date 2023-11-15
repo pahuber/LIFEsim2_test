@@ -1,13 +1,13 @@
 from pathlib import Path
 
-from sygn.core.modules.data_generator.data_generator import DataGenerationMode
-from sygn.core.modules.data_generator.data_generator_module import DataGeneratorModule
-from sygn.core.modules.observation.observation_module import ObservationModule
-from sygn.core.modules.observatory.observatory_module import ObservatoryModule
-from sygn.core.modules.settings.settings_module import SettingsModule
-from sygn.core.modules.target_system.data_type import DataType
-from sygn.core.modules.target_system.target_system_module import TargetSystemModule
-from sygn.core.pipeline import Pipeline
+from sygn.core.pipeline.generator_pipeline import GeneratorPipeline
+from sygn.core.module.data_generator.data_generator import DataGenerationMode
+from sygn.core.module.data_generator.data_generator_module import DataGeneratorModule
+from sygn.core.module.observation.observation_module import ObservationModule
+from sygn.core.module.observatory.observatory_module import ObservatoryModule
+from sygn.core.module.settings.settings_module import SettingsModule
+from sygn.core.module.target_system.data_type import DataType
+from sygn.core.module.target_system.target_system_module import TargetSystemModule
 
 # Specify paths
 path_to_config_file = Path(r'C:\Users\huber\Desktop\LIFEsim2\examples\single_observation_planetary_system\config.yaml')
@@ -15,7 +15,7 @@ path_to_data_file = Path(
     r'C:\Users\huber\Desktop\LIFEsim2\examples\single_observation_planetary_system\planetary_system.yaml')
 
 # Instantiate pipeline
-pipeline = Pipeline()
+pipeline = GeneratorPipeline()
 
 # Load settings from config file and add settings module to pipeline
 module = SettingsModule(path_to_config_file=path_to_config_file)

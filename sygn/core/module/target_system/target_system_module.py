@@ -1,10 +1,10 @@
 from pathlib import Path
 
-from sygn.core.context import Context
-from sygn.core.modules.base_module import BaseModule
-from sygn.core.modules.target_system.data_type import DataType
-from sygn.core.modules.target_system.planet import Planet
-from sygn.core.modules.target_system.star import Star
+from sygn.core.context.base_context import BaseContext
+from sygn.core.module.base_module import BaseModule
+from sygn.core.module.target_system.data_type import DataType
+from sygn.core.module.target_system.planet import Planet
+from sygn.core.module.target_system.star import Star
 from sygn.io.config_reader import ConfigReader
 from sygn.util.blackbody import create_blackbody_spectrum
 
@@ -71,7 +71,7 @@ class TargetSystemModule(BaseModule):
                 # TODO: import population catalog
                 pass
 
-    def apply(self, context: Context) -> Context:
+    def apply(self, context: BaseContext) -> BaseContext:
         """Apply the module.
 
         :param context: The context object of the pipeline

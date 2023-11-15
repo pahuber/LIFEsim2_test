@@ -1,9 +1,11 @@
 import numpy as np
 from astropy import units as u
 
+from sygn.core.context.base_context import BaseContext
 
-class Context():
-    """Class representation of the pipeline context.
+
+class GeneratorContext(BaseContext):
+    """Class representation of the generator context.
     """
 
     def __init__(self):

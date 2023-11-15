@@ -4,15 +4,15 @@ from pathlib import Path
 import numpy as np
 from astropy.io import fits
 
-from sygn.core.context import Context
-from sygn.core.modules.target_system.planet import Planet
-from sygn.core.modules.target_system.star import Star
+from sygn.core.context.base_context import BaseContext
+from sygn.core.module.target_system.planet import Planet
+from sygn.core.module.target_system.star import Star
 
 
 class FITSWriter():
 
     @staticmethod
-    def _get_fits_header(primary: fits.PrimaryHDU, context: Context, index_target_system) -> fits.header.Header:
+    def _get_fits_header(primary: fits.PrimaryHDU, context: BaseContext, index_target_system) -> fits.header.Header:
         """Return the FITS file header containing the information about the simulation and the sources.
 
         :param primary: The primary HDU object
@@ -80,7 +80,7 @@ class FITSWriter():
         return header
 
     @staticmethod
-    def write_fits(output_path: Path, postfix: str, context: Context):
+    def write_fits(output_path: Path, postfix: str, context: BaseContext):
         """Write the differential photon counts to a FITS file.
 
         :param output_path: The output path of the FITS file
