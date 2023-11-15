@@ -10,10 +10,10 @@ from matplotlib import pyplot as plt
 from scipy.optimize import curve_fit
 from sygn.core.simulation.simulation import SimulationMode
 
-from sygn.core.module.data_generator.data_generator import DataGenerator
 from sygn.core.module.settings.noise_contributions import NoiseContributions, OpticalPathDifferenceVariability
 from sygn.core.module.target_system.planet import Planet
 from sygn.core.module.target_system.star import Star
+from sygn.core.pipeline.data_generator.data_generator import DataGenerator
 from sygn.util.blackbody import create_blackbody_spectrum
 from sygn.util.grid import get_meshgrid
 

@@ -1,13 +1,12 @@
 from pathlib import Path
 
-from sygn.core.pipeline.generator_pipeline import GeneratorPipeline
-from sygn.core.module.data_generator.data_generator import DataGenerationMode
-from sygn.core.module.data_generator.data_generator_module import DataGeneratorModule
 from sygn.core.module.observation.observation_module import ObservationModule
 from sygn.core.module.observatory.observatory_module import ObservatoryModule
 from sygn.core.module.settings.settings_module import SettingsModule
 from sygn.core.module.target_system.data_type import DataType
 from sygn.core.module.target_system.target_system_module import TargetSystemModule
+from sygn.core.pipeline.data_generator.data_generator import DataGenerationMode
+from sygn.core.pipeline.generator_pipeline import GeneratorPipeline
 
 # Specify paths
 path_to_config_file = Path(r'C:\Users\huber\Desktop\LIFEsim2\examples\single_observation_planetary_system\config.yaml')
@@ -15,7 +14,7 @@ path_to_data_file = Path(
     r'C:\Users\huber\Desktop\LIFEsim2\examples\single_observation_planetary_system\planetary_system.yaml')
 
 # Instantiate pipeline
-pipeline = GeneratorPipeline()
+pipeline = GeneratorPipeline(mode=DataGenerationMode.SINGLE_OBSERVATION)
 
 # Load settings from config file and add settings module to pipeline
 module = SettingsModule(path_to_config_file=path_to_config_file)
@@ -43,10 +42,6 @@ pipeline.add_module(module)
 #                         image_vmin=-10,
 #                         image_vmax=10)
 # pipeline.add_module(module)
-
-# Instantiate data generator module and add it to the pipeline
-module = DataGeneratorModule(mode=DataGenerationMode.SINGLE_OBSERVATION)
-pipeline.add_module(module)
 
 # Run pipeline
 pipeline.run()

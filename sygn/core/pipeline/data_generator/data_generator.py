@@ -9,12 +9,12 @@ from numpy.random import poisson, normal
 from tqdm import tqdm
 
 from sygn.core.module.animator.animator import Animator
-from sygn.core.module.data_generator.synthetic_data import SyntheticData
 from sygn.core.module.observation.observation import Observation
 from sygn.core.module.observatory.observatory import Observatory
 from sygn.core.module.settings.settings import Settings
 from sygn.core.module.target_system.source import Source
 from sygn.core.module.target_system.star import Star
+from sygn.core.pipeline.data_generator.synthetic_data import SyntheticData
 from sygn.util.grid import get_dictionary_from_list_containing_key
 
 

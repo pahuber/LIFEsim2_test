@@ -29,16 +29,15 @@ class BasePipeline(ABC):
         """
         pass
 
+    @abstractmethod
+    def run(self):
+        """Run the pipeline by calling the apply method of each module.
+        """
+        pass
+
     def add_module(self, module: BaseModule):
         """Add a module to the pipeline.
 
         :param module: The module to be added
         """
         self.modules.append(module)
-
-    def run(self):
-        """Run the pipeline by calling the apply method of each module.
-        """
-        self._validate_modules()
-        for module in self.modules:
-            context = module.apply(context=self.context)

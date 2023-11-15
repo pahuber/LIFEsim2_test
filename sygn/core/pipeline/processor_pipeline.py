@@ -1,5 +1,5 @@
-from sygn.core.pipeline.base_pipeline import BasePipeline
 from sygn.core.context.processor_context import ProcessorContext
+from sygn.core.pipeline.base_pipeline import BasePipeline
 
 
 class ProcessorPipeline(BasePipeline):
@@ -23,3 +23,10 @@ class ProcessorPipeline(BasePipeline):
         :return: The data
         """
         pass
+
+    def run(self):
+        """Run the pipeline by calling the apply method of each module.
+        """
+        self._validate_modules()
+        for module in self.modules:
+            context = module.apply(context=self.context)
