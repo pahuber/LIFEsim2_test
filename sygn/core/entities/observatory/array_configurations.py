@@ -8,7 +8,7 @@ from astropy import units as u
 from pydantic import BaseModel, field_validator
 from pydantic_core.core_schema import ValidationInfo
 
-from sygn.core.module.target_system.star import Star
+from sygn.core.entities.sources.star import Star
 from sygn.io.validators import validate_quantity_units
 from sygn.util.matrix import get_2d_rotation_matrix
 

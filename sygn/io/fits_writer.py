@@ -4,9 +4,9 @@ from pathlib import Path
 import numpy as np
 from astropy.io import fits
 
-from sygn.core.context.base_context import BaseContext
-from sygn.core.module.target_system.planet import Planet
-from sygn.core.module.target_system.star import Star
+from sygn.core.contexts.base_context import BaseContext
+from sygn.core.entities.sources.planet import Planet
+from sygn.core.entities.sources.star import Star
 
 
 class FITSWriter():
@@ -16,7 +16,7 @@ class FITSWriter():
         """Return the FITS file header containing the information about the simulation and the sources.
 
         :param primary: The primary HDU object
-        :param context: The context object
+        :param context: The contexts object
         :param index_target_system: The index of the target system
         :return: The header
         """

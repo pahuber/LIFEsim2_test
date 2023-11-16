@@ -1,13 +1,13 @@
 from pathlib import Path
 
-from sygn.core.context.base_context import BaseContext
-from sygn.core.module.base_module import BaseModule
-from sygn.core.module.settings.settings import Settings
+from sygn.core.contexts.base_context import BaseContext
+from sygn.core.entities.settings import Settings
+from sygn.core.modules.base_module import BaseModule
 from sygn.io.config_reader import ConfigReader
 
 
 class SettingsModule(BaseModule):
-    """Class representation of the settings module.
+    """Class representation of the settings modules.
     """
 
     def __init__(self, path_to_config_file: Path):
@@ -19,10 +19,10 @@ class SettingsModule(BaseModule):
         self.settings = None
 
     def apply(self, context: BaseContext) -> BaseContext:
-        """Apply the module.
+        """Apply the modules.
 
-        :param context: The context object of the pipeline
-        :return: The (updated) context object
+        :param context: The contexts object of the pipelines
+        :return: The (updated) contexts object
         """
         config_dict = ConfigReader(path_to_config_file=self.path_to_config_file).get_dictionary_from_file()
         self.settings = Settings(**config_dict['settings'])

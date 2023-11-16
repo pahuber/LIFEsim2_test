@@ -1,9 +1,9 @@
-from sygn.core.context.processor_context import ProcessorContext
-from sygn.core.pipeline.base_pipeline import BasePipeline
+from sygn.core.contexts.processor_context import ProcessorContext
+from sygn.core.pipelines.base_pipeline import BasePipeline
 
 
 class ProcessorPipeline(BasePipeline):
-    """Class representation of the processor pipeline.
+    """Class representation of the processor pipelines.
     """
 
     def __init__(self):
@@ -13,7 +13,7 @@ class ProcessorPipeline(BasePipeline):
         self.context = ProcessorContext()
 
     def _validate_modules(self):
-        """Validate that the correct number of each module type is added to the pipeline.
+        """Validate that the correct number of each modules type is added to the pipelines.
         """
         pass
 
@@ -25,8 +25,8 @@ class ProcessorPipeline(BasePipeline):
         pass
 
     def run(self):
-        """Run the pipeline by calling the apply method of each module.
+        """Run the pipelines by calling the apply method of each modules.
         """
         self._validate_modules()
-        for module in self.modules:
+        for module in self._modules:
             context = module.apply(context=self.context)

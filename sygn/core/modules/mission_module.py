@@ -1,13 +1,13 @@
 from pathlib import Path
 
-from sygn.core.context.base_context import BaseContext
-from sygn.core.module.base_module import BaseModule
-from sygn.core.module.observation.observation import Observation
+from sygn.core.contexts.base_context import BaseContext
+from sygn.core.entities.mission import Mission
+from sygn.core.modules.base_module import BaseModule
 from sygn.io.config_reader import ConfigReader
 
 
-class ObservationModule(BaseModule):
-    """Class representation of the observation module.
+class MissionModule(BaseModule):
+    """Class representation of the mission modules.
     """
 
     def __init__(self, path_to_config_file: Path):
@@ -19,12 +19,12 @@ class ObservationModule(BaseModule):
         self.observation = None
 
     def apply(self, context: BaseContext) -> BaseContext:
-        """Apply the module.
+        """Apply the modules.
 
-        :param context: The context object of the pipeline
-        :return: The (updated) context object
+        :param context: The contexts object of the pipelines
+        :return: The (updated) contexts object
         """
         config_dict = ConfigReader(path_to_config_file=self.path_to_config_file).get_dictionary_from_file()
-        self.observation = Observation(**config_dict['observation'])
+        self.observation = Mission(**config_dict['mission'])
         context.observation = self.observation
         return context

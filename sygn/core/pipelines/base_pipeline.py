@@ -1,23 +1,23 @@
 from abc import ABC, abstractmethod
 from typing import Any
 
-from sygn.core.context.base_context import BaseContext
-from sygn.core.module.base_module import BaseModule
+from sygn.core.contexts.base_context import BaseContext
+from sygn.core.modules.base_module import BaseModule
 
 
 class BasePipeline(ABC):
-    """Class representation of the base pipeline.
+    """Class representation of the base pipelines.
     """
 
     def __init__(self):
         """Constructor method.
         """
-        self.modules = []
+        self._modules = []
         self.context = BaseContext()
 
     @abstractmethod
     def _validate_modules(self):
-        """Validate that the correct number of each module type is added to the pipeline.
+        """Validate that the correct number of each modules type is added to the pipelines.
         """
         pass
 
@@ -31,13 +31,13 @@ class BasePipeline(ABC):
 
     @abstractmethod
     def run(self):
-        """Run the pipeline by calling the apply method of each module.
+        """Run the pipelines by calling the apply method of each modules.
         """
         pass
 
     def add_module(self, module: BaseModule):
-        """Add a module to the pipeline.
+        """Add a modules to the pipelines.
 
-        :param module: The module to be added
+        :param module: The modules to be added
         """
-        self.modules.append(module)
+        self._modules.append(module)

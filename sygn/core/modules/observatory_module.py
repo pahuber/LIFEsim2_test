@@ -1,18 +1,18 @@
 from pathlib import Path
 
-from sygn.core.context.base_context import BaseContext
-from sygn.core.module.base_module import BaseModule
-from sygn.core.module.observatory.array_configurations import ArrayConfiguration, ArrayConfigurationEnum, \
+from sygn.core.contexts.base_context import BaseContext
+from sygn.core.entities.observatory.array_configurations import ArrayConfiguration, ArrayConfigurationEnum, \
     EmmaXCircularRotation, EmmaXDoubleStretch, EquilateralTriangleCircularRotation, RegularPentagonCircularRotation
-from sygn.core.module.observatory.beam_combination_schemes import BeamCombinationScheme, BeamCombinationSchemeEnum, \
+from sygn.core.entities.observatory.beam_combination_schemes import BeamCombinationScheme, BeamCombinationSchemeEnum, \
     DoubleBracewell, Kernel3, Kernel4, Kernel5
-from sygn.core.module.observatory.instrument_parameters import InstrumentParameters
-from sygn.core.module.observatory.observatory import Observatory
+from sygn.core.entities.observatory.instrument_parameters import InstrumentParameters
+from sygn.core.entities.observatory.observatory import Observatory
+from sygn.core.modules.base_module import BaseModule
 from sygn.io.config_reader import ConfigReader
 
 
 class ObservatoryModule(BaseModule):
-    """Class representation of the obsrvatory module.
+    """Class representation of the obsrvatory modules.
     """
 
     def __init__(self, path_to_config_file: Path):
@@ -66,10 +66,10 @@ class ObservatoryModule(BaseModule):
                 return Kernel5()
 
     def apply(self, context: BaseContext) -> BaseContext:
-        """Apply the module.
+        """Apply the modules.
 
-        :param context: The context object of the pipeline
-        :return: The (updated) context object
+        :param context: The contexts object of the pipelines
+        :return: The (updated) contexts object
         """
         config_dict = ConfigReader(path_to_config_file=self.path_to_config_file).get_dictionary_from_file()
         self.observatory = Observatory()

@@ -1,11 +1,11 @@
 import numpy as np
 from astropy import units as u
 
-from sygn.core.context.base_context import BaseContext
+from sygn.core.contexts.base_context import BaseContext
 
 
 class GeneratorContext(BaseContext):
-    """Class representation of the generator context.
+    """Class representation of the generator contexts.
     """
 
     def __init__(self):
@@ -14,8 +14,8 @@ class GeneratorContext(BaseContext):
         self.settings = None
         self.observation = None
         self.observatory = None
-        self.target_systems = []
-        self.differential_photon_counts_list = []
+        self.photon_sources = []
+        self.data = []
         self.animator = None
 
     @property

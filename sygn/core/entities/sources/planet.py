@@ -9,7 +9,7 @@ from poliastro.twobody import Orbit
 from pydantic import field_validator
 from pydantic_core.core_schema import ValidationInfo
 
-from sygn.core.module.target_system.source import Source
+from sygn.core.entities.sources.source import Source
 from sygn.io.validators import validate_quantity_units
 from sygn.util.grid import get_index_of_closest_value, get_meshgrid
 

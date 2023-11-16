@@ -1,5 +1,5 @@
 class BaseContext():
-    """Class representation of the base context.
+    """Class representation of the base contexts.
     """
 
     def __init__(self):

@@ -1,8 +1,8 @@
 import astropy
 
-from sygn.core.context.base_context import BaseContext
-from sygn.core.module.animator.animator import Animator
-from sygn.core.module.base_module import BaseModule
+from sygn.core.contexts.base_context import BaseContext
+from sygn.core.entities.animator import Animator
+from sygn.core.modules.base_module import BaseModule
 from sygn.util.grid import get_index_of_closest_value
 
 
@@ -27,10 +27,10 @@ class AnimatorModule(BaseModule):
         self.animator = None
 
     def apply(self, context: BaseContext) -> BaseContext:
-        """Apply the module.
+        """Apply the modules.
 
-        :param context: The context object of the pipeline
-        :return: The (updated) context object
+        :param context: The contexts object of the pipelines
+        :return: The (updated) contexts object
         """
         closest_wavelength = context.observatory.instrument_parameters.wavelength_bin_centers[
             get_index_of_closest_value(context.observatory.instrument_parameters.wavelength_bin_centers,

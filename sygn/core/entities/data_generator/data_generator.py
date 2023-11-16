@@ -7,13 +7,13 @@ from astropy import units as u
 from numpy.random import poisson, normal
 from tqdm import tqdm
 
-from sygn.core.module.animator.animator import Animator
-from sygn.core.module.observation.observation import Observation
-from sygn.core.module.observatory.observatory import Observatory
-from sygn.core.module.settings.settings import Settings
-from sygn.core.module.target_system.source import Source
-from sygn.core.module.target_system.star import Star
-from sygn.core.pipeline.data_generator.synthetic_data import SyntheticData
+from sygn.core.entities.animator import Animator
+from sygn.core.entities.data_generator.synthetic_data import SyntheticData
+from sygn.core.entities.mission import Mission
+from sygn.core.entities.observatory.observatory import Observatory
+from sygn.core.entities.settings import Settings
+from sygn.core.entities.sources.source import Source
+from sygn.core.entities.sources.star import Star
 from sygn.util.grid import get_dictionary_from_list_containing_key
 
 
@@ -23,7 +23,7 @@ class DataGenerator():
 
     def __init__(self,
                  settings: Settings,
-                 observation: Observation,
+                 observation: Mission,
                  observatory: Observatory,
                  target_systems: list[dict],
                  time_range: np.ndarray,
@@ -31,7 +31,7 @@ class DataGenerator():
         """Constructor method.
 
         :param settings: The settings object
-        :param observation: The observation object
+        :param observation: The mission object
         :param observatory: The observatory object
         :param target_systems: The target systems
         :param time_range: The time range

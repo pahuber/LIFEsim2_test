@@ -1,16 +1,16 @@
 from pathlib import Path
 
-from sygn.core.context.base_context import BaseContext
-from sygn.core.module.base_module import BaseModule
-from sygn.core.module.target_system.data_type import DataType
-from sygn.core.module.target_system.planet import Planet
-from sygn.core.module.target_system.star import Star
+from sygn.core.contexts.base_context import BaseContext
+from sygn.core.entities.sources.planet import Planet
+from sygn.core.entities.sources.star import Star
+from sygn.core.modules.base_module import BaseModule
 from sygn.io.config_reader import ConfigReader
+from sygn.io.data_type import DataType
 from sygn.util.blackbody import create_blackbody_spectrum
 
 
-class TargetSystemModule(BaseModule):
-    """Class representation of the target system module.
+class PlanetarySystemModule(BaseModule):
+    """Class representation of the planetary system modules.
     """
 
     def __init__(self, path_to_data_file: Path, data_type: DataType):
@@ -27,7 +27,7 @@ class TargetSystemModule(BaseModule):
         """Read the planetary system configuration file, extract the data and create the target system containing the
          star and the planet(s).
 
-        :param context: The context object
+        :param context: The contexts object
         """
         configuration_dict = ConfigReader(path_to_config_file=self.path_to_data_file).get_dictionary_from_file()
         star = Star(**configuration_dict['star'],
@@ -55,7 +55,7 @@ class TargetSystemModule(BaseModule):
     def _load_target_system(self, context):
         """Create a target system from the given input data.
 
-        :param context: The context object
+        :param context: The contexts object
         """
 
         match self.data_type:
@@ -65,17 +65,17 @@ class TargetSystemModule(BaseModule):
                 # TODO: import spectral data
                 pass
             case DataType.SPECTRUM_CONTEXT:
-                # TODO: import spectral context data
+                # TODO: import spectral contexts data
                 pass
             case DataType.POPULATION_CATALOG:
                 # TODO: import population catalog
                 pass
 
     def apply(self, context: BaseContext) -> BaseContext:
-        """Apply the module.
+        """Apply the modules.
 
-        :param context: The context object of the pipeline
-        :return: The (updated) context object
+        :param context: The contexts object of the pipelines
+        :return: The (updated) contexts object
         """
         self._load_target_system(context)
         context.target_systems.append(self.target_system)

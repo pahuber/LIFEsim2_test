@@ -8,8 +8,8 @@ from pydantic_core.core_schema import ValidationInfo
 from sygn.io.validators import validate_quantity_units
 
 
-class Observation(BaseModel):
-    """Class representation of an observation."""
+class Mission(BaseModel):
+    """Class representation of a mission."""
     adjust_baseline_to_habitable_zone: bool
     integration_time: Any
     optimized_wavelength: Any
