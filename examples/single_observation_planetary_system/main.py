@@ -5,7 +5,6 @@ from sygn.core.module.observatory.observatory_module import ObservatoryModule
 from sygn.core.module.settings.settings_module import SettingsModule
 from sygn.core.module.target_system.data_type import DataType
 from sygn.core.module.target_system.target_system_module import TargetSystemModule
-from sygn.core.pipeline.data_generator.data_generator import DataGenerationMode
 from sygn.core.pipeline.generator_pipeline import GeneratorPipeline
 
 # Specify paths
@@ -13,26 +12,26 @@ path_to_config_file = Path(r'C:\Users\huber\Desktop\LIFEsim2\examples\single_obs
 path_to_data_file = Path(
     r'C:\Users\huber\Desktop\LIFEsim2\examples\single_observation_planetary_system\planetary_system.yaml')
 
-# Instantiate pipeline
-pipeline = GeneratorPipeline(mode=DataGenerationMode.SINGLE_OBSERVATION)
+# Instantiate generator pipeline
+pipeline = GeneratorPipeline()
 
-# Load settings from config file and add settings module to pipeline
+# Load settings from config file
 module = SettingsModule(path_to_config_file=path_to_config_file)
 pipeline.add_module(module)
 
-# Load observation from config file and add observation module to pipeline
+# Load observation from config file
 module = ObservationModule(path_to_config_file=path_to_config_file)
 pipeline.add_module(module)
 
-# Load observatory from config file and add observatory module to pipeline
+# Load observatory from config file
 module = ObservatoryModule(path_to_config_file=path_to_config_file)
 pipeline.add_module(module)
 
-# Load sources from file and add sources module to pipeline
+# Load sources from file
 module = TargetSystemModule(data_type=DataType.PLANETARY_SYSTEM_CONFIGURATION, path_to_data_file=path_to_data_file)
 pipeline.add_module(module)
 
-# # Instantiate animator module and add it to the pipeline
+# # Make animation
 # module = AnimatorModule(output_path='.',
 #                         source_name='Earth',
 #                         wavelength=10 * astropy.units.um,

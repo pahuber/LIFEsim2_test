@@ -6,7 +6,7 @@ from sygn.core.module.observatory.observatory_module import ObservatoryModule
 from sygn.core.module.settings.settings_module import SettingsModule
 from sygn.core.module.target_system.target_system_module import TargetSystemModule
 from sygn.core.pipeline.base_pipeline import BasePipeline
-from sygn.core.pipeline.data_generator.data_generator import DataGenerator, DataGenerationMode
+from sygn.core.pipeline.data_generator.data_generator import DataGenerator
 from sygn.io.fits_writer import FITSWriter
 from sygn.util.grid import get_number_of_instances_in_list
 
@@ -15,19 +15,17 @@ class GeneratorPipeline(BasePipeline):
     """Class representation of the generator pipeline.
     """
 
-    def __init__(self, mode: DataGenerationMode):
+    def __init__(self):
         """Constructor method.
         """
         super().__init__()
-        self.mode = mode
         self.context = GeneratorContext()
         self.data_generator = None
 
     def _generate_data(self):
         """Run the data generator to generate the synthetic data.
         """
-        self.data_generator = DataGenerator(mode=self.mode,
-                                            settings=self.context.settings,
+        self.data_generator = DataGenerator(settings=self.context.settings,
                                             observation=self.context.observation,
                                             observatory=self.context.observatory,
                                             target_systems=self.context.target_systems,

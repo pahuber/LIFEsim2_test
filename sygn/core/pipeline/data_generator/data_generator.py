@@ -1,4 +1,3 @@
-from enum import Enum
 from random import choice
 from typing import Tuple
 
@@ -18,19 +17,11 @@ from sygn.core.pipeline.data_generator.synthetic_data import SyntheticData
 from sygn.util.grid import get_dictionary_from_list_containing_key
 
 
-class DataGenerationMode(Enum):
-    """Enum to represent the different data generation modes.
-    """
-    SINGLE_OBSERVATION = 1
-    YIELD_CALCULATIONS = 2
-
-
 class DataGenerator():
     """Class representation of the data generator.
     """
 
     def __init__(self,
-                 mode: DataGenerationMode,
                  settings: Settings,
                  observation: Observation,
                  observatory: Observatory,
@@ -39,7 +30,6 @@ class DataGenerator():
                  animator: Animator, ):
         """Constructor method.
 
-        :param mode: The data generation mode
         :param settings: The settings object
         :param observation: The observation object
         :param observatory: The observatory object
@@ -47,7 +37,6 @@ class DataGenerator():
         :param time_range: The time range
         :param animator: The animator object
         """
-        self.mode = mode
         self.settings = settings
         self.observation = observation
         self.observatory = observatory
