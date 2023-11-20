@@ -1,5 +1,6 @@
 from pathlib import Path
 
+import numpy as np
 from matplotlib import pyplot as plt
 
 from sygn.core.modules.config_loader_module import ConfigLoaderModule
@@ -40,11 +41,12 @@ pipeline.add_module(module)
 # Run pipelines
 pipeline.run()
 
-plt.imshow(pipeline._modules[2].differential_photon_counts)
+plt.imshow(np.swapaxes(pipeline._modules[2].differential_photon_counts, axis1=0, axis2=1), cmap='Greys')
 plt.title('Differential Photon Counts')
 plt.ylabel('Spectral Channel')
 plt.xlabel('Time')
 plt.colorbar()
+plt.tight_layout()
 plt.show()
 
 a = 0

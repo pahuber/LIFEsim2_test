@@ -135,35 +135,53 @@ class Planet(PhotonSource):
         """
         self.angular_separation_from_star_x, self.angular_separation_from_star_y = self._get_x_y_angular_separation_from_star(
             time)
-        if np.abs(self.angular_separation_from_star_x) >= np.abs(self.angular_separation_from_star_y):
-            sky_coordinates = get_meshgrid(2 * (1.05 * np.abs(self.angular_separation_from_star_x)), grid_size)
-            return Coordinates(sky_coordinates[0], sky_coordinates[1])
-        sky_coordinates = get_meshgrid(2 * (1.05 * np.abs(self.angular_separation_from_star_y)), grid_size)
-        return Coordinates(sky_coordinates[0], sky_coordinates[1])
+        sky_coordinates = np.zeros((len(time), 2, grid_size, grid_size)) * self.angular_separation_from_star_x.unit
+        for index_time in range(len(time)):
+            if np.abs(self.angular_separation_from_star_x[index_time]) >= np.abs(
+                    self.angular_separation_from_star_y[index_time]):
+                sky_coordinates[index_time] = get_meshgrid(
+                    2 * (1.05 * np.abs(self.angular_separation_from_star_x[index_time])),
+                    grid_size)
+            else:
+                sky_coordinates[index_time] = get_meshgrid(
+                    2 * (1.05 * np.abs(self.angular_separation_from_star_y[index_time])),
+                    grid_size)
+        return sky_coordinates
 
     def get_sky_brightness_distribution_map(self, time: astropy.units.Quantity,
                                             sky_coordinates: np.ndarray) -> np.ndarray:
-        position_map = np.zeros(((len(self.mean_spectral_flux_density),) + sky_coordinates.x.shape)) * \
+        # position_map = np.zeros(((len(self.mean_spectral_flux_density),) + sky_coordinates.x.shape)) * \
+        #                self.mean_spectral_flux_density[0].unit
+        position_map = np.zeros(
+            ((len(time),) + (len(self.mean_spectral_flux_density),) + sky_coordinates[0, 0, :, :].shape)) * \
                        self.mean_spectral_flux_density[0].unit
-        index_x = get_index_of_closest_value(sky_coordinates.x[0, :], self.angular_separation_from_star_x)
-        index_y = get_index_of_closest_value(sky_coordinates.y[:, 0], self.angular_separation_from_star_y)
-        for index_wavelength in range(len(self.mean_spectral_flux_density)):
-            position_map[index_wavelength][index_y][index_x] = self.mean_spectral_flux_density[index_wavelength]
+        for index_time, time in enumerate(time):
+            index_x = get_index_of_closest_value(sky_coordinates[index_time, 0, 0, :],
+                                                 self.angular_separation_from_star_x[index_time])
+            index_y = get_index_of_closest_value(sky_coordinates[index_time, 1, :, 0],
+                                                 self.angular_separation_from_star_y[index_time])
+            for index_wavelength in range(len(self.mean_spectral_flux_density)):
+                position_map[index_time][index_wavelength][index_y][index_x] = self.mean_spectral_flux_density[
+                    index_wavelength]
         return position_map
 
-    def _get_x_y_separation_from_star(self, time: astropy.units.Quantity) -> Tuple:
+    def _get_x_y_separation_from_star(self, times: astropy.units.Quantity) -> Tuple:
         """Return the separation of the planet from the star in x- and y-direction.
 
         :param time: The time
         :return: A tuple containing the x- and y- coordinates
         """
+        separation_from_star = np.zeros((len(times), 2)) * u.m
         star = Body(parent=None, k=G * (self.star_mass + self.mass), name='Star')
         orbit = Orbit.from_classical(star, a=self.semi_major_axis, ecc=u.Quantity(self.eccentricity),
                                      inc=self.inclination,
                                      raan=self.raan,
                                      argp=self.argument_of_periapsis, nu=self.true_anomaly)
-        orbit_propagated = orbit.propagate(time)
-        return (orbit_propagated.r[0], orbit_propagated.r[1])
+        for index_time, time in enumerate(times):
+            orbit_propagated = orbit.propagate(time)
+            separation_from_star[index_time][0] = orbit_propagated.r[0].to(u.m)
+            separation_from_star[index_time][1] = orbit_propagated.r[1].to(u.m)
+        return separation_from_star
 
     def _get_x_y_angular_separation_from_star(self, time: astropy.units.Quantity) -> Tuple:
         """Return the angular separation of the planet from the star in x- and y-direction.
@@ -171,9 +189,9 @@ class Planet(PhotonSource):
         :param time: The time
         :return: A tuple containing the x- and y- coordinates
         """
-        separation_from_star_x, separation_from_star_y = self._get_x_y_separation_from_star(time)
-        angular_separation_from_star_x = ((separation_from_star_x.to(u.m) / self.star_distance.to(u.m)) * u.rad).to(
+        separation_from_star = self._get_x_y_separation_from_star(time)
+        angular_separation_from_star_x = ((separation_from_star[:, 0].to(u.m) / self.star_distance.to(u.m)) * u.rad).to(
             u.arcsec)
-        angular_separation_from_star_y = ((separation_from_star_y.to(u.m) / self.star_distance.to(u.m)) * u.rad).to(
+        angular_separation_from_star_y = ((separation_from_star[:, 1].to(u.m) / self.star_distance.to(u.m)) * u.rad).to(
             u.arcsec)
         return (angular_separation_from_star_x, angular_separation_from_star_y)

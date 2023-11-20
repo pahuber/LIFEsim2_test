@@ -147,15 +147,17 @@ class Star(PhotonSource):
         :return: A tuple containing the x- and y-sky coordinate maps
         """
         sky_coordinates = get_meshgrid(2 * (1.05 * self.angular_radius), grid_size)
-        return Coordinates(sky_coordinates[0], sky_coordinates[1])
+        return np.repeat(sky_coordinates[None, :], len(time), axis=0)
 
     def get_sky_brightness_distribution_map(self, time: astropy.units.Quantity,
                                             sky_coordinates: np.ndarray) -> np.ndarray:
-        position_map = np.zeros(((len(self.mean_spectral_flux_density),) + sky_coordinates.x.shape)) * \
+        position_map = np.zeros(
+            ((len(time),) + (len(self.mean_spectral_flux_density),) + sky_coordinates[0, 0, :, :].shape)) * \
                        self.mean_spectral_flux_density[0].unit
-        radius_map = (np.sqrt(sky_coordinates.x ** 2 + sky_coordinates.y ** 2) <= self.angular_radius)
+        radius_map = (
+                np.sqrt(sky_coordinates[0, 0, :, :] ** 2 + sky_coordinates[0, 1, :, :] ** 2) <= self.angular_radius)
 
         for index_wavelength in range(len(self.mean_spectral_flux_density)):
-            position_map[index_wavelength] = radius_map * self.mean_spectral_flux_density[index_wavelength]
+            position_map[:, index_wavelength, :, :] = radius_map * self.mean_spectral_flux_density[index_wavelength]
 
         return position_map
