@@ -6,14 +6,14 @@
 ############################################
 ---
 # -------------------------------------------
-# Simulation Settings Configuration
+# Settings
 # -------------------------------------------
 settings:
   grid_size: 80
   time_step: 1 d
   planet_orbital_motion: false
   noise_contributions:
-    stellar_leakage: true
+    stellar_leakage: false
     local_zodi_leakage: false
     exozodi_leakage: false
     fiber_injection_variability: false
@@ -22,7 +22,7 @@ settings:
       power_law_exponent: 1
       rms: 0.1 nm
 # -------------------------------------------
-# Observation Configuration
+# Mission Configuration
 # -------------------------------------------
 mission:
   adjust_baseline_to_habitable_zone: true

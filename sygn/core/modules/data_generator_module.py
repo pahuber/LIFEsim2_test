@@ -185,6 +185,8 @@ class DataGeneratorModule(BaseModule):
         diagonal_of_matrix = []
 
         for index in range(number_of_inputs):
+            amplitude_factor = 1
+            phase_difference = 0 * u.um
             # TODO: Use more realistic distributions
             if fiber_injection_variability:
                 amplitude_factor = np.random.uniform(0.8, 0.9)
