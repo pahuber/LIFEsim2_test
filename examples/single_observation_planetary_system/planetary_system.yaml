@@ -9,7 +9,11 @@ star:
   radius: 1 Rsun
   temperature: 5700 K
   luminosity: 1 Lsun
-  zodi_level: 3
+  right_ascension: 3 h
+  declination: -9 deg
+zodi:
+  level: 3
+  temperature: 200 K
 planets:
   planet_1:
     name: Earth

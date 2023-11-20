@@ -1,34 +1,29 @@
 from pathlib import Path
 
-from sygn.core.modules.mission_module import MissionModule
-from sygn.core.modules.observatory_module import ObservatoryModule
-from sygn.core.modules.planetary_system_module import PlanetarySystemModule
-from sygn.core.modules.settings_module import SettingsModule
-from sygn.core.pipelines.generator_pipeline import GeneratorPipeline
-from sygn.io.data_type import DataType
+from matplotlib import pyplot as plt
+
+from sygn.core.modules.config_loader_module import ConfigLoaderModule
+from sygn.core.modules.data_generator_module import DataGeneratorModule
+from sygn.core.modules.target_loader_module import TargetLoaderModule
+from sygn.core.pipeline import Pipeline
 
 # Specify paths
-path_to_config_file = Path(r'C:\Users\huber\Desktop\LIFEsim2\examples\single_observation_planetary_system\config.yaml')
-path_to_data_file = Path(
-    r'C:\Users\huber\Desktop\LIFEsim2\examples\single_observation_planetary_system\planetary_system.yaml')
+path_to_config_file = Path(r'config.yaml')
+path_to_context_file = Path(r'planetary_system.yaml')
 
-# Instantiate generator pipelines
-pipeline = GeneratorPipeline()
+# Instantiate pipeline
+pipeline = Pipeline()
 
-# Load settings from config file
-module = SettingsModule(path_to_config_file=path_to_config_file)
+# Load configurations
+module = ConfigLoaderModule(path_to_config_file)
 pipeline.add_module(module)
 
-# Load mission from config file
-module = MissionModule(path_to_config_file=path_to_config_file)
+# Load target
+module = TargetLoaderModule(path_to_context_file)
 pipeline.add_module(module)
 
-# Load observatory from config file
-module = ObservatoryModule(path_to_config_file=path_to_config_file)
-pipeline.add_module(module)
-
-# Load sources from file
-module = PlanetarySystemModule(data_type=DataType.PLANETARY_SYSTEM_CONFIGURATION, path_to_data_file=path_to_data_file)
+# Generate data
+module = DataGeneratorModule()
 pipeline.add_module(module)
 
 # # Make animation
@@ -45,5 +40,13 @@ pipeline.add_module(module)
 # Run pipelines
 pipeline.run()
 
+plt.imshow(pipeline._modules[2].differential_photon_counts)
+plt.title('Differential Photon Counts')
+plt.ylabel('Spectral Channel')
+plt.xlabel('Time')
+plt.colorbar()
+plt.show()
+
+a = 0
 # Save synthetic data to FITS file
-pipeline.save_data_to_fits('.')
+# pipeline.save_data_to_fits('.')

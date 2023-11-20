@@ -1,17 +1,17 @@
 from abc import ABC, abstractmethod
 
-from sygn.core.contexts.base_context import BaseContext
+from sygn.core.context import Context
 
 
 class BaseModule(ABC):
-    """Class representation of the base modules.
+    """Class representation of the base module.
     """
 
     @abstractmethod
-    def apply(self, context: BaseContext) -> BaseContext:
-        """Apply the modules.
+    def apply(self, context: Context) -> Context:
+        """Apply the module.
 
-        :param context: The contexts object of the pipelines
-        :return: The (updated) contexts object
+        :param context: The context object of the pipeline
+        :return: The (updated) context object
         """
         pass

@@ -10,7 +10,7 @@
 # -------------------------------------------
 settings:
   grid_size: 80
-  time_step: 50 min
+  time_step: 1 d
   planet_orbital_motion: false
   noise_contributions:
     stellar_leakage: true
@@ -22,11 +22,11 @@ settings:
       power_law_exponent: 1
       rms: 0.1 nm
 # -------------------------------------------
-# Mission Configuration
+# Observation Configuration
 # -------------------------------------------
 mission:
   adjust_baseline_to_habitable_zone: true
-  integration_time: 100 h
+  integration_time: 100 d
   optimized_wavelength: 10 um
 # -------------------------------------------
 # Observatory Configuration
@@ -37,7 +37,7 @@ observatory:
     baseline_maximum: 600 m
     baseline_minimum: 8 m
     baseline_ratio: 6
-    modulation_period: 100 h
+    modulation_period: 100 d
   beam_combination_scheme: double-bracewell
   instrument_parameters:
     aperture_diameter: 4 m

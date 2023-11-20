@@ -8,8 +8,8 @@ from astropy import units as u
 from pydantic import BaseModel, field_validator
 from pydantic_core.core_schema import ValidationInfo
 
-from sygn.core.entities.sources.star import Star
 from sygn.io.validators import validate_quantity_units
+from sygn.util.helpers import Coordinates
 from sygn.util.matrix import get_2d_rotation_matrix
 
 
@@ -63,7 +63,7 @@ class ArrayConfiguration(ABC, BaseModel):
         return validate_quantity_units(value=value, field_name=info.field_name, unit_equivalency=u.s)
 
     @abstractmethod
-    def get_collector_positions(self, time: astropy.units.Quantity) -> np.ndarray:
+    def get_collector_positions(self, time: astropy.units.Quantity) -> Coordinates:
         """Return an array containing the time-dependent x- and y-coordinates of the collectors.
         :param time: Time variable in seconds
         :return: An array containing the coordinates.
@@ -81,23 +81,22 @@ class ArrayConfiguration(ABC, BaseModel):
         """
         pass
 
-    def set_optimal_baseline(self, target_systems: list[dict], optimized_wavelength: astropy.units.Quantity):
+    def set_optimal_baseline(self,
+                             optimized_wavelength: astropy.units.Quantity,
+                             star_habitable_zone_central_angular_radius: astropy.units.Quantity):
         """Set the baseline to optimize for the habitable zone, if it is between the minimum and maximum allowed
         baselines.
 
-        :param target_systems: The target systems
         :param optimized_wavelength: The optimized wavelength
         """
-        for target_system in target_systems:
-            star = [value for value in target_system.values() if isinstance(value, Star)][0]
-            optimal_baseline = self.get_optimal_baseline(wavelength=optimized_wavelength,
-                                                         optimal_angular_distance=star.habitable_zone_central_angular_radius).to(
-                u.m)
-            if self.baseline_minimum <= optimal_baseline and optimal_baseline <= self.baseline_maximum:
-                self.baseline = optimal_baseline
-            else:
-                raise ValueError(
-                    f'Optimal baseline of {optimal_baseline} is not within allowed ranges of baselines {self.baseline_minimum}-{self.baseline_maximum}')
+        optimal_baseline = self.get_optimal_baseline(wavelength=optimized_wavelength,
+                                                     optimal_angular_distance=star_habitable_zone_central_angular_radius).to(
+            u.m)
+        if self.baseline_minimum <= optimal_baseline and optimal_baseline <= self.baseline_maximum:
+            self.baseline = optimal_baseline
+        else:
+            raise ValueError(
+                f'Optimal baseline of {optimal_baseline} is not within allowed ranges of baselines {self.baseline_minimum}-{self.baseline_maximum}')
 
 
 class EmmaXCircularRotation(ArrayConfiguration):
@@ -105,11 +104,12 @@ class EmmaXCircularRotation(ArrayConfiguration):
     """
     type: Any = ArrayConfigurationEnum.EMMA_X_CIRCULAR_ROTATION
 
-    def get_collector_positions(self, time: astropy.units.Quantity) -> np.ndarray:
+    def get_collector_positions(self, time: astropy.units.Quantity) -> Coordinates:
         rotation_matrix = get_2d_rotation_matrix(time, self.modulation_period)
         emma_x_static = self.baseline / 2 * np.array(
             [[self.baseline_ratio, self.baseline_ratio, -self.baseline_ratio, -self.baseline_ratio], [1, -1, -1, 1]])
-        return np.matmul(rotation_matrix, emma_x_static)
+        collector_positions = np.matmul(rotation_matrix, emma_x_static)
+        return Coordinates(collector_positions[0], collector_positions[1])
 
     def get_optimal_baseline(self, wavelength: astropy.units.Quantity,
                              optimal_angular_distance: astropy.units.Quantity):
@@ -121,12 +121,13 @@ class EmmaXDoubleStretch(ArrayConfiguration):
     """
     type: Any = ArrayConfigurationEnum.EMMA_X_DOUBLE_STRETCH
 
-    def get_collector_positions(self, time: float) -> np.ndarray:
+    def get_collector_positions(self, time: float) -> Coordinates:
         emma_x_static = self.baseline / 2 * np.array(
             [[self.baseline_ratio, self.baseline_ratio, -self.baseline_ratio, -self.baseline_ratio], [1, -1, -1, 1]])
         # TODO: fix calculations
-        return emma_x_static * (1 + (2 * self.baseline) / self.baseline * np.sin(
+        collector_positions = emma_x_static * (1 + (2 * self.baseline) / self.baseline * np.sin(
             2 * np.pi * u.rad / self.modulation_period * time))
+        return Coordinates(collector_positions[0], collector_positions[1])
 
     def get_optimal_baseline(self, wavelength: astropy.units.Quantity,
                              optimal_angular_distance: astropy.units.Quantity):
@@ -139,7 +140,7 @@ class EquilateralTriangleCircularRotation(ArrayConfiguration):
     """
     type: Any = ArrayConfigurationEnum.EQUILATERAL_TRIANGLE_CIRCULAR_ROTATION
 
-    def get_collector_positions(self, time: float) -> np.ndarray:
+    def get_collector_positions(self, time: float) -> Coordinates:
         height = np.sqrt(3) / 2 * self.baseline
         height_to_center = height / 3
         rotation_matrix = get_2d_rotation_matrix(time, self.modulation_period)
@@ -147,8 +148,8 @@ class EquilateralTriangleCircularRotation(ArrayConfiguration):
         equilateral_triangle_static = np.array(
             [[0, self.baseline.value / 2, -self.baseline.value / 2],
              [height.value - height_to_center.value, -height_to_center.value, -height_to_center.value]])
-
-        return np.matmul(rotation_matrix, equilateral_triangle_static) * self.baseline.unit
+        collector_positions = np.matmul(rotation_matrix, equilateral_triangle_static) * self.baseline.unit
+        return Coordinates(collector_positions[0], collector_positions[1])
 
     def get_optimal_baseline(self, wavelength: astropy.units.Quantity,
                              optimal_angular_distance: astropy.units.Quantity):
@@ -177,13 +178,14 @@ class RegularPentagonCircularRotation(ArrayConfiguration):
         """
         return 0.851 * self.baseline.value * np.sin(angle)
 
-    def get_collector_positions(self, time: float) -> np.ndarray:
+    def get_collector_positions(self, time: float) -> Coordinates:
         angles = [0, 2 * np.pi / 5, 4 * np.pi / 5, 6 * np.pi / 5, 8 * np.pi / 5]
         rotation_matrix = get_2d_rotation_matrix(time, self.modulation_period)
         pentagon_static = np.array([
             [self._x(angles[0]), self._x(angles[1]), self._x(angles[2]), self._x(angles[3]), self._x(angles[4])],
             [self._y(angles[0]), self._y(angles[1]), self._y(angles[2]), self._y(angles[3]), self._y(angles[4])]])
-        return np.matmul(rotation_matrix, pentagon_static) * self.baseline.unit
+        collector_positions = np.matmul(rotation_matrix, pentagon_static) * self.baseline.unit
+        return Coordinates(collector_positions[0], collector_positions[1])
 
     def get_optimal_baseline(self, wavelength: astropy.units.Quantity,
                              optimal_angular_distance: astropy.units.Quantity):

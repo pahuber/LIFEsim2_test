@@ -5,15 +5,15 @@ import numpy as np
 from astropy.io import fits
 
 from sygn.core.contexts.base_context import BaseContext
-from sygn.core.entities.sources.planet import Planet
-from sygn.core.entities.sources.star import Star
+from sygn.core.entities.photon_sources.planet import Planet
+from sygn.core.entities.photon_sources.star import Star
 
 
 class FITSWriter():
 
     @staticmethod
     def _get_fits_header(primary: fits.PrimaryHDU, context: BaseContext, index_target_system) -> fits.header.Header:
-        """Return the FITS file header containing the information about the simulation and the sources.
+        """Return the FITS file header containing the information about the simulation and the photon_sources.
 
         :param primary: The primary HDU object
         :param context: The contexts object
@@ -57,7 +57,7 @@ class FITSWriter():
             context.observatory.instrument_parameters.wavelength_range_upper_limit)
         header[
             'SYGN_UNPERTURBED_INSTRUMENT_THROUGHPUT'] = context.observatory.instrument_parameters.unperturbed_instrument_throughput
-        for index_source, source in enumerate(context.target_systems[index_target_system].values()):
+        for index_source, source in enumerate(context.photon_sources[index_target_system].values()):
             if isinstance(source, Planet):
                 header[f'SYGN_PLANET{index_source}_NAME'] = source.name
                 header[f'SYGN_PLANET{index_source}_MASS'] = str(source.mass)
@@ -88,14 +88,14 @@ class FITSWriter():
         :param simulation: The simulation object
         :param differential_photon_counts: The differential photon counts
         """
-        for index_target_system, target_system in enumerate(context.target_systems):
+        for index_target_system, target_system in enumerate(context.photon_sources):
             hdu_list = []
             primary = fits.PrimaryHDU()
             header = FITSWriter._get_fits_header(primary, context, index_target_system)
             hdu_list.append(primary)
-            for index_response in context.differential_photon_counts_list[index_target_system].keys():
+            for index_response in context.data[index_target_system].keys():
                 differential_photon_counts_list = list(
-                    context.differential_photon_counts_list[index_target_system][index_response].values())
+                    context.data[index_target_system][index_response].values())
                 differential_photon_counts_array = np.array(differential_photon_counts_list)
                 hdu = fits.ImageHDU(differential_photon_counts_array)
                 hdu_list.append(hdu)

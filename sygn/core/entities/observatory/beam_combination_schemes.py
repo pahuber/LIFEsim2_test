@@ -25,7 +25,7 @@ class BeamCombinationScheme(ABC):
         super().__init__()
         self.number_of_inputs = self.get_beam_combination_transfer_matrix().shape[1]
         self.number_of_outputs = self.get_beam_combination_transfer_matrix().shape[0]
-        self.number_of_differential_intensity_responses = len(self.get_intensity_response_pairs())
+        self.number_of_differential_intensity_responses = len(self.get_differential_output_pairs())
 
     @abstractmethod
     def get_beam_combination_transfer_matrix(self) -> np.ndarray:
@@ -35,9 +35,8 @@ class BeamCombinationScheme(ABC):
         pass
 
     @abstractmethod
-    def get_intensity_response_pairs(self) -> list:
-        """Return the pairs of indices of the intensity response vector that make up one of the differential intensity
-        responses.
+    def get_differential_output_pairs(self) -> list:
+        """Return the pairs of indices of the intensity response vector that make up one of the differential outputs.
 
         :return: List of tuples containing the pairs of indices
         """
@@ -55,7 +54,7 @@ class DoubleBracewell(BeamCombinationScheme):
                                           [1, -1, -np.exp(1j * np.pi / 2), np.exp(1j * np.pi / 2)],
                                           [1, -1, np.exp(1j * np.pi / 2), -np.exp(1j * np.pi / 2)]])
 
-    def get_intensity_response_pairs(self) -> list:
+    def get_differential_output_pairs(self) -> list:
         return [(2, 3)]
 
 
@@ -69,7 +68,7 @@ class Kernel3(BeamCombinationScheme):
                                           [1, np.exp(2j * np.pi / 3), np.exp(4j * np.pi / 3)],
                                           [1, np.exp(4j * np.pi / 3), np.exp(2j * np.pi / 3)]])
 
-    def get_intensity_response_pairs(self) -> list:
+    def get_differential_output_pairs(self) -> list:
         return [(1, 2)]
 
 
@@ -89,7 +88,7 @@ class Kernel4(BeamCombinationScheme):
                                  [1 + exp_plus, -1 - exp_plus, 1 - exp_plus, -1 + exp_plus],
                                  [1 - exp_minus, -1 + exp_minus, -1 - exp_minus, 1 + exp_minus]])
 
-    def get_intensity_response_pairs(self) -> list:
+    def get_differential_output_pairs(self) -> list:
         return [(1, 2), (3, 4), (5, 6)]
 
 
@@ -113,5 +112,5 @@ class Kernel5(BeamCombinationScheme):
                                           [1, self._exp(6), self._exp(2), self._exp(8), self._exp(4)],
                                           [1, self._exp(8), self._exp(6), self._exp(4), self._exp(2)]])
 
-    def get_intensity_response_pairs(self) -> list:
+    def get_differential_output_pairs(self) -> list:
         return [(1, 4), (2, 3)]

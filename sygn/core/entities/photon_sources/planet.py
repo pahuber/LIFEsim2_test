@@ -9,12 +9,13 @@ from poliastro.twobody import Orbit
 from pydantic import field_validator
 from pydantic_core.core_schema import ValidationInfo
 
-from sygn.core.entities.sources.source import Source
+from sygn.core.entities.photon_sources.photon_source import PhotonSource
 from sygn.io.validators import validate_quantity_units
 from sygn.util.grid import get_index_of_closest_value, get_meshgrid
+from sygn.util.helpers import Coordinates
 
 
-class Planet(Source):
+class Planet(PhotonSource):
     """Class representation of a planet.
     """
     name: str
@@ -29,11 +30,13 @@ class Planet(Source):
     true_anomaly: Any
     star_distance: Any
     star_mass: Any
-    number_of_wavelength_bins: int
-    grid_size: int
+    number_of_wavelength_bins: int = None
+    grid_size: int = None
     mean_spectral_flux_density: Any = None
     position_x: Any = None
     position_y: Any = None
+    angular_separation_from_star_x: Any = None
+    angular_separation_from_star_y: Any = None
 
     @field_validator('argument_of_periapsis')
     def _validate_argument_of_periapsis(cls, value: Any, info: ValidationInfo) -> astropy.units.Quantity:
@@ -95,6 +98,16 @@ class Planet(Source):
         """
         return validate_quantity_units(value=value, field_name=info.field_name, unit_equivalency=u.m)
 
+    @field_validator('temperature')
+    def _validate_temperature(cls, value: Any, info: ValidationInfo) -> astropy.units.Quantity:
+        """Validate the temperature input.
+
+        :param value: Value given as input
+        :param info: ValidationInfo object
+        :return: The temperature in units of temperature
+        """
+        return validate_quantity_units(value=value, field_name=info.field_name, unit_equivalency=u.K)
+
     @field_validator('true_anomaly')
     def _validate_true_anomaly(cls, value: Any, info: ValidationInfo) -> astropy.units.Quantity:
         """Validate the true anomaly input.
@@ -113,43 +126,29 @@ class Planet(Source):
         """
         return np.pi * (self.radius.to(u.m) / (self.star_distance.to(u.m)) * u.rad) ** 2
 
-    # @property
-    # def star_angular_separation_x(self) -> astropy.units.Quantity:
-    #     """Return the angular star separation x.
-    #
-    #     :return: The angular star separation x
-    #     """
-    #     return ((self.star_separation_x.to(u.m) / self.star_distance.to(u.m)) * u.rad).to(u.arcsec)
-    #
-    # @property
-    # def star_angular_separation_y(self) -> astropy.units.Quantity:
-    #     """Return the angular star separation y.
-    #
-    #     :return: The angular star separation y
-    #     """
-    #     return ((self.star_separation_y.to(u.m) / self.star_distance.to(u.m)) * u.rad).to(u.arcsec)
-
-    def get_sky_coordinate_maps(self, time: astropy.units.Quantity) -> Tuple[np.ndarray, np.ndarray]:
+    def get_sky_coordinates(self, time: astropy.units.Quantity, grid_size: int) -> Coordinates:
         """Return the sky coordinate maps of the source. The intensity responses are calculated in a resolution that
         allows the source to fill the grid, thus, each source needs to define its own sky coordinate map. Add 10% to the
         angular radius to account for rounding issues and make sure the source is fully covered within the map.
 
         :return: A tuple containing the x- and y-sky coordinate maps
         """
-        angular_separation_from_star_x, angular_separation_from_star_y = self._get_x_y_angular_separation_from_star(
+        self.angular_separation_from_star_x, self.angular_separation_from_star_y = self._get_x_y_angular_separation_from_star(
             time)
-        if np.abs(angular_separation_from_star_x) >= np.abs(angular_separation_from_star_y):
-            return get_meshgrid(2 * (1.05 * np.abs(angular_separation_from_star_x)), self.grid_size)
-        return get_meshgrid(2 * (1.05 * np.abs(angular_separation_from_star_y)), self.grid_size)
+        if np.abs(self.angular_separation_from_star_x) >= np.abs(self.angular_separation_from_star_y):
+            sky_coordinates = get_meshgrid(2 * (1.05 * np.abs(self.angular_separation_from_star_x)), grid_size)
+            return Coordinates(sky_coordinates[0], sky_coordinates[1])
+        sky_coordinates = get_meshgrid(2 * (1.05 * np.abs(self.angular_separation_from_star_y)), grid_size)
+        return Coordinates(sky_coordinates[0], sky_coordinates[1])
 
-    def get_sky_position_map(self, time: astropy.units.Quantity) -> np.ndarray:
-        sky_coordinate_maps = self.get_sky_coordinate_maps(time)
-        position_map = np.zeros(sky_coordinate_maps[0].shape)
-        angular_separation_from_star_x, angular_separation_from_star_y = self._get_x_y_angular_separation_from_star(
-            time)
-        index_x = get_index_of_closest_value(sky_coordinate_maps[0][0, :], angular_separation_from_star_x)
-        index_y = get_index_of_closest_value(sky_coordinate_maps[1][:, 0], angular_separation_from_star_y)
-        position_map[index_y][index_x] = 1
+    def get_sky_brightness_distribution_map(self, time: astropy.units.Quantity,
+                                            sky_coordinates: np.ndarray) -> np.ndarray:
+        position_map = np.zeros(((len(self.mean_spectral_flux_density),) + sky_coordinates.x.shape)) * \
+                       self.mean_spectral_flux_density[0].unit
+        index_x = get_index_of_closest_value(sky_coordinates.x[0, :], self.angular_separation_from_star_x)
+        index_y = get_index_of_closest_value(sky_coordinates.y[:, 0], self.angular_separation_from_star_y)
+        for index_wavelength in range(len(self.mean_spectral_flux_density)):
+            position_map[index_wavelength][index_y][index_x] = self.mean_spectral_flux_density[index_wavelength]
         return position_map
 
     def _get_x_y_separation_from_star(self, time: astropy.units.Quantity) -> Tuple:
