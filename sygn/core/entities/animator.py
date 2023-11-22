@@ -6,7 +6,7 @@ from matplotlib import pyplot as plt
 from matplotlib.animation import FFMpegWriter
 from mpl_toolkits.axes_grid1.inset_locator import zoomed_inset_axes, mark_inset
 
-from sygn.core.module.observatory.observatory import Observatory
+from sygn.core.entities.observatory.observatory import Observatory
 
 
 class Animator():
@@ -98,12 +98,12 @@ class Animator():
                               vmax=self.image_vmax,
                               cmap='seismic')
 
-        max = int(np.max(target_system[self.source_name].get_sky_coordinate_maps(0 * u.s)[0][0, :]).value * 1000)
+        max = int(np.max(target_system[self.source_name].get_sky_coordinates(0 * u.s)[0][0, :]).value * 1000)
         labels = np.linspace(-max, max, grid_size // 10 + 1)
         ticks = np.linspace(0, grid_size, grid_size // 10 + 1)
         source_position_coordinate = (
-                target_system[self.source_name].get_sky_position_map(0 * u.s) *
-                target_system[self.source_name].get_sky_coordinate_maps(0 * u.s)[0])
+                target_system[self.source_name].get_sky_brightness_distribution_map(0 * u.s) *
+                target_system[self.source_name].get_sky_coordinates(0 * u.s)[0])
         y_index, x_index = np.nonzero(source_position_coordinate)
         x_index = x_index[0]
         y_index = y_index[0]

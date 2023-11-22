@@ -12,7 +12,7 @@ def create_blackbody_spectrum(temperature,
                               wavelength_bin_widths: np.ndarray,
                               source_solid_angle: astropy.units.Quantity) -> np.ndarray:
     """Return a blackbody spectrum for an astrophysical object. The spectrum is binned already to the wavelength bin
-    centers of the observation.
+    centers of the mission.
 
     :param temperature: Temperature of the astrophysical object
     :param wavelength_range_lower_limit: Lower limit of the wavelength range
@@ -23,7 +23,7 @@ def create_blackbody_spectrum(temperature,
     :return: Array containing the flux per bin in units of ph m-2 s-1 um-1
     """
     wavelength_range = np.linspace(wavelength_range_lower_limit.value, wavelength_range_upper_limit.value,
-                                   100) * wavelength_range_upper_limit.unit
+                                   1000) * wavelength_range_upper_limit.unit
     blackbody_spectrum = BlackBody(temperature=temperature)(wavelength_range)
 
     units = blackbody_spectrum.unit
