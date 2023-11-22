@@ -57,12 +57,12 @@ class InstrumentParameters(BaseModel):
         return self.aperture_diameter / 2
 
     @property
-    def maximum_field_of_view(self) -> astropy.units.Quantity:
-        """Return the maximum field of view.
+    def fields_of_view(self) -> np.ndarray:
+        """Return the fields of view for each wavelength.
 
-        :return: The maximum field of view
+        :return: An array containing the field of view for each wavelength
         """
-        return (np.max(self.wavelength_bin_centers.to(u.m)) / self.aperture_diameter * u.rad).to(u.arcsec)
+        return (self.wavelength_bin_centers.to(u.m) / self.aperture_diameter * u.rad)
 
     @property
     def wavelength_bin_centers(self) -> np.ndarray:

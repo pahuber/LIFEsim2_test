@@ -23,10 +23,6 @@ class Star(PhotonSource):
     luminosity: Any
     right_ascension: Any
     declination: Any
-    wavelength_range_lower_limit: Any = None
-    wavelength_range_upper_limit: Any = None
-    wavelength_bin_centers: Any = None
-    wavelength_bin_widths: Any = None
 
     # def __init__(self, **data):
     #     """Constructor method.
@@ -138,19 +134,20 @@ class Star(PhotonSource):
         """
         return np.pi * (self.radius.to(u.m) / (self.distance.to(u.m)) * u.rad) ** 2
 
-    def get_sky_coordinates(self, time: astropy.units.Quantity, grid_size: int) -> Coordinates:
+    def get_sky_coordinates(self, time: astropy.units.Quantity, grid_size: int,
+                            wavelength: astropy.units.Quantity = None) -> Coordinates:
         """Return the sky coordinate maps of the source. The intensity responses are calculated in a resolution that
         allows the source to fill the grid, thus, each source needs to define its own sky coordinate map. Add 10% to the
         angular radius to account for rounding issues and make sure the source is fully covered within the map.
 
         :param time: The time
+        :param grid_size: The grid size
         :return: A tuple containing the x- and y-sky coordinate maps
         """
         sky_coordinates = get_meshgrid(2 * (1.05 * self.angular_radius), grid_size)
         return Coordinates(sky_coordinates[0], sky_coordinates[1])
 
-    def get_sky_brightness_distribution_map(self, time: astropy.units.Quantity,
-                                            sky_coordinates: np.ndarray) -> np.ndarray:
+    def get_sky_brightness_distribution_map(self, sky_coordinates: Coordinates) -> np.ndarray:
         position_map = np.zeros(((len(self.mean_spectral_flux_density),) + sky_coordinates.x.shape)) * \
                        self.mean_spectral_flux_density[0].unit
         radius_map = (np.sqrt(sky_coordinates.x ** 2 + sky_coordinates.y ** 2) <= self.angular_radius)

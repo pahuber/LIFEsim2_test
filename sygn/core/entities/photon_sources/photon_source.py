@@ -19,20 +19,21 @@ class PhotonSource(ABC, BaseModel):
     mean_spectral_flux_density: Any = None
 
     @abstractmethod
-    def get_sky_coordinates(self, time: astropy.units.Quantity) -> Coordinates:
+    def get_sky_coordinates(self, time: astropy.units.Quantity, grid_size: int) -> Coordinates:
         """Return the sky coordinate maps of the source. The intensity responses are calculated in a resolution that
         allows the source to fill the grid, thus, each source needs to define its own sky coordinate map.
 
         :param time: The time
+        :param grid_size: The grid size
         :return: A tuple containing the x- and y-sky coordinate maps
         """
         pass
 
     @abstractmethod
-    def get_sky_brightness_distribution_map(self, time: astropy.units.Quantity) -> np.ndarray:
+    def get_sky_brightness_distribution_map(self, sky_coordinates: Coordinates) -> np.ndarray:
         """Return the sky brightness distribution map of the source object.
 
-        :param time: The time
+        :param sky_coordinates: The sky corodinates
         :return: The sky brightness distribution map
         """
         pass

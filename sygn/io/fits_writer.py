@@ -74,7 +74,8 @@ class FITSWriter():
                 header['SYGN_STAR_RADIUS'] = str(source.radius)
                 header['SYGN_STAR_TEMPERATURE'] = str(source.temperature)
                 header['SYGN_STAR_LUMINOSITY'] = str(source.luminosity)
-                header['SYGN_STAR_ZODI_LEVEL'] = source.zodi_level
+                header['SYGN_STAR_RIGHT_ASCENSION'] = str(source.right_ascension)
+                header['SYGN_STAR_DECLINATION'] = str(source.declination)
         return header
 
     @staticmethod

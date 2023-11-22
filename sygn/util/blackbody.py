@@ -1,3 +1,5 @@
+from typing import Union
+
 import astropy.units
 import numpy as np
 import spectres
@@ -10,7 +12,7 @@ def create_blackbody_spectrum(temperature,
                               wavelength_range_upper_limit: astropy.units.Quantity,
                               wavelength_bin_centers: np.ndarray,
                               wavelength_bin_widths: np.ndarray,
-                              source_solid_angle: astropy.units.Quantity) -> np.ndarray:
+                              source_solid_angle: Union[astropy.units.Quantity, np.ndarray]) -> np.ndarray:
     """Return a blackbody spectrum for an astrophysical object. The spectrum is binned already to the wavelength bin
     centers of the mission.
 
@@ -36,7 +38,7 @@ def create_blackbody_spectrum(temperature,
 
 def _convert_blackbody_units(blackbody_spectrum_binned: np.ndarray,
                              wavelength_bin_centers: np.ndarray,
-                             source_solid_angle: astropy.units.Quantity) -> np.ndarray:
+                             source_solid_angle: Union[astropy.units.Quantity, np.ndarray]) -> np.ndarray:
     """Convert the binned black body spectrum from units erg / (Hz s sr cm2) to units ph / (m2 s um)
 
     :param blackbody_spectrum_binned: The binned blackbody spectrum
@@ -47,7 +49,11 @@ def _convert_blackbody_units(blackbody_spectrum_binned: np.ndarray,
     spectral_flux_density = np.zeros(len(blackbody_spectrum_binned)) * u.ph / u.m ** 2 / u.s / u.um
 
     for index in range(len(blackbody_spectrum_binned)):
-        current_spectral_flux_density = (blackbody_spectrum_binned[index] * (source_solid_angle).to(u.sr)).to(
+        if source_solid_angle.size == 1:
+            solid_angle = source_solid_angle
+        else:
+            solid_angle = source_solid_angle[index]
+        current_spectral_flux_density = (blackbody_spectrum_binned[index] * (solid_angle).to(u.sr)).to(
             u.ph / u.m ** 2 / u.s / u.um,
             equivalencies=u.spectral_density(
                 wavelength_bin_centers[index]))

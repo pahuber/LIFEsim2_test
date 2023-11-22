@@ -1,5 +1,9 @@
 from pathlib import Path
 
+import numpy as np
+from astropy import units as u
+from astropy.coordinates import SkyCoord, GeocentricTrueEcliptic
+
 from sygn.core.context import Context
 from sygn.core.entities.photon_sources.exozodi import Exozodi
 from sygn.core.entities.photon_sources.local_zodi import LocalZodi
@@ -49,12 +53,53 @@ class TargetLoaderModule():
         """
         return Exozodi(**config_dict['zodi'])
 
-    def _load_local_zodi(self) -> LocalZodi:
+    def _load_local_zodi(self, context: Context) -> LocalZodi:
         """Return the local zodi object from the dictionary.
 
         :return: The local zodi object
         """
-        return LocalZodi(star_right_ascension=self.star.right_ascension, star_declination=self.star.declination)
+        local_zodi = LocalZodi()
+        variable_tau = 4e-8
+        variable_a = 0.22
+        coordinates = SkyCoord(ra=self.star.right_ascension, dec=self.star.declination, frame='icrs')
+        coordinates_ecliptic = coordinates.transform_to(GeocentricTrueEcliptic)
+        ecliptic_latitude = coordinates_ecliptic.lat.to(u.deg)
+        ecliptic_longitude = coordinates_ecliptic.lon.to(u.deg)
+        relative_ecliptic_longitude = ecliptic_longitude - 0 * u.deg
+        # a = {'name': 'Sun',
+        #      'temperature': 5778 * u.K,
+        #      'radius': 1 * u.Rsun,
+        #      'mass': 1 * u.Msun,
+        #      'distance': 1 * u.au,
+        #      'luminosity': 1 * u.Lsun,
+        #      'right_ascension': 0 * u.deg,
+        #      'declination': 0 * u.deg}
+        # sun = Star(**a)
+
+        local_zodi.mean_spectral_flux_density = (
+                variable_tau
+                * (create_blackbody_spectrum(265 * u.K,
+                                             context.observatory.instrument_parameters.wavelength_range_lower_limit,
+                                             context.observatory.instrument_parameters.wavelength_range_upper_limit,
+                                             context.observatory.instrument_parameters.wavelength_bin_centers,
+                                             context.observatory.instrument_parameters.wavelength_bin_widths,
+                                             context.observatory.instrument_parameters.fields_of_view ** 2)
+                   + variable_a
+                   * create_blackbody_spectrum(5778 * u.K,
+                                               context.observatory.instrument_parameters.wavelength_range_lower_limit,
+                                               context.observatory.instrument_parameters.wavelength_range_upper_limit,
+                                               context.observatory.instrument_parameters.wavelength_bin_centers,
+                                               context.observatory.instrument_parameters.wavelength_bin_widths,
+                                               context.observatory.instrument_parameters.fields_of_view ** 2)
+                   * ((1 * u.Rsun).to(u.au) / (1.5 * u.au)) ** 2)
+                * (
+                        (np.pi / np.arccos(
+                            np.cos(relative_ecliptic_longitude) * np.cos(ecliptic_latitude))) / (
+                                np.sin(ecliptic_latitude) ** 2 + 0.6 * (
+                                context.observatory.instrument_parameters.wavelength_bin_centers / (
+                                11 * u.um)) ** (
+                                    -0.4) * np.cos(ecliptic_latitude) ** 2)) ** 0.5)
+        return local_zodi
 
     def _load_planets(self, config_dict: dict, context: Context) -> list:
         """Return the planet objects from the dictionary.
@@ -99,7 +144,7 @@ class TargetLoaderModule():
         self.star = self._load_star(config_dict, context) if self.star is None else self.star
         self.planets = self._load_planets(config_dict, context) if self.planets is None else self.planets
         self.exozodi = self._load_exozodi(config_dict) if self.exozodi is None else self.exozodi
-        self.local_zodi = self._load_local_zodi() if self.local_zodi is None else self.local_zodi
+        self.local_zodi = self._load_local_zodi(context) if self.local_zodi is None else self.local_zodi
         context.target_specific_photon_sources = self._add_target_specific_photon_sources(context)
         context.star_habitable_zone_central_angular_radius = self.star.habitable_zone_central_angular_radius
         return context

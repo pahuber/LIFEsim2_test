@@ -9,12 +9,12 @@
 # Settings
 # -------------------------------------------
 settings:
-  grid_size: 10
-  time_step: 1 d
+  grid_size: 40
+  time_step: 0.1 d
   planet_orbital_motion: false
   noise_contributions:
-    stellar_leakage: false
-    local_zodi_leakage: false
+    stellar_leakage: true
+    local_zodi_leakage: true
     exozodi_leakage: false
     fiber_injection_variability: false
     optical_path_difference_variability:
@@ -26,7 +26,7 @@ settings:
 # -------------------------------------------
 mission:
   adjust_baseline_to_habitable_zone: true
-  integration_time: 100 d
+  integration_time: 10 d
   optimized_wavelength: 10 um
 # -------------------------------------------
 # Observatory Configuration
@@ -37,8 +37,8 @@ observatory:
     baseline_maximum: 600 m
     baseline_minimum: 8 m
     baseline_ratio: 6
-    modulation_period: 100 d
-  beam_combination_scheme: kernel-4
+    modulation_period: 10 d
+  beam_combination_scheme: double-bracewell
   instrument_parameters:
     aperture_diameter: 4 m
     spectral_resolving_power: 20

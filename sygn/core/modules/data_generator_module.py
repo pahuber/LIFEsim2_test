@@ -44,16 +44,21 @@ class DataGeneratorModule(BaseModule):
             if not context.settings.planet_orbital_motion:
                 time_copy = 0 * u.s
 
-            source_sky_coordinates = source.get_sky_coordinates(time_copy, context.settings.grid_size)
-            source_sky_brightness_distribution_map = source.get_sky_brightness_distribution_map(time_copy,
-                                                                                                source_sky_coordinates)
+            source_sky_coordinates = source.get_sky_coordinates(time_copy, context.settings.grid_size,
+                                                                context.observatory.instrument_parameters.fields_of_view)
+            source_sky_brightness_distribution_map = source.get_sky_brightness_distribution_map(source_sky_coordinates)
 
             for index_wavelength, wavelength in enumerate(wavelength_bin_centers):
+
+                if isinstance(source_sky_coordinates, list):
+                    source_sky_coordinates2 = source_sky_coordinates[index_wavelength]
+                else:
+                    source_sky_coordinates2 = source_sky_coordinates
 
                 intensity_responses = self._get_intensity_responses(
                     time=time,
                     wavelength=wavelength,
-                    source_sky_coordinates=source_sky_coordinates,
+                    source_sky_coordinates=source_sky_coordinates2,
                     observatory_coordinates=context.observatory.array_configuration.get_collector_positions(time),
                     aperture_radius=context.observatory.instrument_parameters.aperture_radius,
                     beam_combination_matrix=context.observatory.beam_combination_scheme.get_beam_combination_transfer_matrix(),
