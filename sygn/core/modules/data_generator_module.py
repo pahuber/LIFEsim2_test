@@ -73,8 +73,8 @@ class DataGeneratorModule(BaseModule):
                     time_step=context.settings.time_step,
                     unperturbed_instrument_throughput=context.observatory.instrument_parameters.unperturbed_instrument_throughput)
 
-                for differential_output_pair in differential_output_pairs:
-                    self.differential_photon_counts[index_wavelength][
+                for index_pair, differential_output_pair in enumerate(differential_output_pairs):
+                    self.differential_photon_counts[index_pair][index_wavelength][
                         index_time] += self._get_differential_photon_counts(
                         photon_counts_per_output=photon_counts_per_output,
                         differential_output_pair=differential_output_pair).value
@@ -256,9 +256,11 @@ class DataGeneratorModule(BaseModule):
         :param context: The contexts object of the pipelines
         :return: The (updated) contexts object
         """
-        self._set_optimal_baseline(context)
         self.differential_photon_counts = np.zeros(
-            (len(context.observatory.instrument_parameters.wavelength_bin_centers), len(context.time_range)))
+            (context.observatory.beam_combination_scheme.number_of_differential_outputs,
+             len(context.observatory.instrument_parameters.wavelength_bin_centers),
+             len(context.time_range)))
+        self._set_optimal_baseline(context)
         self._generate_data(context)
-
+        context.data = self.differential_photon_counts
         return context

@@ -4,6 +4,7 @@ from matplotlib import pyplot as plt
 
 from sygn.core.modules.config_loader_module import ConfigLoaderModule
 from sygn.core.modules.data_generator_module import DataGeneratorModule
+from sygn.core.modules.fits_writer_module import FITSWriterModule
 from sygn.core.modules.target_loader_module import TargetLoaderModule
 from sygn.core.pipeline import Pipeline
 
@@ -22,10 +23,6 @@ pipeline.add_module(module)
 module = TargetLoaderModule(path_to_context_file)
 pipeline.add_module(module)
 
-# Generate data
-module = DataGeneratorModule()
-pipeline.add_module(module)
-
 # # Make animation
 # modules = AnimatorModule(output_path='.',
 #                         source_name='Earth',
@@ -37,16 +34,21 @@ pipeline.add_module(module)
 #                         image_vmax=10)
 # pipelines.add_module(modules)
 
-# Run pipelines
+# Generate data
+module = DataGeneratorModule()
+pipeline.add_module(module)
+
+# Write data to FITS file
+module = FITSWriterModule('.')
+pipeline.add_module(module)
+
+# Run pipeline
 pipeline.run()
 
-plt.imshow(pipeline._modules[2].differential_photon_counts)
+# Plot output data
+plt.imshow(pipeline.context.data[0], cmap='Greys')
 plt.title('Differential Photon Counts')
 plt.ylabel('Spectral Channel')
 plt.xlabel('Time')
 plt.colorbar()
 plt.show()
-
-a = 0
-# Save synthetic data to FITS file
-# pipeline.save_data_to_fits('.')

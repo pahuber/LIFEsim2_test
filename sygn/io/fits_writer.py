@@ -1,10 +1,9 @@
 from datetime import datetime
 from pathlib import Path
 
-import numpy as np
 from astropy.io import fits
 
-from sygn.core.contexts.base_context import BaseContext
+from sygn.core.context import Context
 from sygn.core.entities.photon_sources.planet import Planet
 from sygn.core.entities.photon_sources.star import Star
 
@@ -12,7 +11,7 @@ from sygn.core.entities.photon_sources.star import Star
 class FITSWriter():
 
     @staticmethod
-    def _get_fits_header(primary: fits.PrimaryHDU, context: BaseContext, index_target_system) -> fits.header.Header:
+    def _get_fits_header(primary: fits.PrimaryHDU, context: Context) -> fits.header.Header:
         """Return the FITS file header containing the information about the simulation and the photon_sources.
 
         :param primary: The primary HDU object
@@ -34,9 +33,9 @@ class FITSWriter():
             'SYGN_OPD_VARIABILITY_POWER_LAW_EXPONENT'] = context.settings.noise_contributions.optical_path_difference_variability.power_law_exponent
         header['SYGN_OPD_VARIABILITY_RMS'] = str(
             context.settings.noise_contributions.optical_path_difference_variability.rms)
-        header['SYGN_ADJUST_BASELINE_TO_HABITABLE_ZONE'] = context.observation.adjust_baseline_to_habitable_zone
-        header['SYGN_INTEGRATION_TIME'] = str(context.observation.integration_time)
-        header['SYGN_OPTIMIZED_WAVELENGTH'] = str(context.observation.optimized_wavelength)
+        header['SYGN_ADJUST_BASELINE_TO_HABITABLE_ZONE'] = context.mission.adjust_baseline_to_habitable_zone
+        header['SYGN_INTEGRATION_TIME'] = str(context.mission.integration_time)
+        header['SYGN_OPTIMIZED_WAVELENGTH'] = str(context.mission.optimized_wavelength)
         header['SYGN_ARRAY_CONFIGURATION_TYPE'] = context.observatory.array_configuration.type
         header['SYGN_BASELINE_MAXIMUM'] = str(
             context.observatory.array_configuration.baseline_maximum)
@@ -57,18 +56,17 @@ class FITSWriter():
             context.observatory.instrument_parameters.wavelength_range_upper_limit)
         header[
             'SYGN_UNPERTURBED_INSTRUMENT_THROUGHPUT'] = context.observatory.instrument_parameters.unperturbed_instrument_throughput
-        for index_source, source in enumerate(context.photon_sources[index_target_system].values()):
+        for source in context.target_specific_photon_sources:
             if isinstance(source, Planet):
-                header[f'SYGN_PLANET{index_source}_NAME'] = source.name
-                header[f'SYGN_PLANET{index_source}_MASS'] = str(source.mass)
-                header[f'SYGN_PLANET{index_source}_RADIUS'] = str(source.radius)
-                header[f'SYGN_PLANET{index_source}_TEMPERATURE'] = str(source.temperature)
-                header[f'SYGN_PLANET{index_source}_SEMI_MAJOR_AXIS'] = str(source.semi_major_axis)
-                header[f'SYGN_PLANET{index_source}_ECCENTRICITY'] = source.eccentricity
-                header[f'SYGN_PLANET{index_source}_INCLINATION'] = str(source.inclination)
-                header[f'SYGN_PLANET{index_source}_RAAN'] = str(source.raan)
-                header[f'SYGN_PLANET{index_source}_ARG_OF_PERIAPSIS'] = str(source.argument_of_periapsis)
-                header[f'SYGN_PLANET{index_source}_TRUE_ANOMALY'] = str(source.true_anomaly)
+                header[f'SYGN_PLANET_{source.name}_MASS'] = str(source.mass)
+                header[f'SYGN_PLANET_{source.name}_RADIUS'] = str(source.radius)
+                header[f'SYGN_PLANET_{source.name}_TEMPERATURE'] = str(source.temperature)
+                header[f'SYGN_PLANET_{source.name}_SEMI_MAJOR_AXIS'] = str(source.semi_major_axis)
+                header[f'SYGN_PLANET_{source.name}_ECCENTRICITY'] = source.eccentricity
+                header[f'SYGN_PLANET_{source.name}_INCLINATION'] = str(source.inclination)
+                header[f'SYGN_PLANET_{source.name}_RAAN'] = str(source.raan)
+                header[f'SYGN_PLANET_{source.name}_ARG_OF_PERIAPSIS'] = str(source.argument_of_periapsis)
+                header[f'SYGN_PLANET_{source.name}_TRUE_ANOMALY'] = str(source.true_anomaly)
             if isinstance(source, Star):
                 header['SYGN_STAR_NAME'] = source.name
                 header['SYGN_STAR_DISTANCE'] = str(source.distance)
@@ -80,24 +78,19 @@ class FITSWriter():
         return header
 
     @staticmethod
-    def write_fits(output_path: Path, postfix: str, context: BaseContext):
+    def write_fits(output_path: Path, context: Context):
         """Write the differential photon counts to a FITS file.
 
         :param output_path: The output path of the FITS file
-        :param postfix: Postfix that is appended to the output file name
         :param simulation: The simulation object
         :param differential_photon_counts: The differential photon counts
         """
-        for index_target_system, target_system in enumerate(context.photon_sources):
-            hdu_list = []
-            primary = fits.PrimaryHDU()
-            header = FITSWriter._get_fits_header(primary, context, index_target_system)
-            hdu_list.append(primary)
-            for index_response in context.data[index_target_system].keys():
-                differential_photon_counts_list = list(
-                    context.data[index_target_system][index_response].values())
-                differential_photon_counts_array = np.array(differential_photon_counts_list)
-                hdu = fits.ImageHDU(differential_photon_counts_array)
-                hdu_list.append(hdu)
-            hdul = fits.HDUList(hdu_list)
-            hdul.writeto(f'differential_photon_counts_{datetime.now().strftime("%Y%m%d_%H%M%S.%f")}{postfix}.fits')
+        hdu_list = []
+        primary = fits.PrimaryHDU()
+        header = FITSWriter._get_fits_header(primary, context)
+        hdu_list.append(primary)
+        for data in context.data:
+            hdu = fits.ImageHDU(data)
+            hdu_list.append(hdu)
+        hdul = fits.HDUList(hdu_list)
+        hdul.writeto(f'data_{datetime.now().strftime("%Y%m%d_%H%M%S.%f")}.fits')

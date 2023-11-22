@@ -9,7 +9,7 @@
 # Settings
 # -------------------------------------------
 settings:
-  grid_size: 80
+  grid_size: 10
   time_step: 1 d
   planet_orbital_motion: false
   noise_contributions:
@@ -38,7 +38,7 @@ observatory:
     baseline_minimum: 8 m
     baseline_ratio: 6
     modulation_period: 100 d
-  beam_combination_scheme: double-bracewell
+  beam_combination_scheme: kernel-4
   instrument_parameters:
     aperture_diameter: 4 m
     spectral_resolving_power: 20

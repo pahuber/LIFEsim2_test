@@ -14,7 +14,7 @@ class Context():
         self.observatory = None
         self.target_specific_photon_sources = []
         self.target_unspecific_photon_sources = []
-        self.data = []
+        self.data = None
         self.animator = None
         self.star_habitable_zone_central_angular_radius = None
 
