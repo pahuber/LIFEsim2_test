@@ -13,7 +13,7 @@ star:
   declination: -75 deg
 zodi:
   level: 3
-  temperature: 200 K
+  inclination: 0 deg
 planets:
   planet_1:
     name: Earth

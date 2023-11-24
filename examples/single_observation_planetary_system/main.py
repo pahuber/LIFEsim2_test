@@ -12,7 +12,7 @@ from sygn.core.pipeline import Pipeline
 path_to_config_file = Path(r'config.yaml')
 path_to_context_file = Path(r'planetary_system.yaml')
 
-# Instantiate pipeline
+# Create pipeline
 pipeline = Pipeline()
 
 # Load configurations

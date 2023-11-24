@@ -58,7 +58,7 @@ class ArrayConfiguration(ABC, BaseModel):
 
         :param value: Value given as input
         :param info: ValidationInfo object
-        :return: The modulation period in units of time"
+        :return: The modulation period in units of time
         """
         return validate_quantity_units(value=value, field_name=info.field_name, unit_equivalency=u.s)
 
@@ -73,7 +73,7 @@ class ArrayConfiguration(ABC, BaseModel):
     @abstractmethod
     def get_optimal_baseline(self, wavelength: astropy.units.Quantity,
                              optimal_angular_distance: astropy.units.Quantity) -> astropy.units.Quantity:
-        """Return the optimal baseline for a given wavelength and a angular separation that is to be optimized for
+        """Return the optimal baseline for a given wavelength and an angular separation that is to be optimized for
 
         :param wavelength: Wavelength to be optimized for
         :param optimal_angular_distance: Angular distance between the star and a (potential) planet to be optimized for
@@ -108,10 +108,8 @@ class EmmaXCircularRotation(ArrayConfiguration):
         rotation_matrix = get_2d_rotation_matrix(times, self.modulation_period)
         emma_x_static = self.baseline / 2 * np.array(
             [[self.baseline_ratio, self.baseline_ratio, -self.baseline_ratio, -self.baseline_ratio], [1, -1, -1, 1]])
-        rotation_matrix = np.stack(np.reshape(rotation_matrix, (4, 100)), axis=-1).reshape(100, 2, 2)
-        # collector_positions = np.matmul(rotation_matrix, emma_x_static)
-        collector_positions = np.einsum('ijk,jl->ikl', rotation_matrix, emma_x_static)
-        return collector_positions
+        collector_positions = np.matmul(rotation_matrix, emma_x_static)
+        return Coordinates(collector_positions[0], collector_positions[1])
 
     def get_optimal_baseline(self, wavelength: astropy.units.Quantity,
                              optimal_angular_distance: astropy.units.Quantity):

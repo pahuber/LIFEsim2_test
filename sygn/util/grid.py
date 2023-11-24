@@ -15,6 +15,11 @@ def get_meshgrid(full_extent: astropy.units.Quantity, grid_size: int) -> Tuple[n
     return np.meshgrid(linspace, linspace) * full_extent.unit
 
 
+def get_radial_map(full_extent: astropy.units.Quantity, grid_size: int) -> Tuple[np.ndarray, np.ndarray]:
+    meshgrid = get_meshgrid(full_extent, grid_size)
+    return np.sqrt(meshgrid[0] ** 2 + meshgrid[1] ** 2)
+
+
 def get_index_of_closest_value(array: np.ndarray, value: astropy.units.Quantity):
     """Return the index of a value in an array closest to the provided value.
 
