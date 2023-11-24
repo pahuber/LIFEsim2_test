@@ -24,7 +24,7 @@ def create_blackbody_spectrum(temperature,
     :param source_solid_angle: The solid angle of the source
     :return: Array containing the flux per bin in units of ph m-2 s-1 um-1
     """
-    wavelength_range = np.linspace(wavelength_range_lower_limit.value, wavelength_range_upper_limit.value,
+    wavelength_range = np.linspace(wavelength_range_lower_limit.value, wavelength_range_upper_limit.value + 1,
                                    1000) * wavelength_range_upper_limit.unit
     blackbody_spectrum = BlackBody(temperature=temperature)(wavelength_range)
 
