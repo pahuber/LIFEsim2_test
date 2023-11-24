@@ -104,12 +104,14 @@ class EmmaXCircularRotation(ArrayConfiguration):
     """
     type: Any = ArrayConfigurationEnum.EMMA_X_CIRCULAR_ROTATION
 
-    def get_collector_positions(self, time: astropy.units.Quantity) -> Coordinates:
-        rotation_matrix = get_2d_rotation_matrix(time, self.modulation_period)
+    def get_collector_positions(self, times: np.ndarray) -> Coordinates:
+        rotation_matrix = get_2d_rotation_matrix(times, self.modulation_period)
         emma_x_static = self.baseline / 2 * np.array(
             [[self.baseline_ratio, self.baseline_ratio, -self.baseline_ratio, -self.baseline_ratio], [1, -1, -1, 1]])
-        collector_positions = np.matmul(rotation_matrix, emma_x_static)
-        return Coordinates(collector_positions[0], collector_positions[1])
+        rotation_matrix = np.stack(np.reshape(rotation_matrix, (4, 100)), axis=-1).reshape(100, 2, 2)
+        # collector_positions = np.matmul(rotation_matrix, emma_x_static)
+        collector_positions = np.einsum('ijk,jl->ikl', rotation_matrix, emma_x_static)
+        return collector_positions
 
     def get_optimal_baseline(self, wavelength: astropy.units.Quantity,
                              optimal_angular_distance: astropy.units.Quantity):
