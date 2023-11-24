@@ -4,6 +4,7 @@ from typing import Tuple
 import numpy as np
 from astropy import units as u
 from astropy.coordinates import SkyCoord, GeocentricTrueEcliptic
+from tqdm import tqdm
 
 from sygn.core.context import Context
 from sygn.core.entities.photon_sources.exozodi import Exozodi
@@ -36,7 +37,7 @@ class TargetLoaderModule():
 
     def _add_target_specific_photon_sources(self, context) -> list:
         """Add the photon sources to the list, if specified in the configurations.
-        
+
         :param context: The context
         :return: The list containing the specified photon sources
         """
@@ -92,7 +93,7 @@ class TargetLoaderModule():
                 context.settings.grid_size)) * u.au
         mean_spectral_flux_density = np.zeros(temperature_map.shape) * u.ph / (u.m ** 2 * u.um * u.s)
 
-        for index_separation, stellar_separation in enumerate(maximum_stellar_separations_within_fov):
+        for index_separation, stellar_separation in enumerate(tqdm(maximum_stellar_separations_within_fov)):
             maximum_stellar_separations_radial_maps[index_separation] = get_radial_map(stellar_separation,
                                                                                        context.settings.grid_size)
             temperature_map[index_separation] = self._get_exozodi_temperature(
