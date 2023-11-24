@@ -16,6 +16,12 @@ def get_meshgrid(full_extent: astropy.units.Quantity, grid_size: int) -> Tuple[n
 
 
 def get_radial_map(full_extent: astropy.units.Quantity, grid_size: int) -> Tuple[np.ndarray, np.ndarray]:
+    """Return a radial map over the full extent given.
+
+    :param full_extent: The full extent
+    :param grid_size: The grid size
+    :return: THe radial map
+    """
     meshgrid = get_meshgrid(full_extent, grid_size)
     return np.sqrt(meshgrid[0] ** 2 + meshgrid[1] ** 2)
 

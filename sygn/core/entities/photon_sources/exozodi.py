@@ -20,7 +20,6 @@ class Exozodi(PhotonSource):
     def get_sky_coordinates(self, time: astropy.units.Quantity, grid_size: int,
                             fields_of_view: astropy.units.Quantity = None) -> Coordinates:
         all_sky_coordinates = []
-        # self.grid_size = grid_size
         for index_fov in range(len(fields_of_view)):
             sky_coordinates = get_meshgrid(fields_of_view[index_fov].to(u.rad), grid_size)
             all_sky_coordinates.append(Coordinates(sky_coordinates[0], sky_coordinates[1]))
