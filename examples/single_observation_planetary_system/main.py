@@ -6,7 +6,9 @@ from sygn.core.modules.config_loader_module import ConfigLoaderModule
 from sygn.core.modules.data_generator_module import DataGeneratorModule
 from sygn.core.modules.fits_writer_module import FITSWriterModule
 from sygn.core.modules.target_loader_module import TargetLoaderModule
+from sygn.core.modules.template_generator_module import TemplateGeneratorModule
 from sygn.core.pipeline import Pipeline
+from sygn.util.helpers import FITSDataType
 
 # Specify paths
 path_to_config_file = Path(r'config.yaml')
@@ -39,15 +41,35 @@ module = DataGeneratorModule()
 pipeline.add_module(module)
 
 # Write data to FITS file
-module = FITSWriterModule('.')
+module = FITSWriterModule('.', FITSDataType.SyntheticData)
 pipeline.add_module(module)
+
+# Generate/Load Data Templates
+module = TemplateGeneratorModule('.')
+# module = TemplateLoaderModule()
+pipeline.add_module(module)
+#
+# # Extract flux and position using cross correlation
+# module = XCorExtractionModule()
+# pipeline.add_module(module)
+#
+# # Fit input spectrum to extracted spectrum
+# module = SpectrumFittingModule()
+# pipeline.add_module(module)
 
 # Run pipeline
 pipeline.run()
 
 # Plot output data
-plt.imshow(pipeline.context.data[0], cmap='Greys')
+plt.imshow(pipeline.get_data()[0], cmap='Greys')
 plt.title('Differential Photon Counts')
+plt.ylabel('Spectral Channel')
+plt.xlabel('Time')
+plt.colorbar()
+plt.show()
+
+plt.imshow(pipeline._context.templates[0][0], cmap='Greys')
+plt.title('Differential Photon Counts Templates')
 plt.ylabel('Spectral Channel')
 plt.xlabel('Time')
 plt.colorbar()

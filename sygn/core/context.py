@@ -15,6 +15,7 @@ class Context():
         self.target_specific_photon_sources = []
         self.target_unspecific_photon_sources = []
         self.data = None
+        self.templates = []
         self.animator = None
         self.star_habitable_zone_central_angular_radius = None
 
