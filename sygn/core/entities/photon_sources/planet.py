@@ -128,10 +128,12 @@ class Planet(PhotonSource):
         """
         return np.pi * (self.radius.to(u.m) / (self.star_distance.to(u.m)) * u.rad) ** 2
 
-    def _get_x_y_separation_from_star(self, time: astropy.units.Quantity) -> Tuple:
-        """Return the separation of the planet from the star in x- and y-direction.
+    def _get_x_y_separation_from_star(self, time: astropy.units.Quantity, planet_orbital_motion: bool) -> Tuple:
+        """Return the separation of the planet from the star in x- and y-direction. If the planet orbital motion is
+        considered, calculate the new position for each time step.
 
         :param time: The time
+        :param planet_orbital_motion: Whether the planet orbital motion is to be considered
         :return: A tuple containing the x- and y- coordinates
         """
         star = Body(parent=None, k=G * (self.star_mass + self.mass), name='Star')
@@ -139,36 +141,41 @@ class Planet(PhotonSource):
                                      inc=self.inclination,
                                      raan=self.raan,
                                      argp=self.argument_of_periapsis, nu=self.true_anomaly)
-        orbit_propagated = orbit.propagate(time)
+        if planet_orbital_motion:
+            orbit_propagated = orbit.propagate(time)
+        else:
+            orbit_propagated = orbit
         return (orbit_propagated.r[0], orbit_propagated.r[1])
 
-    def _get_x_y_angular_separation_from_star(self, time: astropy.units.Quantity) -> Tuple:
+    def _get_x_y_angular_separation_from_star(self, time: astropy.units.Quantity, planet_orbital_motion: bool) -> Tuple:
         """Return the angular separation of the planet from the star in x- and y-direction.
 
         :param time: The time
+        :param planet_orbital_motion: Whether the planet orbital motion is to be considered
         :return: A tuple containing the x- and y- coordinates
         """
-        separation_from_star_x, separation_from_star_y = self._get_x_y_separation_from_star(time)
+        separation_from_star_x, separation_from_star_y = self._get_x_y_separation_from_star(time, planet_orbital_motion)
         angular_separation_from_star_x = ((separation_from_star_x.to(u.m) / self.star_distance.to(u.m)) * u.rad).to(
             u.arcsec)
         angular_separation_from_star_y = ((separation_from_star_y.to(u.m) / self.star_distance.to(u.m)) * u.rad).to(
             u.arcsec)
         return (angular_separation_from_star_x, angular_separation_from_star_y)
 
-    def _calculate_sky_coordinates(self, context: Context) -> list[Coordinates]:
-        """Return the sky coordinate maps of the source. The intensity responses are calculated in a resolution that
-        allows the source to fill the grid, thus, each source needs to define its own sky coordinate map. Add 10% to the
-        angular radius to account for rounding issues and make sure the source is fully covered within the map.
+    def _calculate_sky_coordinates(self, context: Context) -> np.ndarray:
+        """Calculate and return the sky coordinates of the source. Add 10% to the angular radius to account for rounding
+        issues and make sure the source is fully covered within the map.
 
-        :param time: The time
-        :param grid_size: The grid size
-        :return: A tuple containing the x- and y-sky coordinate maps
+        :param context: Context
+        :return: The sky coordinates
         """
         sky_coordinates = np.zeros((len(context.time_range_planet_motion)), dtype=object)
 
         for index_time, time in enumerate(context.time_range_planet_motion):
             self.angular_separation_from_star_x, self.angular_separation_from_star_y = self._get_x_y_angular_separation_from_star(
-                time)
+                time, context.settings.planet_orbital_motion)
+
+            # Depending on whether the x- or y-angular separation of planet is larger, the respective value is taken as
+            # the maximum extent of the grid
             if np.abs(self.angular_separation_from_star_x) >= np.abs(self.angular_separation_from_star_y):
                 sky_coordinates_at_time_step = get_meshgrid(2 * (1.05 * np.abs(self.angular_separation_from_star_x)),
                                                             context.settings.grid_size)
@@ -180,10 +187,18 @@ class Planet(PhotonSource):
         return sky_coordinates
 
     def _calculate_sky_brightness_distribution(self, context: Context) -> np.ndarray:
+        """Calculate and return the sky brightness distribution.
+
+        :param context: The context
+        :return: The sky brightness distribution
+        """
         sky_brightness_distribution = np.zeros(
             ((len(self.sky_coordinates), len(self.mean_spectral_flux_density),) + self.sky_coordinates[0].x.shape)) * \
                                       self.mean_spectral_flux_density[0].unit
+
         for index_sky_coordinates, sky_coordinates in enumerate(self.sky_coordinates):
+            # Find the index corresponding to the value of the sky coordinates that matches the closest to the position
+            # of the planet on the sky
             index_x = get_index_of_closest_value(sky_coordinates.x[0, :], self.angular_separation_from_star_x)
             index_y = get_index_of_closest_value(sky_coordinates.y[:, 0], self.angular_separation_from_star_y)
             for index_wavelength in range(len(self.mean_spectral_flux_density)):
@@ -192,6 +207,11 @@ class Planet(PhotonSource):
         return sky_brightness_distribution
 
     def _calculate_mean_spectral_flux_density(self, context: Context) -> np.ndarray:
+        """Calculate the mean spectral flux density of the planet.
+
+        :param context: The context
+        :return: The mean spectral flux density
+        """
         return create_blackbody_spectrum(self.temperature,
                                          context.observatory.instrument_parameters.wavelength_range_lower_limit,
                                          context.observatory.instrument_parameters.wavelength_range_upper_limit,
@@ -200,7 +220,21 @@ class Planet(PhotonSource):
                                          self.solid_angle)
 
     def get_sky_coordinates(self, index_time: int, index_wavelength: int) -> Coordinates:
+        """Return the sky coordinates for a given time index. The coordinates are wavelength-independent and only time-
+        dependent, if its orbital motion is considered.
+
+        :param index_time: The time index
+        :param index_wavelength: The wavelength index
+        :return: The sky coordinates
+        """
         return self.sky_coordinates[index_time]
 
     def get_sky_brightness_distribution(self, index_time: int, index_wavelength: int) -> np.ndarray:
+        """Return the sky brightness distribution for the planet, which is both time- and wavelength-dependent, if its
+        orbital motion is considered.
+
+        :param index_time: The time index
+        :param index_wavelength: The wavelength index
+        :return: The sky brightness distribution
+        """
         return self.sky_brightness_distribution[index_time][index_wavelength]

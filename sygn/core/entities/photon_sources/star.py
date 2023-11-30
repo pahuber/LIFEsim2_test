@@ -123,7 +123,7 @@ class Star(PhotonSource):
         """
         return np.pi * (self.radius.to(u.m) / (self.distance.to(u.m)) * u.rad) ** 2
 
-    def _calculate_sky_coordinates(self, context: Context) -> np.ndarray:
+    def _calculate_sky_coordinates(self, context: Context) -> Coordinates:
         """Return the sky coordinate maps of the source. The intensity responses are calculated in a resolution that
         allows the source to fill the grid, thus, each source needs to define its own sky coordinate map. Add 10% to the
         angular radius to account for rounding issues and make sure the source is fully covered within the map.
