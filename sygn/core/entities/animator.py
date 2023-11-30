@@ -102,7 +102,7 @@ class Animator():
         labels = np.linspace(-max, max, grid_size // 10 + 1)
         ticks = np.linspace(0, grid_size, grid_size // 10 + 1)
         source_position_coordinate = (
-                target_system[self.source_name].get_sky_brightness_distribution_map(0 * u.s) *
+                target_system[self.source_name].get_sky_brightness_distribution(0 * u.s) *
                 target_system[self.source_name].get_sky_coordinates(0 * u.s)[0])
         y_index, x_index = np.nonzero(source_position_coordinate)
         x_index = x_index[0]

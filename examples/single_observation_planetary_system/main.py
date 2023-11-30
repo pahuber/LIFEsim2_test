@@ -6,7 +6,6 @@ from sygn.core.modules.config_loader_module import ConfigLoaderModule
 from sygn.core.modules.data_generator_module import DataGeneratorModule
 from sygn.core.modules.fits_writer_module import FITSWriterModule
 from sygn.core.modules.target_loader_module import TargetLoaderModule
-from sygn.core.modules.template_generator_module import TemplateGeneratorModule
 from sygn.core.pipeline import Pipeline
 from sygn.util.helpers import FITSDataType
 
@@ -44,10 +43,10 @@ pipeline.add_module(module)
 module = FITSWriterModule('.', FITSDataType.SyntheticData)
 pipeline.add_module(module)
 
-# Generate/Load Data Templates
-module = TemplateGeneratorModule('.')
-# module = TemplateLoaderModule()
-pipeline.add_module(module)
+# # Generate/Load Data Templates
+# module = TemplateGeneratorModule('.')
+# # module = TemplateLoaderModule()
+# pipeline.add_module(module)
 #
 # # Extract flux and position using cross correlation
 # module = XCorExtractionModule()
@@ -68,9 +67,9 @@ plt.xlabel('Time')
 plt.colorbar()
 plt.show()
 
-plt.imshow(pipeline._context.templates[0][0], cmap='Greys')
-plt.title('Differential Photon Counts Templates')
-plt.ylabel('Spectral Channel')
-plt.xlabel('Time')
-plt.colorbar()
-plt.show()
+# plt.imshow(pipeline._context.templates[0][0], cmap='Greys')
+# plt.title('Differential Photon Counts Templates')
+# plt.ylabel('Spectral Channel')
+# plt.xlabel('Time')
+# plt.colorbar()
+# plt.show()

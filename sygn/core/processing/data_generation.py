@@ -20,10 +20,19 @@ class DataGenerator():
     def __init__(self, context: Context, mode: GenerationMode):
         self._context = context
         self._mode = mode
+        self.differential_photon_counts = np.zeros(
+            (self._context.observatory.beam_combination_scheme.number_of_differential_outputs,
+             len(self._context.observatory.instrument_parameters.wavelength_bin_centers),
+             len(self._context.time_range)))
 
     def _get_differential_photon_counts(self, photon_counts_per_output, differential_output_pair):
         return photon_counts_per_output[differential_output_pair[0]] - photon_counts_per_output[
             differential_output_pair[1]]
+
+    def _get_index_planet_motion(self, index_time: int):
+        if self._context.settings.planet_orbital_motion:
+            return index_time
+        return 0
 
     def _get_input_complex_amplitudes(self,
                                       time: astropy.units.Quantity,
@@ -149,16 +158,16 @@ class DataGenerator():
         :return: Photon counts in units of photons
         """
         normalization = len(
-            source_sky_brightness_distribution[index_wavelength][
-                source_sky_brightness_distribution[index_wavelength].value > 0]) if not len(
-            source_sky_brightness_distribution[index_wavelength][
-                source_sky_brightness_distribution[index_wavelength].value > 0]) == 0 else 1
+            source_sky_brightness_distribution[
+                source_sky_brightness_distribution.value > 0]) if not len(
+            source_sky_brightness_distribution[
+                source_sky_brightness_distribution.value > 0]) == 0 else 1
 
         photon_counts_per_output = []
 
         for intensity_response in intensity_responses:
             mean_photon_counts = (np.sum(intensity_response
-                                         * source_sky_brightness_distribution[index_wavelength]
+                                         * source_sky_brightness_distribution
                                          * time_step.to(u.s)
                                          * wavelength_bin_width
                                          * unperturbed_instrument_throughput).value
@@ -183,37 +192,19 @@ class DataGenerator():
                 brightness of the source and the intensity response vector at that time and then, for each differential output,
                 calculate the differential photon counts.
                 """
-        differential_photon_counts = np.zeros(
-            (self._context.observatory.beam_combination_scheme.number_of_differential_outputs,
-             len(self._context.observatory.instrument_parameters.wavelength_bin_centers),
-             len(self._context.time_range)))
-        differential_output_pairs = self._context.observatory.beam_combination_scheme.get_differential_output_pairs()
-        time_range = self._context.time_range
-        wavelength_bin_centers = self._context.observatory.instrument_parameters.wavelength_bin_centers
-        target_specific_photon_sources = self._context.target_specific_photon_sources
+        for index_time, source in product(range(len(self._context.time_range)),
+                                          self._context.target_specific_photon_sources):
 
-        for index_time, source in product(range(len(time_range)), target_specific_photon_sources):
+            time = self._context.time_range[index_time]
+            index_time_planet_motion = self._get_index_planet_motion(index_time)
 
-            time = time_range[index_time]
-            time_copy = time
-            if not self._context.settings.planet_orbital_motion:
-                time_copy = 0 * u.s
-
-            source_sky_coordinates = source.get_sky_coordinates(time_copy, self._context.settings.grid_size,
-                                                                self._context.observatory.instrument_parameters.fields_of_view)
-            source_sky_brightness_distribution_map = source.get_sky_brightness_distribution_map(source_sky_coordinates)
-
-            for index_wavelength, wavelength in enumerate(wavelength_bin_centers):
-
-                if isinstance(source_sky_coordinates, list):
-                    source_sky_coordinates2 = source_sky_coordinates[index_wavelength]
-                else:
-                    source_sky_coordinates2 = source_sky_coordinates
+            for index_wavelength, wavelength in enumerate(
+                    self._context.observatory.instrument_parameters.wavelength_bin_centers):
 
                 intensity_responses = self._get_intensity_responses(
                     time=time,
                     wavelength=wavelength,
-                    source_sky_coordinates=source_sky_coordinates2,
+                    source_sky_coordinates=source.get_sky_coordinates(index_time_planet_motion, index_wavelength),
                     observatory_coordinates=self._context.observatory.array_configuration.get_collector_positions(time),
                     aperture_radius=self._context.observatory.instrument_parameters.aperture_radius,
                     beam_combination_matrix=self._context.observatory.beam_combination_scheme.get_beam_combination_transfer_matrix(),
@@ -225,7 +216,8 @@ class DataGenerator():
                     grid_size=self._context.settings.grid_size)
 
                 photon_counts_per_output = self._get_photon_counts_per_output(
-                    source_sky_brightness_distribution=source_sky_brightness_distribution_map,
+                    source_sky_brightness_distribution=source.get_sky_brightness_distribution(index_time_planet_motion,
+                                                                                              index_wavelength),
                     wavelength_bin_width=self._context.observatory.instrument_parameters.wavelength_bin_widths[
                         index_wavelength],
                     index_wavelength=index_wavelength,
@@ -233,8 +225,9 @@ class DataGenerator():
                     time_step=self._context.settings.time_step,
                     unperturbed_instrument_throughput=self._context.observatory.instrument_parameters.unperturbed_instrument_throughput)
 
-                for index_pair, differential_output_pair in enumerate(differential_output_pairs):
-                    differential_photon_counts[index_pair][index_wavelength][
+                for index_pair, differential_output_pair in enumerate(
+                        self._context.observatory.beam_combination_scheme.get_differential_output_pairs()):
+                    self.differential_photon_counts[index_pair][index_wavelength][
                         index_time] += self._get_differential_photon_counts(
                         photon_counts_per_output=photon_counts_per_output,
                         differential_output_pair=differential_output_pair).value
@@ -244,4 +237,4 @@ class DataGenerator():
                 #             wavelength == self.animator.closest_wavelength and
                 #             index_pair == self.animator.differential_intensity_response_index):
                 #         self._update_animation_frame()
-        return differential_photon_counts
+        return self.differential_photon_counts

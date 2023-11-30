@@ -9,8 +9,10 @@ from poliastro.twobody import Orbit
 from pydantic import field_validator
 from pydantic_core.core_schema import ValidationInfo
 
+from sygn.core.context import Context
 from sygn.core.entities.photon_sources.photon_source import PhotonSource
 from sygn.io.validators import validate_quantity_units
+from sygn.util.blackbody import create_blackbody_spectrum
 from sygn.util.grid import get_index_of_closest_value, get_meshgrid
 from sygn.util.helpers import Coordinates
 
@@ -32,7 +34,7 @@ class Planet(PhotonSource):
     star_mass: Any
     number_of_wavelength_bins: int = None
     grid_size: int = None
-    mean_spectral_flux_density: Any = None
+    # mean_spectral_flux_density: Any = None
     position_x: Any = None
     position_y: Any = None
     angular_separation_from_star_x: Any = None
@@ -126,33 +128,6 @@ class Planet(PhotonSource):
         """
         return np.pi * (self.radius.to(u.m) / (self.star_distance.to(u.m)) * u.rad) ** 2
 
-    def get_sky_coordinates(self, time: astropy.units.Quantity, grid_size: int,
-                            wavelength: astropy.units.Quantity = None) -> Coordinates:
-        """Return the sky coordinate maps of the source. The intensity responses are calculated in a resolution that
-        allows the source to fill the grid, thus, each source needs to define its own sky coordinate map. Add 10% to the
-        angular radius to account for rounding issues and make sure the source is fully covered within the map.
-
-        :param time: The time
-        :param grid_size: The grid size
-        :return: A tuple containing the x- and y-sky coordinate maps
-        """
-        self.angular_separation_from_star_x, self.angular_separation_from_star_y = self._get_x_y_angular_separation_from_star(
-            time)
-        if np.abs(self.angular_separation_from_star_x) >= np.abs(self.angular_separation_from_star_y):
-            sky_coordinates = get_meshgrid(2 * (1.05 * np.abs(self.angular_separation_from_star_x)), grid_size)
-            return Coordinates(sky_coordinates[0], sky_coordinates[1])
-        sky_coordinates = get_meshgrid(2 * (1.05 * np.abs(self.angular_separation_from_star_y)), grid_size)
-        return Coordinates(sky_coordinates[0], sky_coordinates[1])
-
-    def get_sky_brightness_distribution_map(self, sky_coordinates: Coordinates) -> np.ndarray:
-        position_map = np.zeros(((len(self.mean_spectral_flux_density),) + sky_coordinates.x.shape)) * \
-                       self.mean_spectral_flux_density[0].unit
-        index_x = get_index_of_closest_value(sky_coordinates.x[0, :], self.angular_separation_from_star_x)
-        index_y = get_index_of_closest_value(sky_coordinates.y[:, 0], self.angular_separation_from_star_y)
-        for index_wavelength in range(len(self.mean_spectral_flux_density)):
-            position_map[index_wavelength][index_y][index_x] = self.mean_spectral_flux_density[index_wavelength]
-        return position_map
-
     def _get_x_y_separation_from_star(self, time: astropy.units.Quantity) -> Tuple:
         """Return the separation of the planet from the star in x- and y-direction.
 
@@ -179,3 +154,53 @@ class Planet(PhotonSource):
         angular_separation_from_star_y = ((separation_from_star_y.to(u.m) / self.star_distance.to(u.m)) * u.rad).to(
             u.arcsec)
         return (angular_separation_from_star_x, angular_separation_from_star_y)
+
+    def _calculate_sky_coordinates(self, context: Context) -> list[Coordinates]:
+        """Return the sky coordinate maps of the source. The intensity responses are calculated in a resolution that
+        allows the source to fill the grid, thus, each source needs to define its own sky coordinate map. Add 10% to the
+        angular radius to account for rounding issues and make sure the source is fully covered within the map.
+
+        :param time: The time
+        :param grid_size: The grid size
+        :return: A tuple containing the x- and y-sky coordinate maps
+        """
+        sky_coordinates = np.zeros((len(context.time_range_planet_motion)), dtype=object)
+
+        for index_time, time in enumerate(context.time_range_planet_motion):
+            self.angular_separation_from_star_x, self.angular_separation_from_star_y = self._get_x_y_angular_separation_from_star(
+                time)
+            if np.abs(self.angular_separation_from_star_x) >= np.abs(self.angular_separation_from_star_y):
+                sky_coordinates_at_time_step = get_meshgrid(2 * (1.05 * np.abs(self.angular_separation_from_star_x)),
+                                                            context.settings.grid_size)
+            else:
+                sky_coordinates_at_time_step = get_meshgrid(2 * (1.05 * np.abs(self.angular_separation_from_star_y)),
+                                                            context.settings.grid_size)
+            sky_coordinates[index_time] = Coordinates(sky_coordinates_at_time_step[0], sky_coordinates_at_time_step[1])
+
+        return sky_coordinates
+
+    def _calculate_sky_brightness_distribution(self, context: Context) -> np.ndarray:
+        sky_brightness_distribution = np.zeros(
+            ((len(self.sky_coordinates), len(self.mean_spectral_flux_density),) + self.sky_coordinates[0].x.shape)) * \
+                                      self.mean_spectral_flux_density[0].unit
+        for index_sky_coordinates, sky_coordinates in enumerate(self.sky_coordinates):
+            index_x = get_index_of_closest_value(sky_coordinates.x[0, :], self.angular_separation_from_star_x)
+            index_y = get_index_of_closest_value(sky_coordinates.y[:, 0], self.angular_separation_from_star_y)
+            for index_wavelength in range(len(self.mean_spectral_flux_density)):
+                sky_brightness_distribution[index_sky_coordinates][index_wavelength][index_y][index_x] = \
+                    self.mean_spectral_flux_density[index_wavelength]
+        return sky_brightness_distribution
+
+    def _calculate_mean_spectral_flux_density(self, context: Context) -> np.ndarray:
+        return create_blackbody_spectrum(self.temperature,
+                                         context.observatory.instrument_parameters.wavelength_range_lower_limit,
+                                         context.observatory.instrument_parameters.wavelength_range_upper_limit,
+                                         context.observatory.instrument_parameters.wavelength_bin_centers,
+                                         context.observatory.instrument_parameters.wavelength_bin_widths,
+                                         self.solid_angle)
+
+    def get_sky_coordinates(self, index_time: int, index_wavelength: int) -> Coordinates:
+        return self.sky_coordinates[index_time]
+
+    def get_sky_brightness_distribution(self, index_time: int, index_wavelength: int) -> np.ndarray:
+        return self.sky_brightness_distribution[index_time][index_wavelength]
