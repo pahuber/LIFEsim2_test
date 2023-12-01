@@ -1,4 +1,4 @@
-from pathlib import Path
+from tqdm.contrib.itertools import product
 
 from sygn.core.context import Context
 from sygn.core.entities.photon_sources.planet import Planet
@@ -9,12 +9,9 @@ class TemplateGeneratorModule():
     """Class representation of the template generator module.
     """
 
-    def __init__(self, output_path: Path):
+    def __init__(self):
         """Constructor method.
-
-        :param output_path: Path where the template FITS files are saved
         """
-        self._output_path = output_path
 
     def _unload_noise_contributions(self, context) -> Context:
         """Unload all noise contributions by setting the corresponding values to false, since they should not be
@@ -44,13 +41,23 @@ class TemplateGeneratorModule():
 
         for source in context.target_specific_photon_sources:
             if isinstance(source, Planet):
-                # if not context.settings.planet_orbital_motion:
-                #     for index_x in range(context.settings.grid_size):
-                #         for index_y in range(context.settings.grid_size):
-                #             source.
-                # else:
-                #     raise Exception('Template generation including planet orbital motion is not yet supported')
-                context_template.target_specific_photon_sources = [source]
-                data_generator = DataGenerator(context_template, GenerationMode.template)
-                context.templates.append(data_generator.generate_data())
+                if not context.settings.planet_orbital_motion:
+                    for index_x, index_y in product(range(context.settings.grid_size),
+                                                    range(context.settings.grid_size)):
+                        for index_wavelength in range(
+                                len(context.observatory.instrument_parameters.wavelength_bin_centers)):
+                            # Reset source sky distribution map
+                            source.sky_brightness_distribution[0][index_wavelength] *= 0
+
+                            # Set new planet position
+                            source.sky_brightness_distribution[0][index_wavelength][index_x][index_y] = \
+                                source.mean_spectral_flux_density[index_wavelength]
+
+                        # Run data generator
+                        context_template.target_specific_photon_sources = [source]
+                        data_generator = DataGenerator(context_template, GenerationMode.template)
+                        context.templates.append(data_generator.generate_data())
+                else:
+                    raise Exception('Template generation including planet orbital motion is not yet supported')
+        # self._save_templates_to_fits()
         return context

@@ -6,4 +6,4 @@ Coordinates = namedtuple('Coordinates', 'x y')
 
 class FITSDataType(Enum):
     SyntheticData = 0
-    Templates = 1
+    Template = 1

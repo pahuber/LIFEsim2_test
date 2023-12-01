@@ -1,11 +1,12 @@
 from enum import Enum
+from itertools import product
 from random import choice
 
 import astropy
 import numpy as np
 from astropy import units as u
 from numpy.random import poisson, normal
-from tqdm.contrib.itertools import product
+from tqdm import tqdm
 
 from sygn.core.context import Context
 from sygn.util.helpers import Coordinates
@@ -29,7 +30,13 @@ class DataGenerator():
         return photon_counts_per_output[differential_output_pair[0]] - photon_counts_per_output[
             differential_output_pair[1]]
 
-    def _get_index_planet_motion(self, index_time: int):
+    def _get_index_planet_motion(self, index_time: int) -> int:
+        """Return the time index that is used by the methods that depend on the planet orbital motion. If the planet
+        orbital motion is not considered, the time index is 0, otherwise it is identical to the main time index.
+
+        :param index_time: The time index
+        :return: The time index considering the planet orbital motion
+        """
         if self._context.settings.planet_orbital_motion:
             return index_time
         return 0
@@ -192,14 +199,17 @@ class DataGenerator():
                 brightness of the source and the intensity response vector at that time and then, for each differential output,
                 calculate the differential photon counts.
                 """
-        for index_time, source in product(range(len(self._context.time_range)),
-                                          self._context.target_specific_photon_sources):
+        for index_time, time in enumerate(
+                tqdm(self._context.time_range, disable=self._mode == GenerationMode.template)):
 
-            time = self._context.time_range[index_time]
             index_time_planet_motion = self._get_index_planet_motion(index_time)
 
-            for index_wavelength, wavelength in enumerate(
-                    self._context.observatory.instrument_parameters.wavelength_bin_centers):
+            for index_wavelength, source in product(
+                    range(len(self._context.observatory.instrument_parameters.wavelength_bin_centers)),
+                    self._context.target_specific_photon_sources
+            ):
+
+                wavelength = self._context.observatory.instrument_parameters.wavelength_bin_centers[index_wavelength]
 
                 intensity_responses = self._get_intensity_responses(
                     time=time,
