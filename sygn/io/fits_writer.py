@@ -10,6 +10,8 @@ from sygn.util.helpers import FITSDataType
 
 
 class FITSWriter():
+    """Class representation of the FITS writer.
+    """
 
     @staticmethod
     def _get_fits_header(primary: fits.PrimaryHDU, context: Context) -> fits.header.Header:
@@ -89,7 +91,7 @@ class FITSWriter():
         """
         primary = fits.PrimaryHDU()
         header = FITSWriter._get_fits_header(primary, context)
-        if data_type == FITSDataType.SyntheticData:
+        if data_type == FITSDataType.SyntheticMeasurement:
             hdu_list = []
             hdu_list.append(primary)
             for data_per_output in context.data:

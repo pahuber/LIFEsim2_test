@@ -59,5 +59,4 @@ class TemplateGeneratorModule():
                         context.templates.append(data_generator.generate_data())
                 else:
                     raise Exception('Template generation including planet orbital motion is not yet supported')
-        # self._save_templates_to_fits()
         return context

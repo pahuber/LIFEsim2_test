@@ -20,8 +20,8 @@ class Pipeline():
         """Validate that the correct number of each modules type is added to the pipelines.
         """
         for module_type in [ConfigLoaderModule]:
-            if not (get_number_of_instances_in_list(self._modules, module_type) == 1):
-                raise TypeError(f'Need exactly one {module_type.__name__} per pipeline')
+            if not (get_number_of_instances_in_list(self._modules, module_type) <= 1):
+                raise TypeError(f'Can not have more than one {module_type.__name__} per pipeline')
 
     def get_data(self) -> np.ndarray:
         """Return the data.

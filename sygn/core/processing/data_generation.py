@@ -13,12 +13,22 @@ from sygn.util.helpers import Coordinates
 
 
 class GenerationMode(Enum):
+    """Class representing the data generation mode.
+    """
     data = 0
     template = 1
 
 
 class DataGenerator():
+    """Class representing the data generator.
+    """
+
     def __init__(self, context: Context, mode: GenerationMode):
+        """The constructor method.
+
+        :param context: The context
+        :param mode: The data generation mode
+        """
         self._context = context
         self._mode = mode
         self.differential_photon_counts = np.zeros(
@@ -26,7 +36,13 @@ class DataGenerator():
              len(self._context.observatory.instrument_parameters.wavelength_bin_centers),
              len(self._context.time_range)))
 
-    def _get_differential_photon_counts(self, photon_counts_per_output, differential_output_pair):
+    def _get_differential_photon_counts(self, photon_counts_per_output, differential_output_pair) -> np.ndarray:
+        """Return the differential photon counts, given the photon counts per output and the pair of outputs.
+
+        :param photon_counts_per_output: The photon counts per output
+        :param differential_output_pair: The differential output pair
+        :return: The differential photon counts
+        """
         return photon_counts_per_output[differential_output_pair[0]] - photon_counts_per_output[
             differential_output_pair[1]]
 
@@ -185,8 +201,13 @@ class DataGenerator():
                 photon_counts_per_output.append(self._get_photon_shot_noise(mean_photon_counts=mean_photon_counts))
         return photon_counts_per_output
 
-    def _get_photon_shot_noise(self,
-                               mean_photon_counts: int):
+    def _get_photon_shot_noise(self, mean_photon_counts: int) -> astropy.units.Quantity:
+        """Given an amount of photons, calculate and return the amount of photons given by drawing from a Poisson/
+        Gaussian distribution.
+
+        :param mean_photon_counts: The mean photon counts
+        :return: The photon counts considering shot noise
+        """
         try:
             photon_counts = poisson(mean_photon_counts, 1)
         except ValueError:
@@ -195,10 +216,10 @@ class DataGenerator():
 
     def generate_data(self):
         """Generate the differential photon counts. This is the main method of the data generation. The calculation
-                procedure is as follows: For each time step, for each wavelength bin, for each photon source, get the sky
-                brightness of the source and the intensity response vector at that time and then, for each differential output,
-                calculate the differential photon counts.
-                """
+        procedure is as follows: For each time step, for each wavelength bin, for each photon source, calculate  the
+        intensity response vector at that time, wavelength and angular resolution corresponding to the source and then,
+        for each differential output, calculate the differential photon counts.
+        """
         for index_time, time in enumerate(
                 tqdm(self._context.time_range, disable=self._mode == GenerationMode.template)):
 
@@ -211,6 +232,7 @@ class DataGenerator():
 
                 wavelength = self._context.observatory.instrument_parameters.wavelength_bin_centers[index_wavelength]
 
+                # Calculate the vector of intensity responses, each intensity response corresponding to one output
                 intensity_responses = self._get_intensity_responses(
                     time=time,
                     wavelength=wavelength,
@@ -225,6 +247,7 @@ class DataGenerator():
                     optical_path_difference_distribution=self._context.settings.noise_contributions.optical_path_difference_distribution,
                     grid_size=self._context.settings.grid_size)
 
+                # Calculate the photon counts at each of the outputs
                 photon_counts_per_output = self._get_photon_counts_per_output(
                     source_sky_brightness_distribution=source.get_sky_brightness_distribution(index_time_planet_motion,
                                                                                               index_wavelength),
@@ -235,6 +258,7 @@ class DataGenerator():
                     time_step=self._context.settings.time_step,
                     unperturbed_instrument_throughput=self._context.observatory.instrument_parameters.unperturbed_instrument_throughput)
 
+                # For each pair of differential outputs, calculate the differential photon counts
                 for index_pair, differential_output_pair in enumerate(
                         self._context.observatory.beam_combination_scheme.get_differential_output_pairs()):
                     self.differential_photon_counts[index_pair][index_wavelength][
