@@ -2,7 +2,9 @@ from tqdm.contrib.itertools import product
 
 from sygn.core.context import Context
 from sygn.core.entities.photon_sources.planet import Planet
+from sygn.core.entities.photon_sources.star import Star
 from sygn.core.processing.data_generation import DataGenerator, GenerationMode
+from sygn.util.grid import get_instances_from_list
 
 
 class TemplateGeneratorModule():
@@ -34,12 +36,12 @@ class TemplateGeneratorModule():
         :param context: The context object of the pipeline
         :return: The (updated) context object
         """
+        star = get_instances_from_list(context.photon_sources, Star)
         context.observatory.array_configuration.set_optimal_baseline(context.mission.optimized_wavelength,
-                                                                     context.star_habitable_zone_central_angular_radius)
-
+                                                                     star.habitable_zone_central_angular_radius)
         context_template = self._unload_noise_contributions(context)
 
-        for source in context.target_specific_photon_sources:
+        for source in context.photon_sources:
             if isinstance(source, Planet):
                 if not context.settings.planet_orbital_motion:
                     for index_x, index_y in product(range(context.settings.grid_size),
@@ -54,9 +56,10 @@ class TemplateGeneratorModule():
                                 source.mean_spectral_flux_density[index_wavelength]
 
                         # Run data generator
-                        context_template.target_specific_photon_sources = [source]
+                        context_template.photon_sources = [source]
                         data_generator = DataGenerator(context_template, GenerationMode.template)
-                        context.templates.append(data_generator.generate_data())
+                        template = data_generator.generate_data()
+                        context.templates.append(template)
                 else:
                     raise Exception('Template generation including planet orbital motion is not yet supported')
         return context

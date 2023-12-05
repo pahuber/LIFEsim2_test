@@ -12,12 +12,11 @@ class Context():
         self.settings = None
         self.mission = None
         self.observatory = None
-        self.target_specific_photon_sources = []
-        self.target_unspecific_photon_sources = []
+        self.photon_sources = []
+        self.animator = None
         self.data = None
         self.templates = []
-        self.animator = None
-        self.star_habitable_zone_central_angular_radius = None
+        self.cost_function = None
 
     @property
     def time_range(self) -> np.ndarray:

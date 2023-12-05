@@ -131,6 +131,5 @@ class TargetLoaderModule():
                                           context) if context.settings.noise_contributions.exozodi_leakage else None
         self.local_zodi = self._load_local_zodi(
             context) if context.settings.noise_contributions.local_zodi_leakage else None
-        context.target_specific_photon_sources = self._add_target_specific_photon_sources(context)
-        context.star_habitable_zone_central_angular_radius = self.star.habitable_zone_central_angular_radius
+        context.photon_sources = self._add_target_specific_photon_sources(context)
         return context

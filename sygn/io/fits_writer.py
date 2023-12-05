@@ -59,7 +59,7 @@ class FITSWriter():
             context.observatory.instrument_parameters.wavelength_range_upper_limit)
         header[
             'HIERARCH SYGN_UNPERTURBED_INSTRUMENT_THROUGHPUT'] = context.observatory.instrument_parameters.unperturbed_instrument_throughput
-        for source in context.target_specific_photon_sources:
+        for source in context.photon_sources:
             if isinstance(source, Planet):
                 header[f'HIERARCH SYGN_PLANET_{source.name}_MASS'] = str(source.mass)
                 header[f'HIERARCH SYGN_PLANET_{source.name}_RADIUS'] = str(source.radius)

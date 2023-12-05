@@ -162,7 +162,7 @@ class Planet(PhotonSource):
         return (angular_separation_from_star_x, angular_separation_from_star_y)
 
     def _calculate_sky_coordinates(self, context: Context) -> np.ndarray:
-        """Calculate and return the sky coordinates of the source. Add 10% to the angular radius to account for rounding
+        """Calculate and return the sky coordinates of the source. Add 40% to the angular radius to account for rounding
         issues and make sure the source is fully covered within the map.
 
         :param context: Context
@@ -177,10 +177,10 @@ class Planet(PhotonSource):
             # Depending on whether the x- or y-angular separation of planet is larger, the respective value is taken as
             # the maximum extent of the grid
             if np.abs(self.angular_separation_from_star_x) >= np.abs(self.angular_separation_from_star_y):
-                sky_coordinates_at_time_step = get_meshgrid(2 * (1.05 * np.abs(self.angular_separation_from_star_x)),
+                sky_coordinates_at_time_step = get_meshgrid(2 * (1.2 * np.abs(self.angular_separation_from_star_x)),
                                                             context.settings.grid_size)
             else:
-                sky_coordinates_at_time_step = get_meshgrid(2 * (1.05 * np.abs(self.angular_separation_from_star_y)),
+                sky_coordinates_at_time_step = get_meshgrid(2 * (1.2 * np.abs(self.angular_separation_from_star_y)),
                                                             context.settings.grid_size)
             sky_coordinates[index_time] = Coordinates(sky_coordinates_at_time_step[0], sky_coordinates_at_time_step[1])
 

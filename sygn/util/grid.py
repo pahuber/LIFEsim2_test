@@ -3,6 +3,8 @@ from typing import Tuple, Any
 import astropy.units
 import numpy as np
 
+from sygn.core.entities.photon_sources.star import Star
+
 
 def get_meshgrid(full_extent: astropy.units.Quantity, grid_size: int) -> Tuple[np.ndarray, np.ndarray]:
     """Return a tuple of numpy arrays corresponding to a meshgrid.
@@ -44,3 +46,7 @@ def get_number_of_instances_in_list(list: list, instance_type: Any) -> int:
     :return: The number of objects
     """
     return len([value for value in list if isinstance(value, instance_type)])
+
+
+def get_instances_from_list(list: list, instance: Any):
+    return [source for source in list if isinstance(source, Star)]
