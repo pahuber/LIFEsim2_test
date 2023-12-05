@@ -17,6 +17,7 @@ class Context():
         self.data = None
         self.templates = []
         self.cost_function = None
+        self.optimized_flux = None
 
     @property
     def time_range(self) -> np.ndarray:
