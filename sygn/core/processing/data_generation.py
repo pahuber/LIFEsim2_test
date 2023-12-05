@@ -261,16 +261,10 @@ class DataGenerator():
                 # For each pair of differential outputs, calculate the differential photon counts
                 for index_pair, differential_output_pair in enumerate(
                         self._context.observatory.beam_combination_scheme.get_differential_output_pairs()):
-                    differential_photon_counts = self._get_differential_photon_counts(
+                    self.differential_photon_counts[index_pair][index_wavelength][
+                        index_time] += self._get_differential_photon_counts(
                         photon_counts_per_output=photon_counts_per_output,
                         differential_output_pair=differential_output_pair).value
-
-                    if self._mode == GenerationMode.template:
-                        differential_photon_counts = differential_photon_counts / np.sqrt(
-                            np.mean(differential_photon_counts ** 2))
-
-                    self.differential_photon_counts[index_pair][index_wavelength][
-                        index_time] += differential_photon_counts
 
                 #     if self.animator and (
                 #             source.name == self.animator.source_name and

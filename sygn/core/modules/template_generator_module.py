@@ -1,10 +1,10 @@
+import numpy as np
 from tqdm.contrib.itertools import product
 
 from sygn.core.context import Context
 from sygn.core.entities.photon_sources.planet import Planet
 from sygn.core.entities.photon_sources.star import Star
 from sygn.core.processing.data_generation import DataGenerator, GenerationMode
-from sygn.util.grid import get_instances_from_list
 
 
 class TemplateGeneratorModule():
@@ -36,7 +36,7 @@ class TemplateGeneratorModule():
         :param context: The context object of the pipeline
         :return: The (updated) context object
         """
-        star = get_instances_from_list(context.photon_sources, Star)
+        star = [source for source in context.photon_sources if isinstance(source, Star)][0]
         context.observatory.array_configuration.set_optimal_baseline(context.mission.optimized_wavelength,
                                                                      star.habitable_zone_central_angular_radius)
         context_template = self._unload_noise_contributions(context)
@@ -59,6 +59,11 @@ class TemplateGeneratorModule():
                         context_template.photon_sources = [source]
                         data_generator = DataGenerator(context_template, GenerationMode.template)
                         template = data_generator.generate_data()
+
+                        # Normalize to unit RMS
+                        normalization = np.sqrt(np.mean(template ** 2, axis=2))
+                        template = np.einsum('ijk, ij->ijk', template, 1 / normalization)
+
                         context.templates.append(template)
                 else:
                     raise Exception('Template generation including planet orbital motion is not yet supported')

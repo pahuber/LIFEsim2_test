@@ -15,8 +15,10 @@ class MLMExtractionModule(ABC):
         :param context: The context object of the pipeline
         :return: The (updated) context object
         """
-        # Create cost function array of shape (number of templates, number differential outputs, number wavelengths)
+        # Create cost function and optimized flux array of shape (number of templates, number differential outputs,
+        # number wavelengths)
         cost_function = np.zeros((len(context.templates), len(context.data), len(context.data[0])))
+        optimized_flux = np.zeros((len(context.templates), len(context.data), len(context.data[0])))
 
         data_variance = np.var(context.data, axis=2)
 
@@ -33,13 +35,16 @@ class MLMExtractionModule(ABC):
                 matrix_b[index_output] = np.diag(matrix_b_elements[index_output])
 
                 # Calculate optimized flux vector according to equation B.6
-                optimized_flux = np.linalg.inv(matrix_b[index_output]) * matrix_c[index_output]
+                optimized_flux[index_template][index_output] = np.diag(np.linalg.inv(matrix_b[index_output]) * matrix_c[
+                    index_output])
 
                 # Set positivity constraint
-                optimized_flux = np.where(optimized_flux >= 0, optimized_flux, 0)
+                optimized_flux[index_template][index_output] = np.where(
+                    optimized_flux[index_template][index_output] >= 0, optimized_flux[index_template][index_output], 0)
 
                 # Calculate the cost function according to equation B.8
-                cost_function[index_template][index_output] = np.sum(optimized_flux * matrix_c[index_output], axis=0)
+                cost_function[index_template][index_output] = optimized_flux[index_template][index_output] * matrix_c[
+                    index_output]
 
         # Calculate the total cost function over all wavelengths
         cost_function = np.sum(cost_function, axis=2)
@@ -47,5 +52,8 @@ class MLMExtractionModule(ABC):
         # Reshape the cost function to the grid size
         cost_function = cost_function.reshape(context.settings.grid_size, context.settings.grid_size,
                                               cost_function.shape[1])
+        optimized_flux = optimized_flux.reshape(context.settings.grid_size, context.settings.grid_size,
+                                                optimized_flux.shape[2])
         context.cost_function = cost_function
+        context.optimized_flux = optimized_flux
         return context
