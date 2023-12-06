@@ -1,6 +1,6 @@
 import astropy
 
-from sygn.core.contexts.base_context import BaseContext
+from sygn.core.context import Context
 from sygn.core.entities.animator import Animator
 from sygn.core.modules.base_module import BaseModule
 from sygn.util.grid import get_index_of_closest_value
@@ -26,7 +26,7 @@ class AnimatorModule(BaseModule):
         self.collector_position_limits = collector_position_limits
         self.animator = None
 
-    def apply(self, context: BaseContext) -> BaseContext:
+    def apply(self, context: Context) -> Context:
         """Apply the modules.
 
         :param context: The contexts object of the pipelines
