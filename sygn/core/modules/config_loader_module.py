@@ -20,7 +20,8 @@ class ConfigLoaderModule():
                  path_to_config_file: Path,
                  settings: Settings = None,
                  mission: Mission = None,
-                 observatory: Observatory = None):
+                 observatory: Observatory = None,
+                 config_dict: dict = None):
         """Constructor method.
 
         :param path_to_config_file: Path to the configuration file
@@ -29,6 +30,7 @@ class ConfigLoaderModule():
         :param observatory: The observatory object
         """
         self._path_to_config_file = path_to_config_file
+        self._config_dict = config_dict
         self.settings = settings
         self.mission = mission
         self.observatory = observatory
@@ -109,10 +111,11 @@ class ConfigLoaderModule():
         :param context: The context object of the pipeline
         :return: The (updated) context object
         """
-        config_dict = ConfigReader(path_to_config_file=self._path_to_config_file).get_dictionary_from_file()
-        self.settings = self._load_settings(config_dict) if self.settings is None else self.settings
-        self.mission = self._load_mission(config_dict) if self.mission is None else self.mission
-        self.observatory = self._load_observatory(config_dict) if self.observatory is None else self.observatory
+        if not self._config_dict:
+            self._config_dict = ConfigReader(path_to_config_file=self._path_to_config_file).get_dictionary_from_file()
+        self.settings = self._load_settings(self._config_dict) if self.settings is None else self.settings
+        self.mission = self._load_mission(self._config_dict) if self.mission is None else self.mission
+        self.observatory = self._load_observatory(self._config_dict) if self.observatory is None else self.observatory
         context.settings = self.settings
         context.mission = self.mission
         context.observatory = self.observatory

@@ -26,7 +26,7 @@ pipeline = Pipeline()
 # # Load target
 # module = TargetLoaderModule(path_to_context_file=Path(r'planetary_system.yaml'))
 # pipeline.add_module(module)
-
+#
 # # # Make animation
 # # modules = AnimatorModule(output_path='.',
 # #                         source_name='Earth',
@@ -50,8 +50,7 @@ pipeline = Pipeline()
 # Or load synthetic measurements
 ########################################################################################################################
 
-# Read synthetic measurement
-module = FITSReaderModule(input_path=Path('data_20231206_121513.057567.fits'),
+module = FITSReaderModule(input_path=Path('data_20231206_160012.129263.fits'),
                           data_type=FITSDataType.SyntheticMeasurement)
 pipeline.add_module(module)
 
@@ -71,7 +70,6 @@ pipeline.add_module(module)
 # Or load templates
 ########################################################################################################################
 
-# Read templates
 module = FITSReaderModule(input_path=Path('templates_20231206_122131.361046'), data_type=FITSDataType.Template)
 pipeline.add_module(module)
 

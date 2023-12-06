@@ -15,7 +15,8 @@ class TargetLoaderModule():
 
     def __init__(self,
                  path_to_context_file: Path,
-                 path_to_spectrum_file: Path = None):
+                 path_to_spectrum_file: Path = None,
+                 config_dict: dict = None):
         """Constructor method.
 
         :param path_to_context_file: Path to the context file
@@ -23,6 +24,7 @@ class TargetLoaderModule():
         """
         self._path_to_context_file = path_to_context_file
         self._path_to_spectrum_file = path_to_spectrum_file
+        self._config_dict = config_dict
         self.star = None
         self.planets = None
         self.exozodi = None
@@ -124,10 +126,11 @@ class TargetLoaderModule():
         :param context: The context object of the pipeline
         :return: The (updated) context object
         """
-        config_dict = ConfigReader(path_to_config_file=self._path_to_context_file).get_dictionary_from_file()
-        self.star = self._load_star(config_dict, context)
-        self.planets = self._load_planets(config_dict, context)
-        self.exozodi = self._load_exozodi(config_dict,
+        if not self._config_dict:
+            self._config_dict = ConfigReader(path_to_config_file=self._path_to_context_file).get_dictionary_from_file()
+        self.star = self._load_star(self._config_dict, context)
+        self.planets = self._load_planets(self._config_dict, context)
+        self.exozodi = self._load_exozodi(self._config_dict,
                                           context) if context.settings.noise_contributions.exozodi_leakage else None
         self.local_zodi = self._load_local_zodi(
             context) if context.settings.noise_contributions.local_zodi_leakage else None

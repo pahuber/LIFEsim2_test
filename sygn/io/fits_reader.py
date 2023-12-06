@@ -1,16 +1,97 @@
-import glob
 from pathlib import Path
 
 import numpy as np
 from astropy.io import fits
 
 from sygn.core.context import Context
-from sygn.util.helpers import FITSDataType
 
 
 class FITSReader():
     """Class representation of the FITS reader.
     """
+
+    @staticmethod
+    def _check_template_fits_header(context: Context, template_fits_header):
+        if context.settings.grid_size != template_fits_header['SYGN_GRID_SIZE']:
+            raise ValueError(f'Template grid size {template_fits_header['SYGN_GRID_SIZE']} does not match')
+        # TODO: check other properties
+
+    @staticmethod
+    def _create_config_dict_from_fits_header(data_fits_header):
+        config_dict = {}
+        config_dict['settings'] = {
+            'grid_size': data_fits_header['SYGN_GRID_SIZE'],
+            'time_step': data_fits_header['SYGN_TIME_STEP'],
+            'planet_orbital_motion': data_fits_header['SYGN_PLANET_ORBITAL_MOTION'],
+            'noise_contributions': {
+                'stellar_leakage': data_fits_header['SYGN_STELLAR_LEAKAGE'],
+                'local_zodi_leakage': data_fits_header['SYGN_LOCAL_ZODI_LEAKAGE'],
+                'exozodi_leakage': data_fits_header['SYGN_EXOZODI_LEAKAGE'],
+                'fiber_injection_variability': data_fits_header['SYGN_FIBER_INJECTION_VARIABILITY'],
+                'optical_path_difference_variability': {
+                    'apply': data_fits_header['SYGN_OPD_VARIABILITY_APPLY '],
+                    'power_law_exponent': data_fits_header['SYGN_OPD_VARIABILITY_POWER_LAW_EXPONENT'],
+                    'rms': data_fits_header['SYGN_OPD_VARIABILITY_RMS']
+                }
+            }
+        }
+        config_dict['mission'] = {
+            'adjust_baseline_to_habitable_zone': data_fits_header['SYGN_ADJUST_BASELINE_TO_HABITABLE_ZONE'],
+            'integration_time': data_fits_header['SYGN_INTEGRATION_TIME'],
+            'optimized_wavelength': data_fits_header['SYGN_OPTIMIZED_WAVELENGTH']
+        }
+        config_dict['observatory'] = {
+            'array_configuration': {
+                'type': data_fits_header['SYGN_ARRAY_CONFIGURATION_TYPE'],
+                'baseline_maximum': data_fits_header['SYGN_BASELINE_MAXIMUM'],
+                'baseline_minimum': data_fits_header['SYGN_BASELINE_MINIMUM'],
+                'baseline_ratio': data_fits_header['SYGN_BASELINE_RATIO'],
+                'modulation_period': data_fits_header['SYGN_MODULATION_PERIOD']
+            },
+            'beam_combination_scheme': data_fits_header['SYGN_BEAM_COMBINATION_SCHEME'],
+            'instrument_parameters': {
+                'aperture_diameter': data_fits_header['SYGN_APERTURE_DIAMETER'],
+                'spectral_resolving_power': data_fits_header['SYGN_SPECTRAL_RESOLVING_POWER'],
+                'wavelength_range_lower_limit': data_fits_header['SYGN_WAVELENGTH_RANGE_LOWER_LIMIT'],
+                'wavelength_range_upper_limit': data_fits_header['SYGN_WAVELENGTH_RANGE_UPPER_LIMIT'],
+                'unperturbed_instrument_throughput': data_fits_header['SYGN_UNPERTURBED_INSTRUMENT_THROUGHPUT']
+            }
+        }
+        return config_dict
+
+    @staticmethod
+    def _create_target_dict_from_fits_header(data_fits_header):
+        target_dict = {}
+        target_dict['star'] = {
+            'name': data_fits_header['SYGN_STAR_NAME'],
+            'distance': data_fits_header['SYGN_STAR_DISTANCE'],
+            'mass': data_fits_header['SYGN_STAR_MASS'],
+            'radius': data_fits_header['SYGN_STAR_RADIUS'],
+            'temperature': data_fits_header['SYGN_STAR_TEMPERATURE'],
+            'luminosity': data_fits_header['SYGN_STAR_LUMINOSITY'],
+            'right_ascension': data_fits_header['SYGN_STAR_RIGHT_ASCENSION'],
+            'declination': data_fits_header['SYGN_STAR_DECLINATION']
+        }
+        try:
+            target_dict['zodi'] = {
+                'level': data_fits_header['SYGN_EXOZODI_LEVEL'],
+                'inclination': data_fits_header['SYGN_EXOZODI_INCLINATION']
+            }
+        except KeyError:
+            pass
+        target_dict['planets'] = {}
+        planet_counter = 1
+        for key in data_fits_header:
+            if key.startswith('SYGN_PLANET_') and not key == 'SYGN_PLANET_ORBITAL_MOTION':
+                planet_name = key.split('_')[2]
+                planet_key = f'planet_{planet_counter}'
+                if planet_key not in target_dict['planets']:
+                    target_dict['planets'][planet_key] = {}
+                    target_dict['planets'][planet_key]['name'] = planet_name
+                if planet_name.upper() in key.upper():
+                    target_dict['planets'][planet_key][key.replace(f'SYGN_PLANET_{planet_name}_', '').lower()] = \
+                        data_fits_header[key]
+        return target_dict
 
     @staticmethod
     def _extract_data(data: np.ndarray) -> np.ndarray:
@@ -25,20 +106,14 @@ class FITSReader():
         return data_array
 
     @staticmethod
-    def read_fits(input_path: Path, context: Context, data_type: FITSDataType) -> Context:
-        """Read the settings, mission, observatory and photon sources from the FITS file.
+    def read_fits(input_path: Path, context: Context) -> Context:
+        """Read the photon count data from the FITS file.
 
         :param input_path: The input path of the FITS file
         :param context: The context
-        :param data_type: The data type to be written to FITS
         :return: The context containing the data or templates
         """
-        if data_type == FITSDataType.SyntheticMeasurement:
-            with fits.open(input_path) as hdul:
-                context.data = FITSReader._extract_data(data=hdul[1:])
-        elif data_type == FITSDataType.Template:
-            fits_files = glob.glob(f"{input_path}/*.fits")
-            for fits_file in fits_files:
-                with fits.open(fits_file) as hdul:
-                    context.templates.append(FITSReader._extract_data(data=hdul[1:]))
-        return context
+        with fits.open(input_path) as hdul:
+            header = hdul[0].header
+            data = FITSReader._extract_data(data=hdul[1:])
+        return data, header

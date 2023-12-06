@@ -60,14 +60,14 @@ class Pipeline():
         # Check that data/templates are not generated and read at the same time
         if (get_number_of_instances_in_list(self._modules, FITSReaderModule) > 0
                 and get_number_of_instances_in_list(self._modules, DataGeneratorModule) == 1):
-            for module in get_number_of_instances_in_list(self._modules, FITSReaderModule):
-                if module.data_type == FITSDataType.SyntheticMeasurement:
+            for module in self._modules:
+                if isinstance(module, FITSReaderModule) and module._data_type == FITSDataType.SyntheticMeasurement:
                     raise TypeError(
                         f'Can not use DataGenerationModule and FITSReaderModule with FITSDataType.SyntheticMeasurements at the same time')
         if (get_number_of_instances_in_list(self._modules, FITSReaderModule) > 0
                 and get_number_of_instances_in_list(self._modules, TemplateGeneratorModule) == 1):
-            for module in get_number_of_instances_in_list(self._modules, FITSReaderModule):
-                if module.data_type == FITSDataType.Template:
+            for module in self._modules:
+                if isinstance(module, FITSReaderModule) and module._data_type == FITSDataType.Template:
                     raise TypeError(
                         f'Can not use TemplateGeneratorModule and FITSReaderModule with FITSDataType.Template at the same time')
 

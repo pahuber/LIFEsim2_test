@@ -30,6 +30,7 @@ class FITSWriter():
         # The following properties are relevant for both data types
         header['HIERARCH SYGN_GRID_SIZE'] = context.settings.grid_size
         header['HIERARCH SYGN_TIME_STEP'] = str(context.settings.time_step)
+        header['HIERARCH SYGN_PLANET_ORBITAL_MOTION'] = context.settings.planet_orbital_motion
         header['HIERARCH SYGN_ADJUST_BASELINE_TO_HABITABLE_ZONE'] = context.mission.adjust_baseline_to_habitable_zone
         header['HIERARCH SYGN_INTEGRATION_TIME'] = str(context.mission.integration_time)
         header['HIERARCH SYGN_OPTIMIZED_WAVELENGTH'] = str(context.mission.optimized_wavelength)
@@ -59,7 +60,7 @@ class FITSWriter():
                 header[f'HIERARCH SYGN_PLANET_{source.name}_ECCENTRICITY'] = source.eccentricity
                 header[f'HIERARCH SYGN_PLANET_{source.name}_INCLINATION'] = str(source.inclination)
                 header[f'HIERARCH SYGN_PLANET_{source.name}_RAAN'] = str(source.raan)
-                header[f'HIERARCH SYGN_PLANET_{source.name}_ARG_OF_PERIAPSIS'] = str(source.argument_of_periapsis)
+                header[f'HIERARCH SYGN_PLANET_{source.name}_ARGUMENT_OF_PERIAPSIS'] = str(source.argument_of_periapsis)
                 header[f'HIERARCH SYGN_PLANET_{source.name}_TRUE_ANOMALY'] = str(source.true_anomaly)
             if isinstance(source, Star):
                 header['HIERARCH SYGN_STAR_NAME'] = source.name
