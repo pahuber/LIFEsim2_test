@@ -45,8 +45,7 @@ class FITSReaderModule():
                 template, template_fits_header = FITSReader.read_fits(fits_file, context)
 
                 # Check that template properties match data properties
-                if context.data_fits_header:
-                    FITSReader._check_template_fits_header(context, template_fits_header)
+                FITSReader._check_template_fits_header(context, template_fits_header)
 
                 context.templates.append(template)
         return context

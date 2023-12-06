@@ -13,7 +13,7 @@ class FITSReader():
     @staticmethod
     def _check_template_fits_header(context: Context, template_fits_header):
         if context.settings.grid_size != template_fits_header['SYGN_GRID_SIZE']:
-            raise ValueError(f'Template grid size {template_fits_header['SYGN_GRID_SIZE']} does not match')
+            raise ValueError(f'Template grid size does not match data grid size')
         # TODO: check other properties
 
     @staticmethod
