@@ -1,4 +1,5 @@
 import numpy as np
+from astropy import units as u
 
 from sygn.core.context import Context
 from sygn.core.modules.base_module import BaseModule
@@ -63,8 +64,20 @@ class MLExtractionModule(BaseModule):
         # Reshape the cost function to the grid size
         cost_function = cost_function.reshape(context.settings.grid_size, context.settings.grid_size,
                                               cost_function.shape[1])
-        optimized_flux = optimized_flux.reshape(context.settings.grid_size, context.settings.grid_size,
+        optimized_flux = optimized_flux.reshape(len(context.data), context.settings.grid_size,
+                                                context.settings.grid_size,
                                                 optimized_flux.shape[2])
+
+        # Get the optimized flux from the cost function maximum
+        optimized_fluxes = np.zeros((context.observatory.beam_combination_scheme.number_of_differential_outputs,
+                                     len(context.data[0]))) * u.ph
+        for index_output in range(len(optimized_fluxes)):
+            j = cost_function[:, :, index_output]
+            j_max = np.max(j)
+            index = np.where(j == j_max)
+            i1, i2 = index[0][0], index[1][0]
+            optimized_fluxes[index_output] = optimized_flux[index_output, i1, i2] * u.ph
+
         context.cost_function = cost_function
-        context.optimized_flux = optimized_flux
+        context.optimized_flux = optimized_fluxes
         return context
