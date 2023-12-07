@@ -77,7 +77,7 @@ class FITSWriter():
                 header[f'HIERARCH SYGN_PLANET_{source.name}_TRUE_ANOMALY'] = str(source.true_anomaly)
             if isinstance(source, Exozodi) and data_type == FITSDataType.SyntheticMeasurement:
                 header['HIERARCH SYGN_EXOZODI_LEVEL'] = str(source.level)
-                header['HIERARCH SYGN_EXOZODI_INCLINATION'] = str(source.inclincation)
+                header['HIERARCH SYGN_EXOZODI_INCLINATION'] = str(source.inclination)
             if isinstance(source, LocalZodi) and data_type == FITSDataType.SyntheticMeasurement:
                 header['HIERARCH SYGN_LOCAL_ZODI'] = True
 
