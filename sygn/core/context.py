@@ -13,6 +13,7 @@ class Context():
         self.mission = None
         self.observatory = None
         self.photon_sources = []
+        self.star = None  # Since there are star properties that need to be shared, even if there is no stellar leakage
         self.animator = None
         self.data = None
         self.templates = []
