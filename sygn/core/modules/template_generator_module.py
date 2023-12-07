@@ -65,13 +65,14 @@ class TemplateGeneratorModule(BaseModule):
                         # Run data generator
                         context_template.photon_sources = [source]
                         data_generator = DataGenerator(context_template, GenerationMode.template)
-                        template = data_generator.generate_data()
+                        template, effective_area = data_generator.generate_data()
 
                         # Normalize to unit RMS
                         normalization = np.sqrt(np.mean(template ** 2, axis=2))
                         template = np.einsum('ijk, ij->ijk', template, 1 / normalization)
 
                         context.templates.append(template)
+                        context.effective_areas.append(effective_area)
                 else:
                     raise Exception('Template generation including planet orbital motion is not yet supported')
         return context

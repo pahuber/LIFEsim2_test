@@ -37,5 +37,5 @@ class DataGeneratorModule(BaseModule):
         context.observatory.array_configuration.set_optimal_baseline(context.mission.optimized_wavelength,
                                                                      context.star.habitable_zone_central_angular_radius)
         data_generator = DataGenerator(context, GenerationMode.data)
-        context.data = data_generator.generate_data()
+        context.data, _ = data_generator.generate_data()
         return context

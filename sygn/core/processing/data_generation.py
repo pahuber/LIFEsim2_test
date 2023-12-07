@@ -1,6 +1,7 @@
 from enum import Enum
 from itertools import product
 from random import choice
+from typing import Tuple
 
 import astropy
 import numpy as np
@@ -171,7 +172,7 @@ class DataGenerator():
                                       index_wavelength: int,
                                       intensity_responses: np.ndarray,
                                       time_step: astropy.units.Quantity,
-                                      unperturbed_instrument_throughput: float) -> list:
+                                      unperturbed_instrument_throughput: float) -> Tuple[list, np.ndarray]:
         """Return the photon counts per output, i.e. for a given intensity response map, including photon noise.
 
         :param mean_spectral_flux_density: Mean spectral density of the source at a given wavelength
@@ -187,19 +188,27 @@ class DataGenerator():
                 source_sky_brightness_distribution.value > 0]) == 0 else 1
 
         photon_counts_per_output = []
+        total_throughput = unperturbed_instrument_throughput
+        effective_area = np.zeros(len(intensity_responses)) * u.m ** 2
 
-        for intensity_response in intensity_responses:
+        for index_intensity_response, intensity_response in enumerate(intensity_responses):
             mean_photon_counts = (np.sum(intensity_response
                                          * source_sky_brightness_distribution
                                          * time_step.to(u.s)
                                          * wavelength_bin_width
-                                         * unperturbed_instrument_throughput).value
+                                         * total_throughput).value
                                   / normalization)
             if self._mode == GenerationMode.template:
                 photon_counts_per_output.append(mean_photon_counts * u.ph)
+
+                # Calculate effective area, i.e. area including all throughput terms, using the pixel of the intensity
+                # response where the planet is located
+                source_sky_brightness_distribution[np.isnan(source_sky_brightness_distribution)] = 0
+                effective_area[index_intensity_response] = np.sum(
+                    intensity_response * total_throughput * source_sky_brightness_distribution)
             else:
                 photon_counts_per_output.append(self._get_photon_shot_noise(mean_photon_counts=mean_photon_counts))
-        return photon_counts_per_output
+        return photon_counts_per_output, effective_area
 
     def _get_photon_shot_noise(self, mean_photon_counts: int) -> astropy.units.Quantity:
         """Given an amount of photons, calculate and return the amount of photons given by drawing from a Poisson/
@@ -214,7 +223,7 @@ class DataGenerator():
             photon_counts = round(normal(mean_photon_counts, 1))
         return photon_counts * u.ph
 
-    def generate_data(self):
+    def generate_data(self) -> Tuple[np.ndarray, np.ndarray]:
         """Generate the differential photon counts. This is the main method of the data generation. The calculation
         procedure is as follows: For each time step, for each wavelength bin, for each photon source, calculate  the
         intensity response vector at that time, wavelength and angular resolution corresponding to the source and then,
@@ -248,7 +257,7 @@ class DataGenerator():
                     grid_size=self._context.settings.grid_size)
 
                 # Calculate the photon counts at each of the outputs
-                photon_counts_per_output = self._get_photon_counts_per_output(
+                photon_counts_per_output, effective_area = self._get_photon_counts_per_output(
                     source_sky_brightness_distribution=source.get_sky_brightness_distribution(index_time_planet_motion,
                                                                                               index_wavelength),
                     wavelength_bin_width=self._context.observatory.instrument_parameters.wavelength_bin_widths[
@@ -271,4 +280,4 @@ class DataGenerator():
                 #             wavelength == self.animator.closest_wavelength and
                 #             index_pair == self.animator.differential_intensity_response_index):
                 #         self._update_animation_frame()
-        return self.differential_photon_counts
+        return self.differential_photon_counts, effective_area
