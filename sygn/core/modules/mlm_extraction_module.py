@@ -5,8 +5,8 @@ import numpy as np
 from sygn.core.context import Context
 
 
-class MLMExtractionModule(ABC):
-    """Class representation of the maximum likelihood method extraction module.
+class MLExtractionModule(ABC):
+    """Class representation of the maximum likelihood extraction module.
     """
 
     def apply(self, context: Context) -> Context:
