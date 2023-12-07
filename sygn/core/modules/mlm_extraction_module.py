@@ -17,7 +17,8 @@ class MLExtractionModule(BaseModule):
         """
         self.dependencies = [(FITSReaderModule, FITSDataType.SyntheticMeasurement, FITSDataType.Template),
                              (FITSReaderModule, DataGeneratorModule, FITSDataType.Template),
-                             (FITSReaderModule, TemplateGeneratorModule, FITSDataType.SyntheticMeasurement)]
+                             (FITSReaderModule, TemplateGeneratorModule, FITSDataType.SyntheticMeasurement),
+                             (DataGeneratorModule, TemplateGeneratorModule)]
 
     def apply(self, context: Context) -> Context:
         """Apply the module.
