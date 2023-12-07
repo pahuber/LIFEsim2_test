@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import numpy as np
+from astropy import units as u
 from astropy.io import fits
 
 from sygn.core.context import Context
@@ -106,7 +107,14 @@ class FITSReader():
         return data_array
 
     @staticmethod
-    def read_fits(input_path: Path, context: Context) -> Context:
+    def _extract_effective_area_from_fits_header(template_fits_header, context):
+        effective_area = np.zeros(context.observatory.beam_combination_scheme.number_of_differential_outputs) * u.m ** 2
+        for index_output in range(context.observatory.beam_combination_scheme.number_of_differential_outputs):
+            effective_area[index_output] = u.Quantity(template_fits_header[f'SYGN_EFFECTIVE_AREA_{index_output}'])
+        return effective_area
+
+    @staticmethod
+    def read_fits(input_path: Path, context: Context) -> tuple:
         """Read the photon count data from the FITS file.
 
         :param input_path: The input path of the FITS file

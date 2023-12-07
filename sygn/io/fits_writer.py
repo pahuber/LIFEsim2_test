@@ -99,8 +99,9 @@ class FITSWriter():
                 'HIERARCH SYGN_UNPERTURBED_INSTRUMENT_THROUGHPUT'] = context.observatory.instrument_parameters.unperturbed_instrument_throughput
 
         if data_type == FITSDataType.Template:
-            header['HIERARCH SYGN_PLANET_POSITION_X'] = context.template_planet_positions[index_template][0]
-            header['HIERARCH SYGN_PLANET_POSITION_Y'] = context.template_planet_positions[index_template][1]
+            for index_output in range(context.observatory.beam_combination_scheme.number_of_differential_outputs):
+                header[f'HIERARCH SYGN_EFFECTIVE_AREA_{index_output}'] = str(context.effective_areas[index_template][
+                                                                                 index_output])
         return header
 
     @staticmethod

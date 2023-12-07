@@ -44,7 +44,7 @@ class FITSReaderModule(BaseModule):
             # ConfigLoaderModule
             context = self._create_entities_from_fits_header(context, data_fits_header)
 
-            # Create the photon source entities from the FITS header, if they are needed, i.e. if there is a
+            # TODO: Create the photon source entities from the FITS header, if they are needed, i.e. if there is a
             # TemplateGeneratorModule and they are not provided through the TargetLoaderModule
 
         elif self._data_type == FITSDataType.Template:
@@ -56,4 +56,6 @@ class FITSReaderModule(BaseModule):
                 FITSReader._check_template_fits_header(context, template_fits_header)
 
                 context.templates.append(template)
+                context.effective_areas.append(
+                    FITSReader._extract_effective_area_from_fits_header(template_fits_header, context))
         return context
