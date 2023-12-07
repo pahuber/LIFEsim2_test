@@ -205,7 +205,7 @@ class DataGenerator():
                 # response where the planet is located
                 source_sky_brightness_distribution[np.isnan(source_sky_brightness_distribution)] = 0
                 effective_area[index_intensity_response] = np.sum(
-                    intensity_response * total_throughput * source_sky_brightness_distribution)
+                    intensity_response * total_throughput * source_sky_brightness_distribution.value)
             else:
                 photon_counts_per_output.append(self._get_photon_shot_noise(mean_photon_counts=mean_photon_counts))
         return photon_counts_per_output, effective_area
