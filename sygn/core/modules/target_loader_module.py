@@ -6,10 +6,11 @@ from sygn.core.entities.photon_sources.local_zodi import LocalZodi
 from sygn.core.entities.photon_sources.photon_source import PhotonSource
 from sygn.core.entities.photon_sources.planet import Planet
 from sygn.core.entities.photon_sources.star import Star
+from sygn.core.modules.base_module import BaseModule
 from sygn.io.config_reader import ConfigReader
 
 
-class TargetLoaderModule():
+class TargetLoaderModule(BaseModule):
     """Class representation of the target loader module.
     """
 
@@ -29,6 +30,7 @@ class TargetLoaderModule():
         self.planets = None
         self.exozodi = None
         self.local_zodi = None
+        self.dependencies = []
 
     def _add_target_specific_photon_sources(self, context) -> list:
         """Add the photon sources to the list, if specified in the configurations.

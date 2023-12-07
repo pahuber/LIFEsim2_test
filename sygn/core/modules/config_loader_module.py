@@ -9,10 +9,11 @@ from sygn.core.entities.observatory.beam_combination_schemes import BeamCombinat
 from sygn.core.entities.observatory.instrument_parameters import InstrumentParameters
 from sygn.core.entities.observatory.observatory import Observatory
 from sygn.core.entities.settings import Settings
+from sygn.core.modules.base_module import BaseModule
 from sygn.io.config_reader import ConfigReader
 
 
-class ConfigLoaderModule():
+class ConfigLoaderModule(BaseModule):
     """Class representation of the config loader module.
     """
 
@@ -34,6 +35,7 @@ class ConfigLoaderModule():
         self.settings = settings
         self.mission = mission
         self.observatory = observatory
+        self.dependencies = []
 
     def _load_array_configuration(self, config_dict: dict) -> ArrayConfiguration:
         """Return the array configuration object from the dictionary.

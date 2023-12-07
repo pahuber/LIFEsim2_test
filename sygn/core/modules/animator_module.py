@@ -3,6 +3,7 @@ import astropy
 from sygn.core.context import Context
 from sygn.core.entities.animator import Animator
 from sygn.core.modules.base_module import BaseModule
+from sygn.core.modules.data_generator_module import DataGeneratorModule
 from sygn.util.grid import get_index_of_closest_value
 
 
@@ -25,6 +26,7 @@ class AnimatorModule(BaseModule):
         self.photon_count_limits = photon_count_limits
         self.collector_position_limits = collector_position_limits
         self.animator = None
+        self.dependencies = [(DataGeneratorModule,)]
 
     def apply(self, context: Context) -> Context:
         """Apply the modules.

@@ -3,16 +3,25 @@ from tqdm.contrib.itertools import product
 
 from sygn.core.context import Context
 from sygn.core.entities.photon_sources.planet import Planet
+from sygn.core.modules.base_module import BaseModule
+from sygn.core.modules.config_loader_module import ConfigLoaderModule
+from sygn.core.modules.fits_reader_module import FITSReaderModule
+from sygn.core.modules.target_loader_module import TargetLoaderModule
 from sygn.core.processing.data_generation import DataGenerator, GenerationMode
+from sygn.util.helpers import FITSDataType
 
 
-class TemplateGeneratorModule():
+class TemplateGeneratorModule(BaseModule):
     """Class representation of the template generator module.
     """
 
     def __init__(self):
         """Constructor method.
         """
+        self.dependencies = [(ConfigLoaderModule, TargetLoaderModule),
+                             (ConfigLoaderModule, FITSReaderModule, FITSDataType.SyntheticMeasurement),
+                             (TargetLoaderModule, FITSReaderModule, FITSDataType.SyntheticMeasurement),
+                             (FITSReaderModule, FITSDataType.SyntheticMeasurement)]
 
     def _unload_noise_contributions(self, context) -> Context:
         """Unload all noise contributions by setting the corresponding values to false, since they should not be

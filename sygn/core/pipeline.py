@@ -7,7 +7,7 @@ from sygn.core.modules.config_loader_module import ConfigLoaderModule
 from sygn.core.modules.data_generator_module import DataGeneratorModule
 from sygn.core.modules.fits_reader_module import FITSReaderModule
 from sygn.core.modules.fits_writer_module import FITSWriterModule
-from sygn.core.modules.mlm_extraction_module import MLMExtractionModule
+from sygn.core.modules.mlm_extraction_module import MLExtractionModule
 from sygn.core.modules.target_loader_module import TargetLoaderModule
 from sygn.core.modules.template_generator_module import TemplateGeneratorModule
 from sygn.util.grid import get_number_of_instances_in_list
@@ -24,40 +24,9 @@ class Pipeline():
         self._modules = []
         self._context = Context()
 
-    def _validate_modules(self):
-        """Validate that th modules of the pipeline are correct.
+    def _check_data_template_generation_reading(self):
+        """Check that there is no combination of DataGenerationModule and TemplateGeneratorModule or FITSReaderModule
         """
-        # Check that number of modules is correct
-        for module_type in [ConfigLoaderModule, TargetLoaderModule, AnimatorModule, DataGeneratorModule,
-                            TemplateGeneratorModule, MLMExtractionModule]:
-            if not (get_number_of_instances_in_list(self._modules, module_type) <= 1):
-                raise TypeError(f'Can not have more than one {module_type.__name__} per pipeline')
-
-        # Check that module dependencies are satisfied
-        if (get_number_of_instances_in_list(self._modules, DataGeneratorModule) == 1
-                and not (get_number_of_instances_in_list(self._modules, ConfigLoaderModule) == 1
-                         and get_number_of_instances_in_list(self._modules, TargetLoaderModule) == 1)):
-            raise TypeError(
-                f'Can not use DataGeneratorModule without ConfigLoaderModule and TargetLoaderModule')
-        if (get_number_of_instances_in_list(self._modules, ConfigLoaderModule) == 1
-                and not (get_number_of_instances_in_list(self._modules, DataGeneratorModule) == 1
-                         and get_number_of_instances_in_list(self._modules, TargetLoaderModule) == 1)):
-            raise TypeError(
-                f'Can not use ConfigLoaderModule without DataGeneratorModule and TargetLoaderModule')
-        if (get_number_of_instances_in_list(self._modules, TargetLoaderModule) == 1
-                and not (get_number_of_instances_in_list(self._modules, DataGeneratorModule) == 1
-                         and get_number_of_instances_in_list(self._modules, ConfigLoaderModule) == 1)):
-            raise TypeError(
-                f'Can not use TargetLoaderModule without DataGeneratorModule and ConfigLoaderModule')
-        if (get_number_of_instances_in_list(self._modules, AnimatorModule) == 1
-                and not (get_number_of_instances_in_list(self._modules, DataGeneratorModule) == 1)):
-            raise TypeError(f'Can not use AnimatorModule without DataGeneratorModule')
-        if (get_number_of_instances_in_list(self._modules, FITSWriterModule) == 1
-                and not (get_number_of_instances_in_list(self._modules, DataGeneratorModule) == 1
-                         or get_number_of_instances_in_list(self._modules, TemplateGeneratorModule) == 1)):
-            raise TypeError(f'Can not use FITSWriterModule without DataGeneratorModule or TemplateGeneratorModule')
-
-        # Check that data/templates are not generated and read at the same time
         if (get_number_of_instances_in_list(self._modules, FITSReaderModule) > 0
                 and get_number_of_instances_in_list(self._modules, DataGeneratorModule) == 1):
             for module in self._modules:
@@ -70,6 +39,51 @@ class Pipeline():
                 if isinstance(module, FITSReaderModule) and module._data_type == FITSDataType.Template:
                     raise TypeError(
                         f'Can not use TemplateGeneratorModule and FITSReaderModule with FITSDataType.Template at the same time')
+
+    def _check_module_dependencies(self):
+        """Check that all modules have their dependencies satisfied, i.e. that for each module all required modules are
+        present in the pipeline and if there is a specific FITSDataType required, that there is a module using that data
+        type."""
+        for module in self._modules:
+            options_fulfilled = 0
+            # Check all possible options of allowed dependency combinations
+            for option in module.dependencies:
+                dependencies_fulfilled = 0
+                # Check if all dependencies of an option are fulfilled
+                for dependency in option:
+                    # Check that if dependency is a FITSDataType, there is a FITSReaderModule or FITSWriterModule with that data type
+                    if isinstance(dependency, FITSDataType):
+                        for module_2 in self._modules:
+                            if (isinstance(module_2, FITSReaderModule) or isinstance(module_2,
+                                                                                     FITSWriterModule)) and module_2._data_type == dependency:
+                                dependencies_fulfilled += 1
+                    # Check that if dependency is a BaseModule, there is a module of that type
+                    elif issubclass(dependency, BaseModule):
+                        for module_2 in self._modules:
+                            if isinstance(module_2, dependency):
+                                dependencies_fulfilled += 1
+                                break
+                # If all dependencies of an option are fulfilled, indicate that one option os fulfilled
+                if dependencies_fulfilled == len(option):
+                    options_fulfilled += 1
+            # If not exactly one option is fulfilled, raise an error
+            if options_fulfilled != 1 and len(module.dependencies) > 0:
+                raise TypeError(f'{module.__class__.__name__} has unsatisfied module dependencies')
+
+    def _check_number_of_modules(self):
+        """Check that there is at most one module of each type in the pipeline.
+        """
+        for module_type in [ConfigLoaderModule, TargetLoaderModule, AnimatorModule, DataGeneratorModule,
+                            TemplateGeneratorModule, MLExtractionModule]:
+            if not (get_number_of_instances_in_list(self._modules, module_type) <= 1):
+                raise TypeError(f'Can not have more than one {module_type.__name__} per pipeline')
+
+    def _validate_modules(self):
+        """Validate that th modules of the pipeline are correct.
+        """
+        self._check_number_of_modules()
+        self._check_data_template_generation_reading()
+        self._check_module_dependencies()
 
     def get_data(self) -> np.ndarray:
         """Return the data.

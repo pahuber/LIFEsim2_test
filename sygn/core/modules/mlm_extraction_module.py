@@ -1,13 +1,23 @@
-from abc import ABC
-
 import numpy as np
 
 from sygn.core.context import Context
+from sygn.core.modules.base_module import BaseModule
+from sygn.core.modules.data_generator_module import DataGeneratorModule
+from sygn.core.modules.fits_reader_module import FITSReaderModule
+from sygn.core.modules.template_generator_module import TemplateGeneratorModule
+from sygn.util.helpers import FITSDataType
 
 
-class MLExtractionModule(ABC):
+class MLExtractionModule(BaseModule):
     """Class representation of the maximum likelihood extraction module.
     """
+
+    def __init__(self):
+        """Constructor method.
+        """
+        self.dependencies = [(FITSReaderModule, FITSDataType.SyntheticMeasurement, FITSDataType.Template),
+                             (FITSReaderModule, DataGeneratorModule, FITSDataType.Template),
+                             (FITSReaderModule, TemplateGeneratorModule, FITSDataType.SyntheticMeasurement)]
 
     def apply(self, context: Context) -> Context:
         """Apply the module.

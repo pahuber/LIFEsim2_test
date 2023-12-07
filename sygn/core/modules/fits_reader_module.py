@@ -3,13 +3,14 @@ from pathlib import Path
 from typing import Tuple
 
 from sygn.core.context import Context
+from sygn.core.modules.base_module import BaseModule
 from sygn.core.modules.config_loader_module import ConfigLoaderModule
 from sygn.core.modules.target_loader_module import TargetLoaderModule
 from sygn.io.fits_reader import FITSReader
 from sygn.util.helpers import FITSDataType
 
 
-class FITSReaderModule():
+class FITSReaderModule(BaseModule):
     """Class representation of the FITS reader module.
     """
 
@@ -21,6 +22,7 @@ class FITSReaderModule():
         """
         self._input_path = input_path
         self._data_type = data_type
+        self.dependencies = []
 
     def _create_entities_from_fits_header(self, context, data_fits_header) -> Context:
         config_dict = FITSReader._create_config_dict_from_fits_header(data_fits_header)
@@ -37,7 +39,13 @@ class FITSReaderModule():
         """
         if self._data_type == FITSDataType.SyntheticMeasurement:
             context.data, data_fits_header = FITSReader.read_fits(self._input_path, context)
-            self._create_entities_from_fits_header(context, data_fits_header)
+
+            # Create the configuration entities from the FITS header, if it is not provided through the
+            # ConfigLoaderModule
+            context = self._create_entities_from_fits_header(context, data_fits_header)
+
+            # Create the photon source entities from the FITS header, if they are needed, i.e. if there is a
+            # TemplateGeneratorModule and they are not provided through the TargetLoaderModule
 
         elif self._data_type == FITSDataType.Template:
             fits_files = glob.glob(f"{self._input_path}/*.fits")

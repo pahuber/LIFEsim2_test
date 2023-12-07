@@ -1,5 +1,7 @@
 from sygn.core.context import Context
 from sygn.core.modules.base_module import BaseModule
+from sygn.core.modules.config_loader_module import ConfigLoaderModule
+from sygn.core.modules.target_loader_module import TargetLoaderModule
 from sygn.core.processing.data_generation import DataGenerator, GenerationMode
 
 
@@ -12,6 +14,7 @@ class DataGeneratorModule(BaseModule):
 
         :param path_to_config_file: Path to the config file
         """
+        self.dependencies = [(ConfigLoaderModule, TargetLoaderModule)]
 
     def _update_animation_frame(self, time, intensity_responses, pair_of_indices, index_pair, index_photon_source,
                                 source, wavelength, index_time):

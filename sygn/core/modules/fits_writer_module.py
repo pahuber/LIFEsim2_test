@@ -2,11 +2,14 @@ from pathlib import Path
 from typing import Tuple
 
 from sygn.core.context import Context
+from sygn.core.modules.base_module import BaseModule
+from sygn.core.modules.data_generator_module import DataGeneratorModule
+from sygn.core.modules.template_generator_module import TemplateGeneratorModule
 from sygn.io.fits_writer import FITSWriter
 from sygn.util.helpers import FITSDataType
 
 
-class FITSWriterModule():
+class FITSWriterModule(BaseModule):
     """Class representation of the FITS writer module.
     """
 
@@ -18,6 +21,7 @@ class FITSWriterModule():
         """
         self._output_path = output_path
         self._data_type = data_type
+        self.dependencies = [(DataGeneratorModule,), (TemplateGeneratorModule,)]
 
     def apply(self, context: Context) -> Context:
         """Write the FITS file.
