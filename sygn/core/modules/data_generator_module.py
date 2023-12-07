@@ -1,5 +1,4 @@
 from sygn.core.context import Context
-from sygn.core.entities.photon_sources.star import Star
 from sygn.core.modules.base_module import BaseModule
 from sygn.core.processing.data_generation import DataGenerator, GenerationMode
 
@@ -32,9 +31,8 @@ class DataGeneratorModule(BaseModule):
         :param context: The contexts object of the pipelines
         :return: The (updated) contexts object
         """
-        star = [source for source in context.photon_sources if isinstance(source, Star)][0]
         context.observatory.array_configuration.set_optimal_baseline(context.mission.optimized_wavelength,
-                                                                     star.habitable_zone_central_angular_radius)
+                                                                     context.star.habitable_zone_central_angular_radius)
         data_generator = DataGenerator(context, GenerationMode.data)
         context.data = data_generator.generate_data()
         return context

@@ -135,4 +135,5 @@ class TargetLoaderModule():
         self.local_zodi = self._load_local_zodi(
             context) if context.settings.noise_contributions.local_zodi_leakage else None
         context.photon_sources = self._add_target_specific_photon_sources(context)
+        context.star = self.star
         return context

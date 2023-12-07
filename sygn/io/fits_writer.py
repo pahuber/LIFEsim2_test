@@ -8,7 +8,6 @@ from sygn.core.context import Context
 from sygn.core.entities.photon_sources.exozodi import Exozodi
 from sygn.core.entities.photon_sources.local_zodi import LocalZodi
 from sygn.core.entities.photon_sources.planet import Planet
-from sygn.core.entities.photon_sources.star import Star
 from sygn.util.helpers import FITSDataType
 
 
@@ -17,12 +16,14 @@ class FITSWriter():
     """
 
     @staticmethod
-    def _get_fits_header(primary: fits.PrimaryHDU, context: Context, data_type: FITSDataType) -> fits.header.Header:
+    def _get_fits_header(primary: fits.PrimaryHDU, context: Context, data_type: FITSDataType,
+                         index_template: int = None) -> fits.header.Header:
         """Return the FITS file header containing the information about the simulation and the photon_sources.
 
         :param primary: The primary HDU object
         :param context: The contexts object
         :param data_type: The data type to be written to FITS
+        :param index_template: The index of the template
         :return: The header
         """
         header = primary.header
@@ -51,6 +52,18 @@ class FITSWriter():
         header['HIERARCH SYGN_WAVELENGTH_RANGE_UPPER_LIMIT'] = str(
             context.observatory.instrument_parameters.wavelength_range_upper_limit)
 
+        # The star is added separately outside of the source loop, since it should be written to the file (to recover
+        # its properties when the file is read again) even if it is not present in the list of photon sources, i.e. if
+        # there is no stellar leakage
+        header['HIERARCH SYGN_STAR_NAME'] = context.star.name
+        header['HIERARCH SYGN_STAR_DISTANCE'] = str(context.star.distance)
+        header['HIERARCH SYGN_STAR_MASS'] = str(context.star.mass)
+        header['HIERARCH SYGN_STAR_RADIUS'] = str(context.star.radius)
+        header['HIERARCH SYGN_STAR_TEMPERATURE'] = str(context.star.temperature)
+        header['HIERARCH SYGN_STAR_LUMINOSITY'] = str(context.star.luminosity)
+        header['HIERARCH SYGN_STAR_RIGHT_ASCENSION'] = str(context.star.right_ascension)
+        header['HIERARCH SYGN_STAR_DECLINATION'] = str(context.star.declination)
+
         for source in context.photon_sources:
             if isinstance(source, Planet):
                 header[f'HIERARCH SYGN_PLANET_{source.name}_MASS'] = str(source.mass)
@@ -62,15 +75,6 @@ class FITSWriter():
                 header[f'HIERARCH SYGN_PLANET_{source.name}_RAAN'] = str(source.raan)
                 header[f'HIERARCH SYGN_PLANET_{source.name}_ARGUMENT_OF_PERIAPSIS'] = str(source.argument_of_periapsis)
                 header[f'HIERARCH SYGN_PLANET_{source.name}_TRUE_ANOMALY'] = str(source.true_anomaly)
-            if isinstance(source, Star):
-                header['HIERARCH SYGN_STAR_NAME'] = source.name
-                header['HIERARCH SYGN_STAR_DISTANCE'] = str(source.distance)
-                header['HIERARCH SYGN_STAR_MASS'] = str(source.mass)
-                header['HIERARCH SYGN_STAR_RADIUS'] = str(source.radius)
-                header['HIERARCH SYGN_STAR_TEMPERATURE'] = str(source.temperature)
-                header['HIERARCH SYGN_STAR_LUMINOSITY'] = str(source.luminosity)
-                header['HIERARCH SYGN_STAR_RIGHT_ASCENSION'] = str(source.right_ascension)
-                header['HIERARCH SYGN_STAR_DECLINATION'] = str(source.declination)
             if isinstance(source, Exozodi) and data_type == FITSDataType.SyntheticMeasurement:
                 header['HIERARCH SYGN_EXOZODI_LEVEL'] = str(source.level)
                 header['HIERARCH SYGN_EXOZODI_INCLINATION'] = str(source.inclincation)
@@ -93,6 +97,10 @@ class FITSWriter():
                 context.observatory.instrument_parameters.aperture_diameter)
             header[
                 'HIERARCH SYGN_UNPERTURBED_INSTRUMENT_THROUGHPUT'] = context.observatory.instrument_parameters.unperturbed_instrument_throughput
+
+        if data_type == FITSDataType.Template:
+            header['HIERARCH SYGN_PLANET_POSITION_X'] = context.template_planet_positions[index_template][0]
+            header['HIERARCH SYGN_PLANET_POSITION_Y'] = context.template_planet_positions[index_template][1]
         return header
 
     @staticmethod
@@ -104,8 +112,8 @@ class FITSWriter():
         :param data_type: The data type to be written to FITS
         """
         primary = fits.PrimaryHDU()
-        header = FITSWriter._get_fits_header(primary, context, data_type)
         if data_type == FITSDataType.SyntheticMeasurement:
+            header = FITSWriter._get_fits_header(primary, context, data_type)
             hdu_list = []
             hdu_list.append(primary)
             for data_per_output in context.data:
@@ -119,6 +127,7 @@ class FITSWriter():
             os.makedirs(output_path.joinpath(folder_name))
 
             for index_template, template in enumerate(context.templates):
+                header = FITSWriter._get_fits_header(primary, context, data_type, index_template)
                 hdu_list = []
                 hdu_list.append(primary)
                 for data_per_output in template:
@@ -126,4 +135,4 @@ class FITSWriter():
                     hdu_list.append(hdu)
                 hdul = fits.HDUList(hdu_list)
                 hdul.writeto(output_path.joinpath(folder_name).joinpath(
-                    f'template_{index_template}_{datetime.now().strftime("%Y%m%d_%H%M%S.%f")}.fits'))
+                    f'template_{datetime.now().strftime("%Y%m%d_%H%M%S.%f")}_{index_template}.fits'))
