@@ -6,7 +6,6 @@ from sygn.core.modules.base_module import BaseModule
 from sygn.core.modules.config_loader_module import ConfigLoaderModule
 from sygn.core.modules.data_generator_module import DataGeneratorModule
 from sygn.core.modules.fits_reader_module import FITSReaderModule
-from sygn.core.modules.fits_writer_module import FITSWriterModule
 from sygn.core.modules.mlm_extraction_module import MLExtractionModule
 from sygn.core.modules.target_loader_module import TargetLoaderModule
 from sygn.core.modules.template_generator_module import TemplateGeneratorModule
@@ -54,8 +53,7 @@ class Pipeline():
                     # Check that if dependency is a FITSDataType, there is a FITSReaderModule or FITSWriterModule with that data type
                     if isinstance(dependency, FITSDataType):
                         for module_2 in self._modules:
-                            if (isinstance(module_2, FITSReaderModule) or isinstance(module_2,
-                                                                                     FITSWriterModule)) and module_2._data_type == dependency:
+                            if isinstance(module_2, FITSReaderModule) and module_2._data_type == dependency:
                                 dependencies_fulfilled += 1
                     # Check that if dependency is a BaseModule, there is a module of that type
                     elif issubclass(dependency, BaseModule):
