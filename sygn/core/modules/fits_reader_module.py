@@ -38,7 +38,7 @@ class FITSReaderModule(BaseModule):
         :return: The (updated) context object
         """
         if self._data_type == FITSDataType.SyntheticMeasurement:
-            context.data, data_fits_header = FITSReader.read_fits(self._input_path, context)
+            context.data, data_fits_header, _ = FITSReader.read_fits(self._input_path, context)
 
             # Create the configuration entities from the FITS header, if it is not provided through the
             # ConfigLoaderModule
@@ -50,12 +50,13 @@ class FITSReaderModule(BaseModule):
         elif self._data_type == FITSDataType.Template:
             fits_files = glob.glob(f"{self._input_path}/*.fits")
             for fits_file in fits_files:
-                template, template_fits_header = FITSReader.read_fits(fits_file, context)
+                template, template_fits_header, effective_area = FITSReader.read_fits(fits_file, context)
 
                 # Check that template properties match data properties
                 FITSReader._check_template_fits_header(context, template_fits_header)
 
+                # Extract effective areas
+                context.effective_area_rms.append(effective_area)
+
                 context.templates.append(template)
-                context.effective_areas.append(
-                    FITSReader._extract_effective_area_from_fits_header(template_fits_header, context))
         return context

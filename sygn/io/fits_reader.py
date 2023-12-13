@@ -101,10 +101,16 @@ class FITSReader():
         :param data: The FITS data
         :return: The data arrays
         """
-        data_array = np.zeros(((len(data),) + data[0].shape))
+        images = [image for image in data if type(image) == fits.hdu.image.ImageHDU]
+        
+        data_array = np.zeros(((len(images),) + data[0].shape))
+        effective_area_array = np.zeros(data[0].shape[0])
         for index_data in range(len(data)):
-            data_array[index_data] = data[index_data].data
-        return data_array
+            if type(data[index_data]) == fits.hdu.image.ImageHDU:
+                data_array[index_data] = data[index_data].data
+            elif type(data[index_data]) == fits.hdu.table.BinTableHDU:
+                effective_area_array = data[index_data].data.field(0)
+        return data_array, effective_area_array
 
     @staticmethod
     def _extract_effective_area_from_fits_header(template_fits_header, context):
@@ -123,5 +129,5 @@ class FITSReader():
         """
         with fits.open(input_path) as hdul:
             header = hdul[0].header
-            data = FITSReader._extract_data(data=hdul[1:])
-        return data, header
+            data, effective_area = FITSReader._extract_data(data=hdul[1:])
+        return data, header, effective_area

@@ -98,10 +98,11 @@ class FITSWriter():
             header[
                 'HIERARCH SYGN_UNPERTURBED_INSTRUMENT_THROUGHPUT'] = context.observatory.instrument_parameters.unperturbed_instrument_throughput
 
-        if data_type == FITSDataType.Template:
-            for index_output in range(context.observatory.beam_combination_scheme.number_of_differential_outputs):
-                header[f'HIERARCH SYGN_EFFECTIVE_AREA_{index_output}'] = str(context.effective_areas[index_template][
-                                                                                 index_output])
+        # if data_type == FITSDataType.Template:
+        #     for index_output in range(context.observatory.beam_combination_scheme.number_of_differential_outputs):
+        #         header[f'HIERARCH SYGN_EFFECTIVE_AREA_{index_output}'] = str(context.effective_area_rms[index_template][
+        #                                                                          index_output])
+        #     pass
         return header
 
     @staticmethod
@@ -131,8 +132,15 @@ class FITSWriter():
                 header = FITSWriter._get_fits_header(primary, context, data_type, index_template)
                 hdu_list = []
                 hdu_list.append(primary)
+                # Add template data
                 for data_per_output in template:
                     hdu = fits.ImageHDU(data_per_output)
+                    hdu_list.append(hdu)
+                # Add effective areas rms
+                for area_per_output in context.effective_area_rms[index_template]:
+                    # table = Table([np.rec.array(area_per_output)], names=['effective_area_rms'], dtype=['float64'])
+                    hdu = fits.BinTableHDU.from_columns(
+                        [fits.Column(name='effective_area_rms', array=area_per_output, format='D')])
                     hdu_list.append(hdu)
                 hdul = fits.HDUList(hdu_list)
                 hdul.writeto(output_path.joinpath(folder_name).joinpath(

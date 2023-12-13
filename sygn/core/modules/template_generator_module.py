@@ -47,6 +47,7 @@ class TemplateGeneratorModule(BaseModule):
         context.observatory.array_configuration.set_optimal_baseline(context.mission.optimized_wavelength,
                                                                      context.star.habitable_zone_central_angular_radius)
         context_template = self._unload_noise_contributions(context)
+        effective_areas = []
 
         for source in context.photon_sources:
             if isinstance(source, Planet):
@@ -67,12 +68,15 @@ class TemplateGeneratorModule(BaseModule):
                         data_generator = DataGenerator(context_template, GenerationMode.template)
                         template, effective_area = data_generator.generate_data()
 
-                        # Normalize to unit RMS
+                        # Normalize each wavelength to unit RMS
                         normalization = np.sqrt(np.mean(template ** 2, axis=2))
+                        # normalization = np.max(template, axis=2)
                         template = np.einsum('ijk, ij->ijk', template, 1 / normalization)
 
                         context.templates.append(template)
-                        context.effective_areas.append(effective_area)
+                        effective_areas.append(effective_area)
                 else:
                     raise Exception('Template generation including planet orbital motion is not yet supported')
+
+        context.effective_area_rms = np.sqrt(np.mean(np.array(effective_areas) ** 2, axis=3))
         return context
