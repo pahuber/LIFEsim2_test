@@ -168,6 +168,7 @@ class Planet(PhotonSource):
         :param context: Context
         :return: The sky coordinates
         """
+        # TODO: check that planet position is such that always a circular ring can be constructed for the cost function
         sky_coordinates = np.zeros((len(context.time_range_planet_motion)), dtype=object)
 
         for index_time, time in enumerate(context.time_range_planet_motion):

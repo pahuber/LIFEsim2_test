@@ -71,8 +71,9 @@ class Exozodi(PhotonSource):
         separations
         :return: The temperature distribution map
         """
-        return (278.3 * self.star_luminosity.to(u.Lsun) ** 0.25 * maximum_stellar_separations_radial_map ** (
+        a = (278.3 * self.star_luminosity.to(u.Lsun) ** 0.25 * maximum_stellar_separations_radial_map ** (
             -0.5)).value * u.K
+        return a
 
     def get_sky_coordinates(self, index_time: int, index_wavelength: int) -> Coordinates:
         return self.sky_coordinates[index_wavelength]

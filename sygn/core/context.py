@@ -12,15 +12,12 @@ class Context():
         self.settings = None
         self.mission = None
         self.observatory = None
-        self.photon_sources = []
-        self.star = None  # Since there are star properties that need to be shared, even if there is no stellar leakage
         self.animator = None
-        self.data = None
-        self.templates = []
-        self.cost_function = None
-        self.optimized_flux = None
-        self.effective_areas = []
-        self.flux_density = None
+        self.photon_sources = []
+        self.signal = None
+        self.templates = None
+        self.extractions = []
+        self.star = None  # Since there are star properties that need to be shared, even if there is no stellar leakage
 
     @property
     def time_range(self) -> np.ndarray:

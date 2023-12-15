@@ -21,23 +21,27 @@ class FluxCalibrationModule(BaseModule):
         :param context: The context object of the pipeline
         :return: The (updated) context object
         """
-        flux_density = np.zeros(context.optimized_flux.shape) * u.ph / (u.m ** 2 * u.um * u.s)
-        effective_area = \
-            np.array(context.effective_area_rms).reshape(
-                (context.settings.grid_size, context.settings.grid_size,
-                 context.observatory.beam_combination_scheme.number_of_differential_outputs,
-                 len(context.observatory.instrument_parameters.wavelength_bin_widths))) * u.m ** 2
-        for index_output in range(len(context.optimized_flux)):
-            j = context.cost_function[:, :, index_output]
-            j_max = np.max(j)
-            index = np.where(j == j_max)
-            i1, i2 = index[0][0], index[1][0]
+        for index_extraction, extraction in enumerate(context.extractions):
+            flux_density = np.zeros(extraction.spectrum.shape) * u.ph / (
+                    u.m ** 2 * u.um * u.s)
+            flux_density_u = np.zeros(extraction.spectrum.shape) * u.ph / (
+                    u.m ** 2 * u.um * u.s)
 
-            time_step = context.settings.time_step.to(u.s)
-            # time_step = context.mission.integration_time.to(u.s)
-            wavelength_bin_widths = context.observatory.instrument_parameters.wavelength_bin_widths
-            flux_density[index_output] = (context.optimized_flux[
-                                              index_output] / time_step / wavelength_bin_widths /  # u.m ** 2)
-                                          effective_area[i1, i2, index_output])
-        context.flux_density = flux_density
+            for index_output in range(len(extraction.spectrum)):
+                j = extraction.cost_function[index_output]
+                j_max = np.max(j)
+                index = np.where(j == j_max)
+                i1, i2 = index[0][0], index[1][0]
+
+                effective_area = context.templates[i1, i2].effective_area_rms
+                time_step = context.settings.time_step.to(u.s)
+                wavelength_bin_widths = context.observatory.instrument_parameters.wavelength_bin_widths
+
+                flux_density[index_output] = (
+                        extraction.spectrum[index_output] / time_step / wavelength_bin_widths / effective_area)
+                flux_density_u[index_output] = (extraction.spectrum_uncertainties[
+                                                    index_output] * u.ph / time_step / wavelength_bin_widths / effective_area)
+
+            context.extractions[index_extraction].spectrum = flux_density
+            context.extractions[index_extraction].spectrum_uncertainties = flux_density_u
         return context

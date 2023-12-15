@@ -4,14 +4,14 @@ from typing import Tuple
 from sygn.core.context import Context
 from sygn.core.modules.base_module import BaseModule
 from sygn.io.fits_writer import FITSWriter
-from sygn.util.helpers import FITSDataType
+from sygn.util.helpers import FITSReadWriteType
 
 
 class FITSWriterModule(BaseModule):
     """Class representation of the FITS writer module.
     """
 
-    def __init__(self, output_path: Path, data_type: Tuple[FITSDataType]):
+    def __init__(self, output_path: Path, data_type: Tuple[FITSReadWriteType]):
         """Constructor method.
 
         :param output_path: Output path of the FITS file

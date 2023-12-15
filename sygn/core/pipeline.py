@@ -10,7 +10,7 @@ from sygn.core.modules.mlm_extraction_module import MLExtractionModule
 from sygn.core.modules.target_loader_module import TargetLoaderModule
 from sygn.core.modules.template_generator_module import TemplateGeneratorModule
 from sygn.util.grid import get_number_of_instances_in_list
-from sygn.util.helpers import FITSDataType
+from sygn.util.helpers import FITSReadWriteType
 
 
 class Pipeline():
@@ -29,13 +29,13 @@ class Pipeline():
         if (get_number_of_instances_in_list(self._modules, FITSReaderModule) > 0
                 and get_number_of_instances_in_list(self._modules, DataGeneratorModule) == 1):
             for module in self._modules:
-                if isinstance(module, FITSReaderModule) and module._data_type == FITSDataType.SyntheticMeasurement:
+                if isinstance(module, FITSReaderModule) and module._data_type == FITSReadWriteType.SyntheticMeasurement:
                     raise TypeError(
                         f'Can not use DataGenerationModule and FITSReaderModule with FITSDataType.SyntheticMeasurements at the same time')
         if (get_number_of_instances_in_list(self._modules, FITSReaderModule) > 0
                 and get_number_of_instances_in_list(self._modules, TemplateGeneratorModule) == 1):
             for module in self._modules:
-                if isinstance(module, FITSReaderModule) and module._data_type == FITSDataType.Template:
+                if isinstance(module, FITSReaderModule) and module._data_type == FITSReadWriteType.Template:
                     raise TypeError(
                         f'Can not use TemplateGeneratorModule and FITSReaderModule with FITSDataType.Template at the same time')
 
@@ -50,8 +50,9 @@ class Pipeline():
                 dependencies_fulfilled = 0
                 # Check if all dependencies of an option are fulfilled
                 for dependency in option:
-                    # Check that if dependency is a FITSDataType, there is a FITSReaderModule or FITSWriterModule with that data type
-                    if isinstance(dependency, FITSDataType):
+                    # Check that if dependency is a FITSDataType, there is a FITSReaderModule or FITSWriterModule with
+                    # that data type
+                    if isinstance(dependency, FITSReadWriteType):
                         for module_2 in self._modules:
                             if isinstance(module_2, FITSReaderModule) and module_2._data_type == dependency:
                                 dependencies_fulfilled += 1
@@ -88,7 +89,7 @@ class Pipeline():
 
         :return: An array containing the data
         """
-        return self._context.data
+        return self._context.signal
 
     def run(self):
         """Run the pipeline by calling the apply method of each module.

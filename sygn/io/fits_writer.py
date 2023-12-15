@@ -1,5 +1,6 @@
 import os
 from datetime import datetime
+from itertools import product
 from pathlib import Path
 
 from astropy.io import fits
@@ -8,7 +9,7 @@ from sygn.core.context import Context
 from sygn.core.entities.photon_sources.exozodi import Exozodi
 from sygn.core.entities.photon_sources.local_zodi import LocalZodi
 from sygn.core.entities.photon_sources.planet import Planet
-from sygn.util.helpers import FITSDataType
+from sygn.util.helpers import FITSReadWriteType
 
 
 class FITSWriter():
@@ -16,8 +17,8 @@ class FITSWriter():
     """
 
     @staticmethod
-    def _get_fits_header(primary: fits.PrimaryHDU, context: Context, data_type: FITSDataType,
-                         index_template: int = None) -> fits.header.Header:
+    def _get_fits_header(primary: fits.PrimaryHDU, context: Context,
+                         data_type: FITSReadWriteType, index_x: int = None, index_y: int = None) -> fits.header.Header:
         """Return the FITS file header containing the information about the simulation and the photon_sources.
 
         :param primary: The primary HDU object
@@ -75,13 +76,13 @@ class FITSWriter():
                 header[f'HIERARCH SYGN_PLANET_{source.name}_RAAN'] = str(source.raan)
                 header[f'HIERARCH SYGN_PLANET_{source.name}_ARGUMENT_OF_PERIAPSIS'] = str(source.argument_of_periapsis)
                 header[f'HIERARCH SYGN_PLANET_{source.name}_TRUE_ANOMALY'] = str(source.true_anomaly)
-            if isinstance(source, Exozodi) and data_type == FITSDataType.SyntheticMeasurement:
+            if isinstance(source, Exozodi) and data_type == FITSReadWriteType.SyntheticMeasurement:
                 header['HIERARCH SYGN_EXOZODI_LEVEL'] = str(source.level)
                 header['HIERARCH SYGN_EXOZODI_INCLINATION'] = str(source.inclination)
-            if isinstance(source, LocalZodi) and data_type == FITSDataType.SyntheticMeasurement:
+            if isinstance(source, LocalZodi) and data_type == FITSReadWriteType.SyntheticMeasurement:
                 header['HIERARCH SYGN_LOCAL_ZODI'] = True
 
-        if data_type == FITSDataType.SyntheticMeasurement:
+        if data_type == FITSReadWriteType.SyntheticMeasurement:
             header['HIERARCH SYGN_STELLAR_LEAKAGE'] = context.settings.noise_contributions.stellar_leakage
             header['HIERARCH SYGN_LOCAL_ZODI_LEAKAGE'] = context.settings.noise_contributions.local_zodi_leakage
             header['HIERARCH SYGN_EXOZODI_LEAKAGE'] = context.settings.noise_contributions.exozodi_leakage
@@ -98,15 +99,13 @@ class FITSWriter():
             header[
                 'HIERARCH SYGN_UNPERTURBED_INSTRUMENT_THROUGHPUT'] = context.observatory.instrument_parameters.unperturbed_instrument_throughput
 
-        # if data_type == FITSDataType.Template:
-        #     for index_output in range(context.observatory.beam_combination_scheme.number_of_differential_outputs):
-        #         header[f'HIERARCH SYGN_EFFECTIVE_AREA_{index_output}'] = str(context.effective_area_rms[index_template][
-        #                                                                          index_output])
-        #     pass
+        if data_type == FITSReadWriteType.Template:
+            header[f'HIERARCH SYGN_INDEX_X'] = index_x
+            header[f'HIERARCH SYGN_INDEX_Y'] = index_y
         return header
 
     @staticmethod
-    def write_fits(output_path: Path, context: Context, data_type: FITSDataType):
+    def write_fits(output_path: Path, context: Context, data_type: FITSReadWriteType):
         """Write the differential photon counts to a FITS file.
 
         :param output_path: The output path of the FITS file
@@ -114,34 +113,37 @@ class FITSWriter():
         :param data_type: The data type to be written to FITS
         """
         primary = fits.PrimaryHDU()
-        if data_type == FITSDataType.SyntheticMeasurement:
+        if data_type == FITSReadWriteType.SyntheticMeasurement:
             header = FITSWriter._get_fits_header(primary, context, data_type)
             hdu_list = []
             hdu_list.append(primary)
-            for data_per_output in context.data:
+            for data_per_output in context.signal:
                 hdu = fits.ImageHDU(data_per_output)
                 hdu_list.append(hdu)
             hdul = fits.HDUList(hdu_list)
             hdul.writeto(output_path.joinpath(f'data_{datetime.now().strftime("%Y%m%d_%H%M%S.%f")}.fits'))
-        elif data_type == FITSDataType.Template:
+        elif data_type == FITSReadWriteType.Template:
             # Create folder
             folder_name = f'templates_{datetime.now().strftime("%Y%m%d_%H%M%S.%f")}'
             os.makedirs(output_path.joinpath(folder_name))
 
-            for index_template, template in enumerate(context.templates):
-                header = FITSWriter._get_fits_header(primary, context, data_type, index_template)
+            for index_x, index_y in product(range(context.settings.grid_size),
+                                            range(context.settings.grid_size)):
+                template = context.templates[index_x, index_y]
+                header = FITSWriter._get_fits_header(primary, context, data_type, index_x, index_y)
                 hdu_list = []
                 hdu_list.append(primary)
                 # Add template data
-                for data_per_output in template:
+                for data_per_output in template.signal:
                     hdu = fits.ImageHDU(data_per_output)
                     hdu_list.append(hdu)
                 # Add effective areas rms
-                for area_per_output in context.effective_area_rms[index_template]:
+                print(template.effective_area_rms)
+                for area_per_output in template.effective_area_rms:
                     # table = Table([np.rec.array(area_per_output)], names=['effective_area_rms'], dtype=['float64'])
                     hdu = fits.BinTableHDU.from_columns(
                         [fits.Column(name='effective_area_rms', array=area_per_output, format='D')])
                     hdu_list.append(hdu)
                 hdul = fits.HDUList(hdu_list)
                 hdul.writeto(output_path.joinpath(folder_name).joinpath(
-                    f'template_{datetime.now().strftime("%Y%m%d_%H%M%S.%f")}_{index_template}.fits'))
+                    f'template_{datetime.now().strftime("%Y%m%d_%H%M%S.%f")}_{index_x}_{index_y}.fits'))

@@ -8,7 +8,8 @@ from sygn.core.modules.config_loader_module import ConfigLoaderModule
 from sygn.core.modules.fits_reader_module import FITSReaderModule
 from sygn.core.modules.target_loader_module import TargetLoaderModule
 from sygn.core.processing.data_generation import DataGenerator, GenerationMode
-from sygn.util.helpers import FITSDataType
+from sygn.core.template import Template
+from sygn.util.helpers import FITSReadWriteType
 
 
 class TemplateGeneratorModule(BaseModule):
@@ -19,9 +20,9 @@ class TemplateGeneratorModule(BaseModule):
         """Constructor method.
         """
         self.dependencies = [(ConfigLoaderModule, TargetLoaderModule),
-                             (ConfigLoaderModule, FITSReaderModule, FITSDataType.SyntheticMeasurement),
-                             (TargetLoaderModule, FITSReaderModule, FITSDataType.SyntheticMeasurement),
-                             (FITSReaderModule, FITSDataType.SyntheticMeasurement)]
+                             (ConfigLoaderModule, FITSReaderModule, FITSReadWriteType.SyntheticMeasurement),
+                             (TargetLoaderModule, FITSReaderModule, FITSReadWriteType.SyntheticMeasurement),
+                             (FITSReaderModule, FITSReadWriteType.SyntheticMeasurement)]
 
     def _unload_noise_contributions(self, context) -> Context:
         """Unload all noise contributions by setting the corresponding values to false, since they should not be
@@ -47,7 +48,9 @@ class TemplateGeneratorModule(BaseModule):
         context.observatory.array_configuration.set_optimal_baseline(context.mission.optimized_wavelength,
                                                                      context.star.habitable_zone_central_angular_radius)
         context_template = self._unload_noise_contributions(context)
-        effective_areas = []
+        # effective_areas = []
+
+        context.templates = np.zeros((context.settings.grid_size, context.settings.grid_size), dtype=object)
 
         for source in context.photon_sources:
             if isinstance(source, Planet):
@@ -66,17 +69,21 @@ class TemplateGeneratorModule(BaseModule):
                         # Run data generator
                         context_template.photon_sources = [source]
                         data_generator = DataGenerator(context_template, GenerationMode.template)
-                        template, effective_area = data_generator.generate_data()
+                        signal, effective_area = data_generator.generate_data()
+                        units = effective_area.unit
 
                         # Normalize each wavelength to unit RMS
-                        normalization = np.sqrt(np.mean(template ** 2, axis=2))
-                        # normalization = np.max(template, axis=2)
-                        template = np.einsum('ijk, ij->ijk', template, 1 / normalization)
+                        normalization = np.sqrt(np.mean(signal ** 2, axis=2))
+                        signal = np.einsum('ijk, ij->ijk', signal, 1 / normalization)
 
-                        context.templates.append(template)
-                        effective_areas.append(effective_area)
+                        template = Template(signal, np.sqrt(np.mean(np.array(effective_area) ** 2, axis=2)) * units,
+                                            index_x, index_y)
+
+                        context.templates[index_x, index_y] = template
+
+                        # effective_areas.append(effective_area)
                 else:
                     raise Exception('Template generation including planet orbital motion is not yet supported')
 
-        context.effective_area_rms = np.sqrt(np.mean(np.array(effective_areas) ** 2, axis=3))
+        # context.effective_area_rms = np.sqrt(np.mean(np.array(effective_areas) ** 2, axis=3))
         return context

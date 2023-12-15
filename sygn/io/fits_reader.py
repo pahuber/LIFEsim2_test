@@ -1,7 +1,7 @@
 from pathlib import Path
+from typing import Tuple
 
 import numpy as np
-from astropy import units as u
 from astropy.io import fits
 
 from sygn.core.context import Context
@@ -95,6 +95,12 @@ class FITSReader():
         return target_dict
 
     @staticmethod
+    def _read_indices_from_fits_header(template_fits_header) -> Tuple:
+        index_x = template_fits_header['SYGN_INDEX_X']
+        index_y = template_fits_header['SYGN_INDEX_Y']
+        return index_x, index_y
+
+    @staticmethod
     def _extract_data(data: np.ndarray) -> np.ndarray:
         """Extract and return the data arrays from the FITS file.
 
@@ -102,7 +108,7 @@ class FITSReader():
         :return: The data arrays
         """
         images = [image for image in data if type(image) == fits.hdu.image.ImageHDU]
-        
+
         data_array = np.zeros(((len(images),) + data[0].shape))
         effective_area_array = np.zeros(data[0].shape[0])
         for index_data in range(len(data)):
@@ -111,13 +117,6 @@ class FITSReader():
             elif type(data[index_data]) == fits.hdu.table.BinTableHDU:
                 effective_area_array = data[index_data].data.field(0)
         return data_array, effective_area_array
-
-    @staticmethod
-    def _extract_effective_area_from_fits_header(template_fits_header, context):
-        effective_area = np.zeros(context.observatory.beam_combination_scheme.number_of_differential_outputs) * u.m ** 2
-        for index_output in range(context.observatory.beam_combination_scheme.number_of_differential_outputs):
-            effective_area[index_output] = u.Quantity(template_fits_header[f'SYGN_EFFECTIVE_AREA_{index_output}'])
-        return effective_area
 
     @staticmethod
     def read_fits(input_path: Path, context: Context) -> tuple:

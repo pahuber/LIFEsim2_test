@@ -2,19 +2,23 @@ import glob
 from pathlib import Path
 from typing import Tuple
 
+import numpy as np
+from astropy import units as u
+
 from sygn.core.context import Context
 from sygn.core.modules.base_module import BaseModule
 from sygn.core.modules.config_loader_module import ConfigLoaderModule
 from sygn.core.modules.target_loader_module import TargetLoaderModule
+from sygn.core.template import Template
 from sygn.io.fits_reader import FITSReader
-from sygn.util.helpers import FITSDataType
+from sygn.util.helpers import FITSReadWriteType
 
 
 class FITSReaderModule(BaseModule):
     """Class representation of the FITS reader module.
     """
 
-    def __init__(self, input_path: Path, data_type: Tuple[FITSDataType]):
+    def __init__(self, input_path: Path, data_type: Tuple[FITSReadWriteType]):
         """Constructor method.
 
         :param input_path: Input path of the FITS file
@@ -37,8 +41,10 @@ class FITSReaderModule(BaseModule):
         :param context: The context object of the pipeline
         :return: The (updated) context object
         """
-        if self._data_type == FITSDataType.SyntheticMeasurement:
-            context.data, data_fits_header, _ = FITSReader.read_fits(self._input_path, context)
+        if self._data_type == FITSReadWriteType.SyntheticMeasurement:
+            context.signal, data_fits_header, _ = FITSReader.read_fits(
+                self._input_path,
+                context)
 
             # Create the configuration entities from the FITS header, if it is not provided through the
             # ConfigLoaderModule
@@ -47,16 +53,19 @@ class FITSReaderModule(BaseModule):
             # TODO: Create the photon source entities from the FITS header, if they are needed, i.e. if there is a
             # TemplateGeneratorModule and they are not provided through the TargetLoaderModule
 
-        elif self._data_type == FITSDataType.Template:
+        elif self._data_type == FITSReadWriteType.Template:
+            context.templates = np.zeros((context.settings.grid_size, context.settings.grid_size), dtype=object)
             fits_files = glob.glob(f"{self._input_path}/*.fits")
+
             for fits_file in fits_files:
-                template, template_fits_header, effective_area = FITSReader.read_fits(fits_file, context)
+                template_signal, template_fits_header, effective_area_rms = FITSReader.read_fits(fits_file, context)
 
                 # Check that template properties match data properties
                 FITSReader._check_template_fits_header(context, template_fits_header)
 
-                # Extract effective areas
-                context.effective_area_rms.append(effective_area)
+                index_x, index_y = FITSReader._read_indices_from_fits_header(template_fits_header)
 
-                context.templates.append(template)
+                context.templates[index_x, index_y] = Template(template_signal, effective_area_rms * u.m ** 2, index_x,
+                                                               index_y)
+
         return context
