@@ -1,6 +1,8 @@
 import numpy as np
 
 from sygn.core.context import Context
+from sygn.core.entities.photon_sources.planet import Planet
+from sygn.core.extraction import Extraction
 from sygn.core.modules.animator_module import AnimatorModule
 from sygn.core.modules.base_module import BaseModule
 from sygn.core.modules.config_loader_module import ConfigLoaderModule
@@ -24,7 +26,7 @@ class Pipeline():
         self._context = Context()
 
     def _check_data_template_generation_reading(self):
-        """Check that there is no combination of DataGenerationModule and TemplateGeneratorModule or FITSReaderModule
+        """Check that there is no combination of DataGenerationModule and TemplateGeneratorModule or FITSReaderModule.
         """
         if (get_number_of_instances_in_list(self._modules, FITSReaderModule) > 0
                 and get_number_of_instances_in_list(self._modules, DataGeneratorModule) == 1):
@@ -84,12 +86,33 @@ class Pipeline():
         self._check_data_template_generation_reading()
         self._check_module_dependencies()
 
-    def get_data(self) -> np.ndarray:
-        """Return the data.
+    def get_signal(self) -> np.ndarray:
+        """Return the signal.
 
-        :return: An array containing the data
+        :return: An array containing the signal
         """
         return self._context.signal
+
+    def get_extractions(self) -> list[Extraction]:
+        """Return the extractions.
+
+        :return: A list containing the extractions
+        """
+        return self._context.extractions
+
+    def get_planets(self) -> list[Planet]:
+        """Return the planets.
+
+        :return: A list containing the planets
+        """
+        return [source for source in self._context.photon_sources if isinstance(source, Planet)]
+
+    def get_wavelengths(self) -> np.ndarray:
+        """Return the wavelengths.
+
+        :return: An array containing the wavelengths
+        """
+        return self._context.observatory.instrument_parameters.wavelength_bin_centers
 
     def run(self):
         """Run the pipeline by calling the apply method of each module.
