@@ -4,6 +4,7 @@ from astropy import units as u
 from sygn.core.context import Context
 from sygn.core.modules.base_module import BaseModule
 from sygn.core.modules.mlm_extraction_module import MLExtractionModule
+from sygn.util.grid import get_indices_of_maximum_of_2d_array
 
 
 class FluxCalibrationModule(BaseModule):
@@ -16,7 +17,8 @@ class FluxCalibrationModule(BaseModule):
         self.dependencies = [(MLExtractionModule,)]
 
     def apply(self, context: Context) -> Context:
-        """Apply the module.
+        """For every extraction in the context, calibrate the flux and convert it from photon counts to spectral flux
+        density by dividing by the time step, wavelength bin widths and effective areas.
 
         :param context: The context object of the pipeline
         :return: The (updated) context object
@@ -24,24 +26,29 @@ class FluxCalibrationModule(BaseModule):
         for index_extraction, extraction in enumerate(context.extractions):
             flux_density = np.zeros(extraction.spectrum.shape) * u.ph / (
                     u.m ** 2 * u.um * u.s)
-            flux_density_u = np.zeros(extraction.spectrum.shape) * u.ph / (
+            flux_density_uncertainty = np.zeros(extraction.spectrum.shape) * u.ph / (
                     u.m ** 2 * u.um * u.s)
 
-            for index_output in range(len(extraction.spectrum)):
-                j = extraction.cost_function[index_output]
-                j_max = np.max(j)
-                index = np.where(j == j_max)
-                i1, i2 = index[0][0], index[1][0]
+            for index_differential_output in range(len(extraction.spectrum)):
+                index_x, index_y = get_indices_of_maximum_of_2d_array(
+                    extraction.cost_function[index_differential_output])
 
-                effective_area = context.templates[i1, i2].effective_area_rms
+                effective_area = context.templates[index_x, index_y].effective_area_rms
                 time_step = context.settings.time_step.to(u.s)
                 wavelength_bin_widths = context.observatory.instrument_parameters.wavelength_bin_widths
 
-                flux_density[index_output] = (
-                        extraction.spectrum[index_output] / time_step / wavelength_bin_widths / effective_area)
-                flux_density_u[index_output] = (extraction.spectrum_uncertainties[
-                                                    index_output] * u.ph / time_step / wavelength_bin_widths / effective_area)
+                flux_density[index_differential_output] = (
+                        extraction.spectrum[index_differential_output]
+                        / time_step
+                        / wavelength_bin_widths
+                        / effective_area)
+
+                flux_density_uncertainty[index_differential_output] = (
+                        extraction.spectrum_uncertainties[index_differential_output] * u.ph
+                        / time_step
+                        / wavelength_bin_widths
+                        / effective_area)
 
             context.extractions[index_extraction].spectrum = flux_density
-            context.extractions[index_extraction].spectrum_uncertainties = flux_density_u
+            context.extractions[index_extraction].spectrum_uncertainties = flux_density_uncertainty
         return context
