@@ -65,13 +65,15 @@ class ArrayConfiguration(ABC, BaseModel):
     @abstractmethod
     def get_collector_positions(self, time: astropy.units.Quantity) -> Coordinates:
         """Return an array containing the time-dependent x- and y-coordinates of the collectors.
+
         :param time: Time variable in seconds
         :return: An array containing the coordinates.
         """
         pass
 
     @abstractmethod
-    def get_optimal_baseline(self, wavelength: astropy.units.Quantity,
+    def get_optimal_baseline(self,
+                             wavelength: astropy.units.Quantity,
                              optimal_angular_distance: astropy.units.Quantity) -> astropy.units.Quantity:
         """Return the optimal baseline for a given wavelength and an angular separation that is to be optimized for
 
@@ -88,6 +90,7 @@ class ArrayConfiguration(ABC, BaseModel):
         baselines.
 
         :param optimized_wavelength: The optimized wavelength
+        :param star_habitable_zone_central_angular_radius: The angular radius of the habitable zone
         """
         optimal_baseline = self.get_optimal_baseline(wavelength=optimized_wavelength,
                                                      optimal_angular_distance=star_habitable_zone_central_angular_radius).to(

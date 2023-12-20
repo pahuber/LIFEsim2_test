@@ -57,7 +57,7 @@ class InstrumentParameters(BaseModel):
         return self.aperture_diameter / 2
 
     @property
-    def fields_of_view(self) -> np.ndarray:
+    def field_of_view(self) -> np.ndarray:
         """Return the fields of view for each wavelength.
 
         :return: An array containing the field of view for each wavelength

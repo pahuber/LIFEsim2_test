@@ -30,6 +30,7 @@ class BeamCombinationScheme(ABC):
     @abstractmethod
     def get_beam_combination_transfer_matrix(self) -> np.ndarray:
         """Return the bea, combination transfer matrix.
+        
         :return: An array representing the bea combination transfer matrix
         """
         pass
