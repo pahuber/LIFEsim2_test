@@ -26,17 +26,19 @@ class DataGeneratorModule(BaseModule):
         """
         self.dependencies = [(ConfigLoaderModule, TargetLoaderModule)]
 
-    def _update_animation_frame(self, time, intensity_responses, pair_of_indices, index_pair, index_photon_source,
-                                source, wavelength, index_time):
-        self.animator.update_collector_position(time, self.observatory)
-        self.animator.update_differential_intensity_response(
-            intensity_responses[pair_of_indices[0]] - intensity_responses[pair_of_indices[1]])
-        self.animator.update_differential_photon_counts(
-            self.output[index_photon_source].differential_photon_counts_by_source[index_pair][
-                source.name][
-                wavelength][
-                index_time], index_time)
-        self.animator.writer.grab_frame()
+    def _create_animation(self, context: Context):
+        """Prepare the animation writer and generate the data.
+        """
+        planet = [source for source in context.photon_sources if
+                  (isinstance(source, Planet) and source.name == context.animator.planet_name)][0]
+
+        context.animator.prepare_animation_writer(context.time_range, context.settings.grid_size, planet)
+
+        with context.animator.writer.saving(context.animator.figure,
+                                            f"animation_{context.animator.planet_name}_{np.round(context.animator.closest_wavelength.to(u.um).value, 3)}um_{datetime.now().strftime('%Y%m%d_%H%M%S.%f')}.gif",
+                                            300):
+            data_generator = DataGenerator(context, GenerationMode.data)
+            return data_generator.generate_data()
 
     def apply(self, context: Context) -> Context:
         """Apply the modules.
@@ -52,17 +54,3 @@ class DataGeneratorModule(BaseModule):
             data_generator = DataGenerator(context, GenerationMode.data)
             context.signal, _ = data_generator.generate_data()
         return context
-
-    def _create_animation(self, context: Context):
-        """Prepare the animation writer and run the time loop.
-        """
-        planet = [source for source in context.photon_sources if
-                  (isinstance(source, Planet) and source.name == context.animator.planet_name)][0]
-        context.animator.prepare_animation_writer(context.time_range,
-                                                  context.settings.grid_size,
-                                                  planet)
-        with context.animator.writer.saving(context.animator.figure,
-                                            f"animation_{context.animator.planet_name}_{np.round(context.animator.closest_wavelength.to(u.um).value, 3)}um_{datetime.now().strftime('%Y%m%d_%H%M%S.%f')}.gif",
-                                            300):
-            data_generator = DataGenerator(context, GenerationMode.data)
-            return data_generator.generate_data()
