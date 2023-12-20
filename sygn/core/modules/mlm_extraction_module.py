@@ -2,7 +2,6 @@ from itertools import product
 
 import numpy as np
 from astropy import units as u
-from matplotlib import pyplot as plt
 
 from sygn.core.context import Context
 from sygn.core.extraction import Extraction
@@ -92,7 +91,7 @@ class MLExtractionModule(BaseModule):
 
             # print(templates[i1, i2, index_output].shape)
             # print(context.data.differential_photon_count_time_series[index_output].shape)
-            photon_time_series = context.signal
+            photon_time_series = np.copy(context.signal)
             # print(extracted_photon_counts.shape)
             # print(templates[i1, i2].shape)
             # print(photon_time_series.shape)
@@ -158,9 +157,9 @@ class MLExtractionModule(BaseModule):
             # circle_pixels = image[mask]
             # print(mask.shape)
             # print(extracted_photon_counts.shape)
-            plt.imshow(cost_function_white[0, :, :] * mask)
-            plt.colorbar()
-            plt.show()
+            # plt.imshow(cost_function_white[0, :, :] * mask)
+            # plt.colorbar()
+            # plt.show()
             a = np.einsum('ijk, ij -> ijk', extracted_spectrum_white[index_output, :, :], mask).reshape(
                 context.settings.grid_size ** 2, -1)
 
