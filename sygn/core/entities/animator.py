@@ -94,7 +94,6 @@ class Animator():
                                               cmap='seismic')
 
         # axins = zoomed_inset_axes(ax1, 14, loc=1)
-
         # image2 = axins.imshow(np.zeros((grid_size, grid_size)),
         #                       vmin=self.image_vmin,
         #                       vmax=self.image_vmax,
@@ -158,10 +157,12 @@ class Animator():
         return image_photon_rates
 
     def prepare_animation_writer(self, time_range: np.ndarray, grid_size: int, planet: Planet):
-        """Prepare the animation writer.
+        """Prepare the animation writer. This includes preparing the individual plots and putting them together into one
+        final image.
 
         :param time_range: The time range
         :param grid_size: The grid size
+        :param planet: The planet object
         """
         self.writer = FFMpegWriter(fps=15)
         self.figure = plt.figure(1)

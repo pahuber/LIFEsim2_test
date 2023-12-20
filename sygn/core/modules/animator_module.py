@@ -29,10 +29,11 @@ class AnimatorModule(BaseModule):
         self.dependencies = [(DataGeneratorModule,)]
 
     def apply(self, context: Context) -> Context:
-        """Apply the modules.
+        """Apply the module.  Get the wavelength of the list of wavelength centers that matches the closest to the
+        wavelength given by the user and initialize the animator object.
 
-        :param context: The contexts object of the pipelines
-        :return: The (updated) contexts object
+        :param context: The context object of the pipeline
+        :return: The (updated) context object
         """
         index_closest_wavelength = get_index_of_closest_value(
             context.observatory.instrument_parameters.wavelength_bin_centers,
