@@ -34,12 +34,15 @@ class AnimatorModule(BaseModule):
         :param context: The contexts object of the pipelines
         :return: The (updated) contexts object
         """
+        index_closest_wavelength = get_index_of_closest_value(
+            context.observatory.instrument_parameters.wavelength_bin_centers,
+            self.wavelength)
         closest_wavelength = context.observatory.instrument_parameters.wavelength_bin_centers[
-            get_index_of_closest_value(context.observatory.instrument_parameters.wavelength_bin_centers,
-                                       self.wavelength)]
+            index_closest_wavelength]
         self.animator = Animator(self.output_path,
                                  self.source_name,
                                  closest_wavelength,
+                                 index_closest_wavelength,
                                  self.differential_intensity_response_index,
                                  self.image_vmin,
                                  self.image_vmax,

@@ -300,9 +300,20 @@ class DataGenerator():
                                                                                                          differential_output_pair[
                                                                                                              1]]
 
-                #     if self.animator and (
-                #             source.name == self.animator.source_name and
-                #             wavelength == self.animator.closest_wavelength and
-                #             index_pair == self.animator.differential_intensity_response_index):
-                #         self._update_animation_frame()
+                    if self._context.animator and (
+                            source.name == self._context.animator.planet_name and
+                            wavelength == self._context.animator.closest_wavelength and
+                            index_pair == self._context.animator.differential_intensity_response_index):
+                        self._update_animation_frame(time, intensity_responses, differential_output_pair, index_pair,
+                                                     index_wavelength, source, wavelength, index_time)
         return self.differential_photon_counts, self.differential_effective_area
+
+    def _update_animation_frame(self, time, intensity_responses, pair_of_indices, index_pair, index_wavelength,
+                                source, wavelength, index_time):
+        self._context.animator.update_collector_position(time, self._context.observatory)
+        self._context.animator.update_differential_intensity_response(
+            intensity_responses[pair_of_indices[0]] - intensity_responses[pair_of_indices[1]])
+        self._context.animator.update_differential_photon_counts(
+            self.differential_photon_counts[index_pair][index_wavelength][
+                index_time], index_time)
+        self._context.animator.writer.grab_frame()
