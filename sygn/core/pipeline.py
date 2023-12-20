@@ -26,7 +26,8 @@ class Pipeline():
         self._context = Context()
 
     def _check_data_template_generation_reading(self):
-        """Check that there is no combination of DataGenerationModule and TemplateGeneratorModule or FITSReaderModule.
+        """Check that there is no combination of the DataGenerationModule or the TemplateGeneratorModule with the
+        FITSReaderModule.
         """
         if (get_number_of_instances_in_list(self._modules, FITSReaderModule) > 0
                 and get_number_of_instances_in_list(self._modules, DataGeneratorModule) == 1):
@@ -84,6 +85,7 @@ class Pipeline():
         """
         self._check_number_of_modules()
         self._check_data_template_generation_reading()
+        self._check_fits_reader_config_loader()
         self._check_module_dependencies()
 
     def get_signal(self) -> np.ndarray:
@@ -127,3 +129,16 @@ class Pipeline():
         :param module: The modules to be added
         """
         self._modules.append(module)
+
+    def _check_fits_reader_config_loader(self):
+        """Check that there is no combination of the ConfigLoaderModule and TargetLoaderModule with the
+        FITSReaderModule with data type synthetic measurement, as the FITSReaderModule would overwrite the
+        configurations from the other modules.
+        """
+        if (get_number_of_instances_in_list(self._modules, FITSReaderModule) > 0
+                and (get_number_of_instances_in_list(self._modules, ConfigLoaderModule) == 1) or (
+                        get_number_of_instances_in_list(self._modules, TargetLoaderModule) == 1)):
+            for module in self._modules:
+                if isinstance(module, FITSReaderModule) and module._data_type == FITSReadWriteType.SyntheticMeasurement:
+                    raise TypeError(
+                        f'Can not use ConfigLoaderModule or TargetLoaderModule together with FITSReaderModule with FITSDataType.SyntheticMeasurements, as the latter would overwrite the former')
