@@ -29,14 +29,21 @@ class FITSReaderModule(BaseModule):
         self.dependencies = []
 
     def _create_entities_from_fits_header(self, context, data_fits_header) -> Context:
+        """Create dictionaries from the FITS header and load the entities from the dictionaries.
+
+        :param context: The context object
+        :param data_fits_header: The FITS header of the data
+        :return: The context object
+        """
         config_dict = FITSReader._create_config_dict_from_fits_header(data_fits_header)
-        context = ConfigLoaderModule(path_to_config_file=None, config_dict=config_dict).apply(context)
         target_dict = FITSReader._create_target_dict_from_fits_header(data_fits_header)
+        context = ConfigLoaderModule(path_to_config_file=None, config_dict=config_dict).apply(context)
         context = TargetLoaderModule(path_to_context_file=None, config_dict=target_dict).apply(context)
         return context
 
     def apply(self, context: Context) -> Context:
-        """Read the FITS file and load the settings, mission, observatory and photon sources.
+        """Read the FITS file(s) and load the (template) signals. If the file corresponds to a synthetic measurement,
+        load the settings, mission, observatory and photon sources.
 
         :param context: The context object of the pipeline
         :return: The (updated) context object
@@ -45,13 +52,7 @@ class FITSReaderModule(BaseModule):
             context.signal, data_fits_header, _ = FITSReader.read_fits(
                 self._input_path,
                 context)
-
-            # Create the configuration entities from the FITS header, if it is not provided through the
-            # ConfigLoaderModule
             context = self._create_entities_from_fits_header(context, data_fits_header)
-
-            # TODO: Create the photon source entities from the FITS header, if they are needed, i.e. if there is a
-            # TemplateGeneratorModule and they are not provided through the TargetLoaderModule
 
         elif self._data_type == FITSReadWriteType.Template:
             context.templates = np.zeros((context.settings.grid_size, context.settings.grid_size), dtype=object)
