@@ -12,56 +12,65 @@ from sygn.util.helpers import Coordinates
 
 
 class Exozodi(PhotonSource):
-    """Class representation of a exozodi.
+    """Class representation of an exozodi.
     """
     level: float
     inclination: Any
     star_distance: Any
     star_luminosity: Any
-    maximum_stellar_separations_radial_maps: Any = None
+    field_of_view_in_au_radial_maps: Any = None
 
     def _calculate_sky_coordinates(self, context: Context) -> np.ndarray:
-        sky_coordinates = np.zeros(len(context.observatory.instrument_parameters.fields_of_view), dtype=object)
-        for index_fov in range(len(context.observatory.instrument_parameters.fields_of_view)):
+        sky_coordinates = np.zeros(len(context.observatory.instrument_parameters.field_of_view), dtype=object)
+
+        # The sky coordinates have a different extent for each field of view, i.e. for each wavelength
+        for index_fov in range(len(context.observatory.instrument_parameters.field_of_view)):
             sky_coordinates_at_fov = get_meshgrid(
-                context.observatory.instrument_parameters.fields_of_view[index_fov].to(u.rad),
+                context.observatory.instrument_parameters.field_of_view[index_fov].to(u.rad),
                 context.settings.grid_size)
             sky_coordinates[index_fov] = Coordinates(sky_coordinates_at_fov[0], sky_coordinates_at_fov[1])
         return sky_coordinates
 
     def _calculate_sky_brightness_distribution(self, context: Context) -> np.ndarray:
+        # The sky brightness distribution is calculated as in Dannert et al., 2022
         reference_radius = np.sqrt(self.star_luminosity.to(u.Lsun)).value * u.au
         surface_maps = self.level * 7.12e-8 * (
-                self.maximum_stellar_separations_radial_maps / reference_radius) ** (-0.34)
+                self.field_of_view_in_au_radial_maps / reference_radius) ** (-0.34)
         return surface_maps * self.mean_spectral_flux_density
 
     def _calculate_mean_spectral_flux_density(self, context: Context) -> np.ndarray:
-        maximum_stellar_separations_within_fov = (
-                context.observatory.instrument_parameters.fields_of_view / u.rad * self.star_distance).to(u.au)
+        # TODO: Fix calculation
+        # Calculate the fields of view in AU from the angular fields of view
+        fields_of_view_in_au = (
+                context.observatory.instrument_parameters.field_of_view / u.rad * self.star_distance).to(u.au)
+
+        # Initialize empty maps
         temperature_map = np.zeros(
-            (len(maximum_stellar_separations_within_fov), context.settings.grid_size, context.settings.grid_size)) * u.K
-        self.maximum_stellar_separations_radial_maps = np.zeros(
+            (len(fields_of_view_in_au), context.settings.grid_size, context.settings.grid_size)) * u.K
+        self.field_of_view_in_au_radial_maps = np.zeros(
             (
-                len(maximum_stellar_separations_within_fov), context.settings.grid_size,
+                len(fields_of_view_in_au), context.settings.grid_size,
                 context.settings.grid_size)) * u.au
         mean_spectral_flux_density = np.zeros(temperature_map.shape) * u.ph / (u.m ** 2 * u.um * u.s)
 
-        for index_separation, stellar_separation in enumerate(tqdm(maximum_stellar_separations_within_fov)):
-            self.maximum_stellar_separations_radial_maps[index_separation] = get_radial_map(stellar_separation,
-                                                                                            context.settings.grid_size)
-            temperature_map[index_separation] = self._get_exozodi_temperature(
-                self.maximum_stellar_separations_radial_maps[index_separation])
+        # For each field of view, i.e. each wavelength, calculate the temperature profile and the mean spectral flux
+        # density
+        for index_fov, field_of_view in enumerate(tqdm(fields_of_view_in_au)):
+            self.field_of_view_in_au_radial_maps[index_fov] = get_radial_map(field_of_view,
+                                                                             context.settings.grid_size)
+            temperature_map[index_fov] = self._get_exozodi_temperature(
+                self.field_of_view_in_au_radial_maps[index_fov])
 
             for index_x in range(context.settings.grid_size):
                 for index_y in range(context.settings.grid_size):
-                    mean_spectral_flux_density[index_separation][index_x][index_y] = (create_blackbody_spectrum(
-                        temperature_map[index_separation][index_x][index_y],
+                    mean_spectral_flux_density[index_fov][index_x][index_y] = (create_blackbody_spectrum(
+                        temperature_map[index_fov][index_x][index_y],
                         context.observatory.instrument_parameters.wavelength_range_lower_limit,
                         context.observatory.instrument_parameters.wavelength_range_upper_limit,
                         context.observatory.instrument_parameters.wavelength_bin_centers,
                         context.observatory.instrument_parameters.wavelength_bin_widths,
-                        context.observatory.instrument_parameters.fields_of_view ** 2
-                    )[index_separation])
+                        context.observatory.instrument_parameters.field_of_view ** 2
+                    )[index_fov])
         return mean_spectral_flux_density.reshape((-1, context.settings.grid_size, context.settings.grid_size))
 
     def _get_exozodi_temperature(self, maximum_stellar_separations_radial_map) -> np.ndarray:
@@ -71,9 +80,8 @@ class Exozodi(PhotonSource):
         separations
         :return: The temperature distribution map
         """
-        a = (278.3 * self.star_luminosity.to(u.Lsun) ** 0.25 * maximum_stellar_separations_radial_map ** (
+        return (278.3 * self.star_luminosity.to(u.Lsun) ** 0.25 * maximum_stellar_separations_radial_map ** (
             -0.5)).value * u.K
-        return a
 
     def get_sky_coordinates(self, index_time: int, index_wavelength: int) -> Coordinates:
         return self.sky_coordinates[index_wavelength]

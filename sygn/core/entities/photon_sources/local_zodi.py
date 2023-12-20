@@ -19,7 +19,7 @@ class LocalZodi(PhotonSource):
     star_declination: Any
 
     def _get_ecliptic_coordinates(self) -> Tuple:
-        """Return the ecliptic latitude and relative ecliptic longitude.
+        """Return the ecliptic latitude and relative ecliptic longitude that correspond to the star position in the sky.
 
         :return: Tuple containing the two coordinates
         """
@@ -27,14 +27,16 @@ class LocalZodi(PhotonSource):
         coordinates_ecliptic = coordinates.transform_to(GeocentricTrueEcliptic)
         ecliptic_latitude = coordinates_ecliptic.lat.to(u.deg)
         ecliptic_longitude = coordinates_ecliptic.lon.to(u.deg)
+        # TODO: Fix relative ecliptic longitude with current sun position
         relative_ecliptic_longitude = ecliptic_longitude - 0 * u.deg
         return ecliptic_latitude, relative_ecliptic_longitude
 
     def _calculate_sky_coordinates(self, context: Context) -> Coordinates:
-        sky_coordinates = np.zeros(len(context.observatory.instrument_parameters.fields_of_view), dtype=object)
-        for index_fov in range(len(context.observatory.instrument_parameters.fields_of_view)):
+        sky_coordinates = np.zeros(len(context.observatory.instrument_parameters.field_of_view), dtype=object)
+        # The sky coordinates have a different extent for each field of view, i.e. for each wavelength
+        for index_fov in range(len(context.observatory.instrument_parameters.field_of_view)):
             sky_coordinates_at_fov = get_meshgrid(
-                context.observatory.instrument_parameters.fields_of_view[index_fov].to(u.rad),
+                context.observatory.instrument_parameters.field_of_view[index_fov].to(u.rad),
                 context.settings.grid_size)
             sky_coordinates[index_fov] = Coordinates(sky_coordinates_at_fov[0], sky_coordinates_at_fov[1])
         return sky_coordinates
@@ -44,6 +46,7 @@ class LocalZodi(PhotonSource):
         return np.einsum('i, jk ->ijk', self.mean_spectral_flux_density, grid)
 
     def _calculate_mean_spectral_flux_density(self, context: Context) -> np.ndarray:
+        # The local zodi mean spectral flux density is calculated as described in Dannert et al. 2022
         variable_tau = 4e-8
         variable_a = 0.22
         ecliptic_latitude, relative_ecliptic_longitude = self._get_ecliptic_coordinates()
@@ -54,14 +57,14 @@ class LocalZodi(PhotonSource):
                                              context.observatory.instrument_parameters.wavelength_range_upper_limit,
                                              context.observatory.instrument_parameters.wavelength_bin_centers,
                                              context.observatory.instrument_parameters.wavelength_bin_widths,
-                                             context.observatory.instrument_parameters.fields_of_view ** 2)
+                                             context.observatory.instrument_parameters.field_of_view ** 2)
                    + variable_a
                    * create_blackbody_spectrum(5778 * u.K,
                                                context.observatory.instrument_parameters.wavelength_range_lower_limit,
                                                context.observatory.instrument_parameters.wavelength_range_upper_limit,
                                                context.observatory.instrument_parameters.wavelength_bin_centers,
                                                context.observatory.instrument_parameters.wavelength_bin_widths,
-                                               context.observatory.instrument_parameters.fields_of_view ** 2)
+                                               context.observatory.instrument_parameters.field_of_view ** 2)
                    * ((1 * u.Rsun).to(u.au) / (1.5 * u.au)) ** 2)
                 * (
                         (np.pi / np.arccos(

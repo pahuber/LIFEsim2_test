@@ -34,7 +34,6 @@ class Planet(PhotonSource):
     star_mass: Any
     number_of_wavelength_bins: int = None
     grid_size: int = None
-    # mean_spectral_flux_density: Any = None
     position_x: Any = None
     position_y: Any = None
     angular_separation_from_star_x: Any = None
@@ -162,29 +161,23 @@ class Planet(PhotonSource):
         return (angular_separation_from_star_x, angular_separation_from_star_y)
 
     def _calculate_sky_coordinates(self, context: Context) -> np.ndarray:
-        """Calculate and return the sky coordinates of the source. Add 40% to the angular radius to account for rounding
-        issues and make sure the source is fully covered within the map.
+        """Calculate and return the sky coordinates of the planet. Choose the maximum extent of the sky coordinates such
+        that a circle with the radius of the planet's separation lies well (i.e. + 2x 20%) within the map. The construction
+        of such a circle will be important to estimate the noise during signal extraction.
 
         :param context: Context
         :return: The sky coordinates
         """
-        # TODO: check that planet position is such that always a circular ring can be constructed for the cost function
         sky_coordinates = np.zeros((len(context.time_range_planet_motion)), dtype=object)
 
+        # If planet motion is being considered, then the sky coordinates may change with eah time step
         for index_time, time in enumerate(context.time_range_planet_motion):
             self.angular_separation_from_star_x, self.angular_separation_from_star_y = self._get_x_y_angular_separation_from_star(
                 time, context.settings.planet_orbital_motion)
-
-            # Depending on whether the x- or y-angular separation of planet is larger, the respective value is taken as
-            # the maximum extent of the grid
-            if np.abs(self.angular_separation_from_star_x) >= np.abs(self.angular_separation_from_star_y):
-                sky_coordinates_at_time_step = get_meshgrid(2 * (1.2 * np.abs(self.angular_separation_from_star_x)),
-                                                            context.settings.grid_size)
-            else:
-                sky_coordinates_at_time_step = get_meshgrid(2 * (1.2 * np.abs(self.angular_separation_from_star_y)),
-                                                            context.settings.grid_size)
+            angular_radius = np.sqrt(
+                self.angular_separation_from_star_x ** 2 + self.angular_separation_from_star_y ** 2)
+            sky_coordinates_at_time_step = get_meshgrid(2 * (1.2 * angular_radius), context.settings.grid_size)
             sky_coordinates[index_time] = Coordinates(sky_coordinates_at_time_step[0], sky_coordinates_at_time_step[1])
-
         return sky_coordinates
 
     def _calculate_sky_brightness_distribution(self, context: Context) -> np.ndarray:

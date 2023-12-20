@@ -51,11 +51,16 @@ def _convert_blackbody_units(blackbody_spectrum_binned: np.ndarray,
     for index in range(len(blackbody_spectrum_binned)):
         if source_solid_angle.size == 1:
             solid_angle = source_solid_angle
+
+        # The solid angle can also be an array of values corresponding to the field of view at different wavelengths.
+        # This is used e.g. for the local zodi
         else:
             solid_angle = source_solid_angle[index]
+
         current_spectral_flux_density = (blackbody_spectrum_binned[index] * (solid_angle).to(u.sr)).to(
             u.ph / u.m ** 2 / u.s / u.um,
             equivalencies=u.spectral_density(
                 wavelength_bin_centers[index]))
+
         spectral_flux_density[index] = current_spectral_flux_density
     return spectral_flux_density
