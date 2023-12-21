@@ -6,8 +6,10 @@ from astropy import units as u
 from pydantic import field_validator
 from pydantic_core.core_schema import ValidationInfo
 
+from sygn.core.context import Context
 from sygn.core.entities.photon_sources.photon_source import PhotonSource
 from sygn.io.validators import validate_quantity_units
+from sygn.util.blackbody import create_blackbody_spectrum
 from sygn.util.grid import get_meshgrid
 from sygn.util.helpers import Coordinates
 
@@ -23,23 +25,6 @@ class Star(PhotonSource):
     luminosity: Any
     right_ascension: Any
     declination: Any
-    wavelength_range_lower_limit: Any = None
-    wavelength_range_upper_limit: Any = None
-    wavelength_bin_centers: Any = None
-    wavelength_bin_widths: Any = None
-
-    # def __init__(self, **data):
-    #     """Constructor method.
-    #
-    #     :param data: Data to initialize the star class.
-    #     """
-    #     super().__init__(**data)
-    #     self.mean_spectral_flux_density = create_blackbody_spectrum(self.temperature,
-    #                                                                 self.wavelength_range_lower_limit,
-    #                                                                 self.wavelength_range_upper_limit,
-    #                                                                 self.wavelength_bin_centers,
-    #                                                                 self.wavelength_bin_widths,
-    #                                                                 self.solid_angle)
 
     @field_validator('distance')
     def _validate_distance(cls, value: Any, info: ValidationInfo) -> astropy.units.Quantity:
@@ -138,26 +123,40 @@ class Star(PhotonSource):
         """
         return np.pi * (self.radius.to(u.m) / (self.distance.to(u.m)) * u.rad) ** 2
 
-    def get_sky_coordinates(self, time: astropy.units.Quantity, grid_size: int) -> Coordinates:
+    def _calculate_sky_coordinates(self, context: Context) -> Coordinates:
         """Return the sky coordinate maps of the source. The intensity responses are calculated in a resolution that
         allows the source to fill the grid, thus, each source needs to define its own sky coordinate map. Add 10% to the
         angular radius to account for rounding issues and make sure the source is fully covered within the map.
 
         :param time: The time
+        :param grid_size: The grid size
         :return: A tuple containing the x- and y-sky coordinate maps
         """
-        sky_coordinates = get_meshgrid(2 * (1.05 * self.angular_radius), grid_size)
-        return np.repeat(sky_coordinates[None, :], len(time), axis=0)
+        sky_coordinates = get_meshgrid(2 * (1.05 * self.angular_radius), context.settings.grid_size)
+        return Coordinates(sky_coordinates[0], sky_coordinates[1])
 
-    def get_sky_brightness_distribution_map(self, time: astropy.units.Quantity,
-                                            sky_coordinates: np.ndarray) -> np.ndarray:
-        position_map = np.zeros(
-            ((len(time),) + (len(self.mean_spectral_flux_density),) + sky_coordinates[0, 0, :, :].shape)) * \
-                       self.mean_spectral_flux_density[0].unit
-        radius_map = (
-                np.sqrt(sky_coordinates[0, 0, :, :] ** 2 + sky_coordinates[0, 1, :, :] ** 2) <= self.angular_radius)
+    def _calculate_sky_brightness_distribution(self, context: Context) -> np.ndarray:
+        sky_brightness_distribution = np.zeros(
+            ((len(self.mean_spectral_flux_density),) + self.sky_coordinates.x.shape)) * \
+                                      self.mean_spectral_flux_density[0].unit
+        radius_map = (np.sqrt(self.sky_coordinates.x ** 2 + self.sky_coordinates.y ** 2) <= self.angular_radius)
 
         for index_wavelength in range(len(self.mean_spectral_flux_density)):
-            position_map[:, index_wavelength, :, :] = radius_map * self.mean_spectral_flux_density[index_wavelength]
+            sky_brightness_distribution[index_wavelength] = radius_map * self.mean_spectral_flux_density[
+                index_wavelength]
 
-        return position_map
+        return sky_brightness_distribution
+
+    def _calculate_mean_spectral_flux_density(self, context: Context) -> np.ndarray:
+        return create_blackbody_spectrum(self.temperature,
+                                         context.observatory.instrument_parameters.wavelength_range_lower_limit,
+                                         context.observatory.instrument_parameters.wavelength_range_upper_limit,
+                                         context.observatory.instrument_parameters.wavelength_bin_centers,
+                                         context.observatory.instrument_parameters.wavelength_bin_widths,
+                                         self.solid_angle)
+
+    def get_sky_coordinates(self, index_time: int, index_wavelength: int) -> Coordinates:
+        return self.sky_coordinates
+
+    def get_sky_brightness_distribution(self, index_time: int, index_wavelength: int) -> np.ndarray:
+        return self.sky_brightness_distribution[index_wavelength]

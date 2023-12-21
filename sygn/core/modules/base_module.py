@@ -6,6 +6,7 @@ from sygn.core.context import Context
 class BaseModule(ABC):
     """Class representation of the base module.
     """
+    dependencies: list
 
     @abstractmethod
     def apply(self, context: Context) -> Context:

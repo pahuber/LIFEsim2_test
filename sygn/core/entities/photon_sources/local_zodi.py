@@ -1,9 +1,12 @@
-from typing import Any
+from typing import Any, Tuple
 
-import astropy
 import numpy as np
+from astropy import units as u
+from astropy.coordinates import SkyCoord, GeocentricTrueEcliptic
 
+from sygn.core.context import Context
 from sygn.core.entities.photon_sources.photon_source import PhotonSource
+from sygn.util.blackbody import create_blackbody_spectrum
 from sygn.util.grid import get_meshgrid
 from sygn.util.helpers import Coordinates
 
@@ -11,27 +14,69 @@ from sygn.util.helpers import Coordinates
 class LocalZodi(PhotonSource):
     """Class representation of a local zodi.
     """
+
     star_right_ascension: Any
     star_declination: Any
 
-    def get_sky_coordinates(self, time: astropy.units.Quantity) -> Coordinates:
-        """Return the sky coordinate maps of the source. The intensity responses are calculated in a resolution that
-        allows the source to fill the grid, thus, each source needs to define its own sky coordinate map. Add 10% to the
-        angular radius to account for rounding issues and make sure the source is fully covered within the map.
+    def _get_ecliptic_coordinates(self) -> Tuple:
+        """Return the ecliptic latitude and relative ecliptic longitude that correspond to the star position in the sky.
 
-        :param time: The time
-        :return: A tuple containing the x- and y-sky coordinate maps
+        :return: Tuple containing the two coordinates
         """
-        return get_meshgrid(2 * (1.05 * self.angular_radius), self.grid_size)
+        coordinates = SkyCoord(ra=self.star_right_ascension, dec=self.star_declination, frame='icrs')
+        coordinates_ecliptic = coordinates.transform_to(GeocentricTrueEcliptic)
+        ecliptic_latitude = coordinates_ecliptic.lat.to(u.deg)
+        ecliptic_longitude = coordinates_ecliptic.lon.to(u.deg)
+        # TODO: Fix relative ecliptic longitude with current sun position
+        relative_ecliptic_longitude = ecliptic_longitude - 0 * u.deg
+        return ecliptic_latitude, relative_ecliptic_longitude
 
-    def get_sky_brightness_distribution_map(self, time: astropy.units.Quantity) -> np.ndarray:
-        sky_coordinate_maps = self.get_sky_coordinates(time)
-        position_map = np.zeros(((len(self.mean_spectral_flux_density),) + sky_coordinate_maps[0].shape)) * \
-                       self.mean_spectral_flux_density[0].unit
-        radius_map = (np.sqrt(sky_coordinate_maps[0] ** 2 + sky_coordinate_maps[
-            1] ** 2) <= self.angular_radius)
+    def _calculate_sky_coordinates(self, context: Context) -> Coordinates:
+        sky_coordinates = np.zeros(len(context.observatory.instrument_parameters.field_of_view), dtype=object)
+        # The sky coordinates have a different extent for each field of view, i.e. for each wavelength
+        for index_fov in range(len(context.observatory.instrument_parameters.field_of_view)):
+            sky_coordinates_at_fov = get_meshgrid(
+                context.observatory.instrument_parameters.field_of_view[index_fov].to(u.rad),
+                context.settings.grid_size)
+            sky_coordinates[index_fov] = Coordinates(sky_coordinates_at_fov[0], sky_coordinates_at_fov[1])
+        return sky_coordinates
 
-        for index_wavelength in range(len(self.mean_spectral_flux_density)):
-            position_map[index_wavelength] = radius_map * self.mean_spectral_flux_density[index_wavelength]
+    def _calculate_sky_brightness_distribution(self, context: Context) -> np.ndarray:
+        grid = np.ones((context.settings.grid_size, context.settings.grid_size))
+        return np.einsum('i, jk ->ijk', self.mean_spectral_flux_density, grid)
 
-        return position_map
+    def _calculate_mean_spectral_flux_density(self, context: Context) -> np.ndarray:
+        # The local zodi mean spectral flux density is calculated as described in Dannert et al. 2022
+        variable_tau = 4e-8
+        variable_a = 0.22
+        ecliptic_latitude, relative_ecliptic_longitude = self._get_ecliptic_coordinates()
+        mean_spectral_flux_density = (
+                variable_tau
+                * (create_blackbody_spectrum(265 * u.K,
+                                             context.observatory.instrument_parameters.wavelength_range_lower_limit,
+                                             context.observatory.instrument_parameters.wavelength_range_upper_limit,
+                                             context.observatory.instrument_parameters.wavelength_bin_centers,
+                                             context.observatory.instrument_parameters.wavelength_bin_widths,
+                                             context.observatory.instrument_parameters.field_of_view ** 2)
+                   + variable_a
+                   * create_blackbody_spectrum(5778 * u.K,
+                                               context.observatory.instrument_parameters.wavelength_range_lower_limit,
+                                               context.observatory.instrument_parameters.wavelength_range_upper_limit,
+                                               context.observatory.instrument_parameters.wavelength_bin_centers,
+                                               context.observatory.instrument_parameters.wavelength_bin_widths,
+                                               context.observatory.instrument_parameters.field_of_view ** 2)
+                   * ((1 * u.Rsun).to(u.au) / (1.5 * u.au)) ** 2)
+                * (
+                        (np.pi / np.arccos(
+                            np.cos(relative_ecliptic_longitude) * np.cos(ecliptic_latitude))) / (
+                                np.sin(ecliptic_latitude) ** 2 + 0.6 * (
+                                context.observatory.instrument_parameters.wavelength_bin_centers / (
+                                11 * u.um)) ** (
+                                    -0.4) * np.cos(ecliptic_latitude) ** 2)) ** 0.5)
+        return mean_spectral_flux_density
+
+    def get_sky_coordinates(self, index_time: int, index_wavelength: int) -> Coordinates:
+        return self.sky_coordinates[index_wavelength]
+
+    def get_sky_brightness_distribution(self, index_time: int, index_wavelength: int) -> np.ndarray:
+        return self.sky_brightness_distribution[index_wavelength]

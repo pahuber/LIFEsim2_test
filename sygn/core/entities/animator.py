@@ -4,9 +4,9 @@ import numpy as np
 from astropy import units as u
 from matplotlib import pyplot as plt
 from matplotlib.animation import FFMpegWriter
-from mpl_toolkits.axes_grid1.inset_locator import zoomed_inset_axes, mark_inset
 
 from sygn.core.entities.observatory.observatory import Observatory
+from sygn.core.entities.photon_sources.planet import Planet
 
 
 class Animator():
@@ -15,8 +15,9 @@ class Animator():
 
     def __init__(self,
                  output_path: str,
-                 source_name: str,
+                 planet_name: str,
                  closest_wavelength: astropy.units.Quantity,
+                 index_closest_wavelength: int,
                  differential_intensity_response_index: int,
                  image_vmin: float,
                  image_vmax: float,
@@ -27,6 +28,7 @@ class Animator():
         :param output_path: Output path for the animation file
         :param source_name: Name of the source for which the animation should be made
         :param wavelength: Wavelength at which the animation should be made
+        :param index_closest_wavelength: Index of the closest wavelength
         :param differential_intensity_response_index: Index specifying which of the differential outputs to animate
         :param image_vmin: Minimum value of the colormap
         :param image_vmax: Maximum value of the colormap
@@ -34,8 +36,9 @@ class Animator():
         :param collector_position_limits: Limits of the collector position plot
         """
         self.output_path = output_path
-        self.source_name = source_name
+        self.planet_name = planet_name
         self.closest_wavelength = closest_wavelength
+        self.index_closest_wavelength = index_closest_wavelength
         self.differential_intensity_response_index = differential_intensity_response_index
         self.image_vmin = image_vmin
         self.image_vmax = image_vmax
@@ -76,12 +79,11 @@ class Animator():
 
     def _prepare_differential_intensity_response_plot(self,
                                                       gs: matplotlib.gridspec.GridSpec,
-                                                      target_system: dict,
-                                                      grid_size: int) -> matplotlib.image.AxesImage:
+                                                      grid_size: int,
+                                                      planet: Planet) -> matplotlib.image.AxesImage:
         """Prepare the plot for the differential intensity response.
 
         :param gs: The GridSpec object
-        :param target_systems: The target systems
         :param grid_size: The grid size
         :return: The image
         """
@@ -91,19 +93,22 @@ class Animator():
                                               vmax=self.image_vmax,
                                               cmap='seismic')
 
-        axins = zoomed_inset_axes(ax1, 14, loc=1)
+        # axins = zoomed_inset_axes(ax1, 14, loc=1)
+        # image2 = axins.imshow(np.zeros((grid_size, grid_size)),
+        #                       vmin=self.image_vmin,
+        #                       vmax=self.image_vmax,
+        #                       cmap='seismic')
 
-        image2 = axins.imshow(np.zeros((grid_size, grid_size)),
-                              vmin=self.image_vmin,
-                              vmax=self.image_vmax,
-                              cmap='seismic')
+        # Get the maximum coordinate of the planet for labeling the plots
+        max_coordinate = int(np.max(planet.get_sky_coordinates(0, self.index_closest_wavelength).x).value * 1000)
+        if int(np.max(planet.get_sky_coordinates(0, self.index_closest_wavelength).y).value * 1000) > max_coordinate:
+            max_coordinate = int(np.max(planet.get_sky_coordinates(0, self.index_closest_wavelength).y).value * 1000)
 
-        max = int(np.max(target_system[self.source_name].get_sky_coordinates(0 * u.s)[0][0, :]).value * 1000)
-        labels = np.linspace(-max, max, grid_size // 10 + 1)
+        labels = np.linspace(-max_coordinate, max_coordinate, grid_size // 10 + 1)
         ticks = np.linspace(0, grid_size, grid_size // 10 + 1)
         source_position_coordinate = (
-                target_system[self.source_name].get_sky_brightness_distribution_map(0 * u.s) *
-                target_system[self.source_name].get_sky_coordinates(0 * u.s)[0])
+                planet.get_sky_brightness_distribution(0, self.index_closest_wavelength) *
+                planet.get_sky_coordinates(0, self.index_closest_wavelength).x)
         y_index, x_index = np.nonzero(source_position_coordinate)
         x_index = x_index[0]
         y_index = y_index[0]
@@ -116,15 +121,15 @@ class Animator():
         ax1.set_yticks(ticks=ticks, labels=labels)
         ax1.tick_params(axis='both', which='major', labelsize=6)
         ax1.tick_params(axis='x', rotation=45)
-        axins.set_xlim(x_index - 0.5, x_index + 0.5)
-        axins.set_ylim(y_index - 0.5, y_index + 0.5)
-        axins.set_xticklabels([])
-        axins.set_yticklabels([])
+        # axins.set_xlim(x_index - 0.5, x_index + 0.5)
+        # axins.set_ylim(y_index - 0.5, y_index + 0.5)
+        # axins.set_xticklabels([])
+        # axins.set_yticklabels([])
         cb.ax.tick_params(labelsize=6)
         cb.set_label('Diff. Intensity Response (m$^2$)')
-        mark_inset(ax1, axins, loc1=4, loc2=3, fc="none", ec="black")
+        # mark_inset(ax1, axins, loc1=4, loc2=3, fc="none", ec="black")
 
-        return image_intensity_response, image2
+        return image_intensity_response, None  # image2
 
     def _prepare_photon_counts_plot(self, gs: matplotlib.gridspec.GridSpec,
                                     time_range: np.ndarray) -> matplotlib.image.AxesImage:
@@ -151,19 +156,19 @@ class Animator():
 
         return image_photon_rates
 
-    def prepare_animation_writer(self, target_system: dict, time_range: np.ndarray, grid_size: int):
-        """Prepare the animation writer.
+    def prepare_animation_writer(self, time_range: np.ndarray, grid_size: int, planet: Planet):
+        """Prepare the animation writer. This includes preparing the individual plots and putting them together into one
+        final image.
 
-        :param target_systems: The target systems
         :param time_range: The time range
         :param grid_size: The grid size
+        :param planet: The planet object
         """
         self.writer = FFMpegWriter(fps=15)
         self.figure = plt.figure(1)
         gs = self.figure.add_gridspec(2, 2)
 
-        image_intensity_response, image2 = self._prepare_differential_intensity_response_plot(gs, target_system,
-                                                                                              grid_size)
+        image_intensity_response, image2 = self._prepare_differential_intensity_response_plot(gs, grid_size, planet)
         image_collector_positions = self._prepare_collector_position_image(gs, grid_size)
         image_photon_rates = self._prepare_photon_counts_plot(gs, time_range)
 
@@ -193,7 +198,7 @@ class Animator():
         :param differential_intensity_response: The differential intensity response
         """
         self.images[1].set_data(differential_intensity_response.value)
-        self.images[2].set_data(differential_intensity_response.value)
+        # self.images[2].set_data(differential_intensity_response.value)
 
     def update_differential_photon_counts(self, differential_photon_counts: np.ndarray, index_time: int):
         """Update the differential photon counts frame.
@@ -203,5 +208,5 @@ class Animator():
         :return:
         """
         self.time_index_list.append(index_time)
-        self.differential_photon_counts_list.append(differential_photon_counts.value)
+        self.differential_photon_counts_list.append(differential_photon_counts)
         self.images[3].set_data(self.time_index_list, self.differential_photon_counts_list)

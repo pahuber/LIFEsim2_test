@@ -15,6 +15,17 @@ def get_meshgrid(full_extent: astropy.units.Quantity, grid_size: int) -> Tuple[n
     return np.meshgrid(linspace, linspace) * full_extent.unit
 
 
+def get_radial_map(full_extent: astropy.units.Quantity, grid_size: int) -> Tuple[np.ndarray, np.ndarray]:
+    """Return a radial map over the full extent given.
+
+    :param full_extent: The full extent
+    :param grid_size: The grid size
+    :return: THe radial map
+    """
+    meshgrid = get_meshgrid(full_extent, grid_size)
+    return np.sqrt(meshgrid[0] ** 2 + meshgrid[1] ** 2)
+
+
 def get_index_of_closest_value(array: np.ndarray, value: astropy.units.Quantity):
     """Return the index of a value in an array closest to the provided value.
 
@@ -35,13 +46,11 @@ def get_number_of_instances_in_list(list: list, instance_type: Any) -> int:
     return len([value for value in list if isinstance(value, instance_type)])
 
 
-def get_dictionary_from_list_containing_key(key: str, list: list) -> dict:
-    """Given a list of dictionaries and a key, return the dictionary that contains the key.
+def get_indices_of_maximum_of_2d_array(array: np.ndarray) -> Tuple[int, int]:
+    """Return the indices of the maximum of a 2D array.
 
-    :param key: The key
-    :param list: The list
-    :return: The dictionary containing the key
+    :param array: The array
+    :return: The indices of the maximum
     """
-    for dictionary in list:
-        if key in dictionary:
-            return dictionary
+    index = np.where(array == np.max(array))
+    return index[0][0], index[1][0]

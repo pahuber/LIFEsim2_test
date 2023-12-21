@@ -1,8 +1,9 @@
 import astropy
 
-from sygn.core.contexts.base_context import BaseContext
+from sygn.core.context import Context
 from sygn.core.entities.animator import Animator
 from sygn.core.modules.base_module import BaseModule
+from sygn.core.modules.data_generator_module import DataGeneratorModule
 from sygn.util.grid import get_index_of_closest_value
 
 
@@ -25,19 +26,24 @@ class AnimatorModule(BaseModule):
         self.photon_count_limits = photon_count_limits
         self.collector_position_limits = collector_position_limits
         self.animator = None
+        self.dependencies = [(DataGeneratorModule,)]
 
-    def apply(self, context: BaseContext) -> BaseContext:
-        """Apply the modules.
+    def apply(self, context: Context) -> Context:
+        """Apply the module.  Get the wavelength of the list of wavelength centers that matches the closest to the
+        wavelength given by the user and initialize the animator object.
 
-        :param context: The contexts object of the pipelines
-        :return: The (updated) contexts object
+        :param context: The context object of the pipeline
+        :return: The (updated) context object
         """
+        index_closest_wavelength = get_index_of_closest_value(
+            context.observatory.instrument_parameters.wavelength_bin_centers,
+            self.wavelength)
         closest_wavelength = context.observatory.instrument_parameters.wavelength_bin_centers[
-            get_index_of_closest_value(context.observatory.instrument_parameters.wavelength_bin_centers,
-                                       self.wavelength)]
+            index_closest_wavelength]
         self.animator = Animator(self.output_path,
                                  self.source_name,
                                  closest_wavelength,
+                                 index_closest_wavelength,
                                  self.differential_intensity_response_index,
                                  self.image_vmin,
                                  self.image_vmax,
