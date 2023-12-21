@@ -26,73 +26,6 @@ class MLExtractionModule(BaseModule):
                              (FITSReaderModule, TemplateGeneratorModule, FITSReadWriteType.SyntheticMeasurement),
                              (DataGeneratorModule, TemplateGeneratorModule)]
 
-    def apply(self, context: Context) -> Context:
-        """Calculate the function for each template and then get a maximum likelihood estimate for the flux in units of
-        photons at the position of the maximum of the cost function.
-
-        :param context: The context object of the pipeline
-        :return: The (updated) context object
-        """
-        cost_functions, optimum_fluxes = self._calculate_maximum_likelihood(context.signal, context)
-        optimum_flux_at_maximum = self._get_optimum_flux_at_cost_function_maximum(cost_functions,
-                                                                                  optimum_fluxes,
-                                                                                  context)
-
-        # Get the whitened signal and the uncertainties on the extracted flux
-        signal_white = self._get_whitened_signal(context.signal, optimum_fluxes, cost_functions, context)
-        cost_functions_white, optimum_fluxes_white = self._calculate_maximum_likelihood(signal_white, context)
-        optimum_fluxes_uncertainties = self._get_fluxes_uncertainties(cost_functions,
-                                                                      cost_functions_white,
-                                                                      optimum_fluxes_white,
-                                                                      context)
-
-        context.extractions.append(Extraction(optimum_flux_at_maximum, optimum_fluxes_uncertainties, cost_functions))
-
-        return context
-
-    def _get_matrix_c(self, signal: np.ndarray, template_signal: np.ndarray) -> np.ndarray:
-        """Calculate the matrix C according to equation B.2.
-
-        :param signal: The signal
-        :param template_signal: The template signal
-        :return: The matrix C
-        """
-        data_variance = np.var(signal, axis=2)
-        return np.sum(signal * template_signal, axis=2) / data_variance
-
-    def _get_matrix_b(self, signal: np.ndarray, template_signal: np.ndarray) -> np.ndarray:
-        """Calculate the matrix B according to equation B.3.
-
-        :param signal: The signal
-        :param template_signal: The template signal
-        :return: The matrix B
-        """
-        data_variance = np.var(signal, axis=2)
-        matrix_b_elements = np.sum(template_signal ** 2, axis=2) / data_variance
-        matrix_b = np.zeros(matrix_b_elements.shape[0], dtype=object)
-
-        for index_output in range(len(matrix_b_elements)):
-            matrix_b[index_output] = np.diag(matrix_b_elements[index_output])
-
-        return matrix_b
-
-    def _get_optimum_flux(self, matrix_b: np.ndarray, matrix_c: np.ndarray) -> np.ndarray:
-        """Calculate the optimum flux according to equation B.6.
-
-        :param matrix_b: The matrix B
-        :param matrix_c: The matrix C
-        :return: The optimum flux
-        """
-        return np.diag(np.linalg.inv(matrix_b) * matrix_c)
-
-    def _get_positivity_constraint(self, optimum_flux: np.ndarray) -> np.ndarray:
-        """Return the optimum flux with negative values set to zero.
-
-        :param optimum_flux: The optimum flux
-        :return: The optimum flux with negative values set to zero
-        """
-        return np.where(optimum_flux >= 0, optimum_flux, 0)
-
     def _calculate_maximum_likelihood(self, signal, context) -> Tuple:
         """Calculate the maximum likelihood estimate for the flux in units of photons at the position of the maximum of
         the cost function.
@@ -129,40 +62,6 @@ class MLExtractionModule(BaseModule):
         cost_function = np.sum(cost_function, axis=3)
         cost_function[np.isnan(cost_function)] = 0
         return cost_function, optimum_flux
-
-    def _get_optimum_flux_at_cost_function_maximum(self, cost_functions, optimum_fluxes, context) -> np.ndarray:
-        """Calculate the optimum flux at the position of the maximum of the cost function.
-
-        :param cost_functions: The cost functions
-        :param optimum_fluxes: The optimum fluxes
-        :param context: The context object of the pipeline
-        :return: The optimum flux at the position of the maximum of the cost function
-        """
-        optimum_flux_at_maximum = np.zeros(
-            (context.observatory.beam_combination_scheme.number_of_differential_outputs,
-             len(context.observatory.instrument_parameters.wavelength_bin_centers))) * u.ph
-
-        for index_output in range(len(optimum_flux_at_maximum)):
-            index_x, index_y = get_indices_of_maximum_of_2d_array(cost_functions[index_output])
-            optimum_flux_at_maximum[index_output] = optimum_fluxes[index_output, index_x, index_y] * u.ph
-
-        return optimum_flux_at_maximum
-
-    def _get_whitened_signal(self, signal, optimum_fluxes, cost_functions, context) -> np.ndarray:
-        """Return the whitened signal, i.e. the original signal with the most likely planet signal substracted.
-
-        :param signal: The signal
-        :param optimum_fluxes: The optimum fluxes
-        :param cost_functions: The cost functions
-        :param context: The context object of the pipeline
-        :return: The whitened signal
-        """
-        for index_output in range(context.observatory.beam_combination_scheme.number_of_differential_outputs):
-            index_x, index_y = get_indices_of_maximum_of_2d_array(cost_functions[index_output])
-            signal_white = np.copy(context.signal)
-            signal_white -= np.einsum('ij, ijk->ijk', optimum_fluxes[:, index_x, index_y],
-                                      context.templates[index_x, index_y].signal)
-        return signal_white
 
     def _get_fluxes_uncertainties(self, cost_functions, cost_functions_white, optimum_fluxes_white,
                                   context) -> np.ndarray:
@@ -204,3 +103,104 @@ class MLExtractionModule(BaseModule):
                 uncertainties[index] = np.std(a[:, index])
 
         return uncertainties
+
+    def _get_matrix_c(self, signal: np.ndarray, template_signal: np.ndarray) -> np.ndarray:
+        """Calculate the matrix C according to equation B.2.
+
+        :param signal: The signal
+        :param template_signal: The template signal
+        :return: The matrix C
+        """
+        data_variance = np.var(signal, axis=2)
+        return np.sum(signal * template_signal, axis=2) / data_variance
+
+    def _get_matrix_b(self, signal: np.ndarray, template_signal: np.ndarray) -> np.ndarray:
+        """Calculate the matrix B according to equation B.3.
+
+        :param signal: The signal
+        :param template_signal: The template signal
+        :return: The matrix B
+        """
+        data_variance = np.var(signal, axis=2)
+        matrix_b_elements = np.sum(template_signal ** 2, axis=2) / data_variance
+        matrix_b = np.zeros(matrix_b_elements.shape[0], dtype=object)
+
+        for index_output in range(len(matrix_b_elements)):
+            matrix_b[index_output] = np.diag(matrix_b_elements[index_output])
+
+        return matrix_b
+
+    def _get_optimum_flux(self, matrix_b: np.ndarray, matrix_c: np.ndarray) -> np.ndarray:
+        """Calculate the optimum flux according to equation B.6.
+
+        :param matrix_b: The matrix B
+        :param matrix_c: The matrix C
+        :return: The optimum flux
+        """
+        return np.diag(np.linalg.inv(matrix_b) * matrix_c)
+
+    def _get_optimum_flux_at_cost_function_maximum(self, cost_functions, optimum_fluxes, context) -> np.ndarray:
+        """Calculate the optimum flux at the position of the maximum of the cost function.
+
+        :param cost_functions: The cost functions
+        :param optimum_fluxes: The optimum fluxes
+        :param context: The context object of the pipeline
+        :return: The optimum flux at the position of the maximum of the cost function
+        """
+        optimum_flux_at_maximum = np.zeros(
+            (context.observatory.beam_combination_scheme.number_of_differential_outputs,
+             len(context.observatory.instrument_parameters.wavelength_bin_centers))) * u.ph
+
+        for index_output in range(len(optimum_flux_at_maximum)):
+            index_x, index_y = get_indices_of_maximum_of_2d_array(cost_functions[index_output])
+            optimum_flux_at_maximum[index_output] = optimum_fluxes[index_output, index_x, index_y] * u.ph
+
+        return optimum_flux_at_maximum
+
+    def _get_positivity_constraint(self, optimum_flux: np.ndarray) -> np.ndarray:
+        """Return the optimum flux with negative values set to zero.
+
+        :param optimum_flux: The optimum flux
+        :return: The optimum flux with negative values set to zero
+        """
+        return np.where(optimum_flux >= 0, optimum_flux, 0)
+
+    def _get_whitened_signal(self, signal, optimum_fluxes, cost_functions, context) -> np.ndarray:
+        """Return the whitened signal, i.e. the original signal with the most likely planet signal substracted.
+
+        :param signal: The signal
+        :param optimum_fluxes: The optimum fluxes
+        :param cost_functions: The cost functions
+        :param context: The context object of the pipeline
+        :return: The whitened signal
+        """
+        for index_output in range(context.observatory.beam_combination_scheme.number_of_differential_outputs):
+            index_x, index_y = get_indices_of_maximum_of_2d_array(cost_functions[index_output])
+            signal_white = np.copy(context.signal)
+            signal_white -= np.einsum('ij, ijk->ijk', optimum_fluxes[:, index_x, index_y],
+                                      context.templates[index_x, index_y].signal)
+        return signal_white
+
+    def apply(self, context: Context) -> Context:
+        """Calculate the function for each template and then get a maximum likelihood estimate for the flux in units of
+        photons at the position of the maximum of the cost function.
+
+        :param context: The context object of the pipeline
+        :return: The (updated) context object
+        """
+        cost_functions, optimum_fluxes = self._calculate_maximum_likelihood(context.signal, context)
+        optimum_flux_at_maximum = self._get_optimum_flux_at_cost_function_maximum(cost_functions,
+                                                                                  optimum_fluxes,
+                                                                                  context)
+
+        # Get the whitened signal and the uncertainties on the extracted flux
+        signal_white = self._get_whitened_signal(context.signal, optimum_fluxes, cost_functions, context)
+        cost_functions_white, optimum_fluxes_white = self._calculate_maximum_likelihood(signal_white, context)
+        optimum_fluxes_uncertainties = self._get_fluxes_uncertainties(cost_functions,
+                                                                      cost_functions_white,
+                                                                      optimum_fluxes_white,
+                                                                      context)
+
+        context.extractions.append(Extraction(optimum_flux_at_maximum, optimum_fluxes_uncertainties, cost_functions))
+
+        return context
