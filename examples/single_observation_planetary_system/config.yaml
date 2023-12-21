@@ -9,7 +9,7 @@
 # Settings
 # -------------------------------------------
 settings:
-  grid_size: 2
+  grid_size: 10
   time_step: 0.01 d
   planet_orbital_motion: false
   noise_contributions:

@@ -4,11 +4,11 @@ from matplotlib import pyplot as plt
 
 from sygn.core.modules.config_loader_module import ConfigLoaderModule
 from sygn.core.modules.data_generator_module import DataGeneratorModule
-from sygn.core.modules.fits_reader_module import FITSReaderModule
 from sygn.core.modules.fits_writer_module import FITSWriterModule
 from sygn.core.modules.flux_calibration_module import FluxCalibrationModule
 from sygn.core.modules.mlm_extraction_module import MLExtractionModule
 from sygn.core.modules.target_loader_module import TargetLoaderModule
+from sygn.core.modules.template_generator_module import TemplateGeneratorModule
 from sygn.core.pipeline import Pipeline
 from sygn.util.helpers import FITSReadWriteType
 
@@ -32,13 +32,13 @@ pipeline.add_module(module)
 
 # # Make animation
 # modules = AnimatorModule(output_path='.',
-#                         source_name='Earth',
-#                         wavelength=10 * astropy.units.um,
-#                         differential_intensity_response_index=0,
-#                         photon_count_limits=1000,
-#                         collector_position_limits=50,
-#                         image_vmin=-10,
-#                         image_vmax=10)
+#                          source_name='Earth',
+#                          wavelength=10 * astropy.units.um,
+#                          differential_intensity_response_index=0,
+#                          photon_count_limits=1000,
+#                          collector_position_limits=50,
+#                          image_vmin=-10,
+#                          image_vmax=10)
 # pipeline.add_module(modules)
 
 ########################################################################################################################
@@ -57,7 +57,7 @@ pipeline.add_module(module)
 # Or load synthetic measurements
 ########################################################################################################################
 
-# module = FITSReaderModule(input_path=Path('data_20231215_095922.023314.fits'),
+# module = FITSReaderModule(input_path=Path('data_20231220_141250.389684.fits'),
 #                           data_type=FITSReadWriteType.SyntheticMeasurement)
 # pipeline.add_module(module)
 
@@ -65,20 +65,20 @@ pipeline.add_module(module)
 # Generate templates
 ########################################################################################################################
 
-# # Generate Templates
-# module = TemplateGeneratorModule()
-# pipeline.add_module(module)
-#
-# # Write templates to FITS file
-# module = FITSWriterModule(output_path=Path('.'), data_type=FITSReadWriteType.Template)
-# pipeline.add_module(module)
+# Generate Templates
+module = TemplateGeneratorModule()
+pipeline.add_module(module)
+
+# Write templates to FITS file
+module = FITSWriterModule(output_path=Path('.'), data_type=FITSReadWriteType.Template)
+pipeline.add_module(module)
 
 ########################################################################################################################
 # Or load templates
 ########################################################################################################################
-#
-module = FITSReaderModule(input_path=Path('templates_20231215_124021.546307'), data_type=FITSReadWriteType.Template)
-pipeline.add_module(module)
+
+# module = FITSReaderModule(input_path=Path('templates_20231215_124021.546307'), data_type=FITSReadWriteType.Template)
+# pipeline.add_module(module)
 
 ########################################################################################################################
 # Process data
@@ -120,6 +120,7 @@ plt.title('Differential Photon Counts')
 plt.ylabel('Spectral Channel')
 plt.xlabel('Time')
 plt.colorbar()
+plt.savefig('signal.png', dpi=300)
 plt.show()
 
 # Plot cost function
@@ -141,18 +142,7 @@ plt.fill_between(wavelengths,
 plt.title('Planet Spectrum')
 plt.xlabel('Wavelength ($\mu$m)')
 plt.ylabel('Flux Density (ph s$^{-1}$ m$^{-2}$ $\mu$m$^{-1}$)')
+plt.tight_layout()
 plt.legend()
+plt.savefig('spec.png', dpi=300)
 plt.show()
-
-# # Get position
-# x = planet.sky_coordinates[0].x
-# y = planet.sky_coordinates[0].y
-# x_coordinate = x[i1][i2]
-# y_coordinate = y[i1][i2]
-#
-# extent = np.max(x[0]) - np.min(x[0])
-# extent_per_pixel = extent / len(x[0])
-# uncertainty = extent_per_pixel / 2
-#
-# print(f'{x_coordinate} +/- {uncertainty}')
-# print(f'{y_coordinate} +/- {uncertainty}')
