@@ -135,7 +135,6 @@ class FITSWriter():
                     hdu = fits.ImageHDU(data_per_output)
                     hdu_list.append(hdu)
                 # Add effective areas rms
-                print(template.effective_area_rms)
                 for area_per_output in template.effective_area_rms:
                     # table = Table([np.rec.array(area_per_output)], names=['effective_area_rms'], dtype=['float64'])
                     hdu = fits.BinTableHDU.from_columns(
