@@ -221,6 +221,7 @@ class Planet(PhotonSource):
         :param index_wavelength: The wavelength index
         :return: The sky coordinates
         """
+        # TODO: check that planet is not outside of field of view of the array
         return self.sky_coordinates[index_time]
 
     def get_sky_brightness_distribution(self, index_time: int, index_wavelength: int) -> np.ndarray:
