@@ -12,12 +12,12 @@ class BeamCombinationSchemeEnum(Enum):
     KERNEL_3 = 'kernel-3'
     KERNEL_4 = 'kernel-4'
     KERNEL_5 = 'kernel-5'
-    type: Any = None
 
 
 class BeamCombinationScheme(ABC):
     """Class representation of a beam combination scheme.
     """
+    type: Any = None
 
     def __init__(self):
         """Constructor method.
@@ -29,7 +29,7 @@ class BeamCombinationScheme(ABC):
 
     @abstractmethod
     def get_beam_combination_transfer_matrix(self) -> np.ndarray:
-        """Return the bea, combination transfer matrix.
+        """Return the beam combination transfer matrix.
         
         :return: An array representing the bea combination transfer matrix
         """
@@ -47,7 +47,7 @@ class BeamCombinationScheme(ABC):
 class DoubleBracewell(BeamCombinationScheme):
     """Class representation of a double Bracewell beam combination scheme.
     """
-    type: Any = BeamCombinationSchemeEnum.DOUBLE_BRACEWELL
+    type: Any = BeamCombinationSchemeEnum.DOUBLE_BRACEWELL.value
 
     def get_beam_combination_transfer_matrix(self) -> np.ndarray:
         return 1 / np.sqrt(4) * np.array([[0, 0, np.sqrt(2), np.sqrt(2)],
@@ -62,7 +62,7 @@ class DoubleBracewell(BeamCombinationScheme):
 class Kernel3(BeamCombinationScheme):
     """Class representation of a Kernel nulling beam combination scheme.
     """
-    type: Any = BeamCombinationSchemeEnum.KERNEL_3
+    type: Any = BeamCombinationSchemeEnum.KERNEL_3.value
 
     def get_beam_combination_transfer_matrix(self) -> np.ndarray:
         return 1 / np.sqrt(3) * np.array([[1, 1, 1],
@@ -76,7 +76,7 @@ class Kernel3(BeamCombinationScheme):
 class Kernel4(BeamCombinationScheme):
     """Class representation of a Kernel nulling beam combination scheme.
     """
-    type: Any = BeamCombinationSchemeEnum.KERNEL_4
+    type: Any = BeamCombinationSchemeEnum.KERNEL_4.value
 
     def get_beam_combination_transfer_matrix(self) -> np.ndarray:
         exp_plus = np.exp(1j * np.pi / 2)
@@ -96,7 +96,7 @@ class Kernel4(BeamCombinationScheme):
 class Kernel5(BeamCombinationScheme):
     """Class representation of a Kernel nulling beam combination scheme.
     """
-    type: Any = BeamCombinationSchemeEnum.KERNEL_5
+    type: Any = BeamCombinationSchemeEnum.KERNEL_5.value
 
     def _exp(self, number: int) -> float:
         """Return the exponent.
