@@ -5,10 +5,8 @@ from typing import Any
 import astropy.units
 import numpy as np
 from astropy import units as u
-from pydantic import BaseModel, field_validator
-from pydantic_core.core_schema import ValidationInfo
+from pydantic import BaseModel
 
-from sygn.io.validators import validate_quantity_units
 from sygn.util.helpers import Coordinates
 from sygn.util.matrix import get_2d_rotation_matrix
 
@@ -25,42 +23,10 @@ class ArrayConfigurationEnum(Enum):
 class ArrayConfiguration(ABC, BaseModel):
     """Class representation of a collector array configuration.
     """
-    baseline_minimum: Any
-    baseline_maximum: Any
-    baseline_ratio: int
     modulation_period: Any
+    baseline_ratio: int
     baseline: Any = None
     type: Any = None
-
-    @field_validator('baseline_minimum')
-    def _validate_baseline_minimum(cls, value: Any, info: ValidationInfo) -> astropy.units.Quantity:
-        """Validate the baseline minimum input.
-
-        :param value: Value given as input
-        :param info: ValidationInfo object
-        :return: The minimum baseline in units of length
-        """
-        return validate_quantity_units(value=value, field_name=info.field_name, unit_equivalency=u.m)
-
-    @field_validator('baseline_maximum')
-    def _validate_baseline_maximum(cls, value: Any, info: ValidationInfo) -> astropy.units.Quantity:
-        """Validate the baseline maximum input.
-
-        :param value: Value given as input
-        :param info: ValidationInfo object
-        :return: The maximum baseline in units of length
-        """
-        return validate_quantity_units(value=value, field_name=info.field_name, unit_equivalency=u.m)
-
-    @field_validator('modulation_period')
-    def _validate_modulation_period(cls, value: Any, info: ValidationInfo) -> astropy.units.Quantity:
-        """Validate the modulation period input.
-
-        :param value: Value given as input
-        :param info: ValidationInfo object
-        :return: The modulation period in units of time
-        """
-        return validate_quantity_units(value=value, field_name=info.field_name, unit_equivalency=u.s)
 
     @abstractmethod
     def get_collector_positions(self, time: astropy.units.Quantity) -> Coordinates:
@@ -82,24 +48,6 @@ class ArrayConfiguration(ABC, BaseModel):
         :return: The baseline
         """
         pass
-
-    def set_optimal_baseline(self,
-                             optimized_wavelength: astropy.units.Quantity,
-                             star_habitable_zone_central_angular_radius: astropy.units.Quantity):
-        """Set the baseline to optimize for the habitable zone, if it is between the minimum and maximum allowed
-        baselines.
-
-        :param optimized_wavelength: The optimized wavelength
-        :param star_habitable_zone_central_angular_radius: The angular radius of the habitable zone
-        """
-        optimal_baseline = self.get_optimal_baseline(wavelength=optimized_wavelength,
-                                                     optimal_angular_distance=star_habitable_zone_central_angular_radius).to(
-            u.m)
-        if self.baseline_minimum <= optimal_baseline and optimal_baseline <= self.baseline_maximum:
-            self.baseline = optimal_baseline
-        else:
-            raise ValueError(
-                f'Optimal baseline of {optimal_baseline} is not within allowed ranges of baselines {self.baseline_minimum}-{self.baseline_maximum}')
 
 
 class EmmaXCircularRotation(ArrayConfiguration):

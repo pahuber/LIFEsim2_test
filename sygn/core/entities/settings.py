@@ -34,4 +34,4 @@ class Settings(BaseModel):
         :param info: ValidationInfo object
         :return: The time step in units of time
         """
-        return validate_quantity_units(value=value, field_name=info.field_name, unit_equivalency=u.s)
+        return validate_quantity_units(value=value, field_name=info.field_name, unit_equivalency=(u.s,))

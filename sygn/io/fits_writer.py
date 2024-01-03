@@ -33,19 +33,16 @@ class FITSWriter():
         header['HIERARCH SYGN_GRID_SIZE'] = context.settings.grid_size
         header['HIERARCH SYGN_TIME_STEP'] = str(context.settings.time_step)
         header['HIERARCH SYGN_PLANET_ORBITAL_MOTION'] = context.settings.planet_orbital_motion
-        header['HIERARCH SYGN_ADJUST_BASELINE_TO_HABITABLE_ZONE'] = context.mission.adjust_baseline_to_habitable_zone
         header['HIERARCH SYGN_INTEGRATION_TIME'] = str(context.mission.integration_time)
+        header['HIERARCH SYGN_MODULATION_PERIOD'] = str(context.mission.modulation_period)
+        header['HIERARCH SYGN_BASELINE_RATIO'] = context.mission.baseline_ratio
+        header['HIERARCH SYGN_BASELINE_MAXIMUM'] = str(context.mission.baseline_maximum)
+        header['HIERARCH SYGN_BASELINE_MINIMUM'] = str(context.mission.baseline_minimum)
+        header['HIERARCH SYGN_OPTIMIZED_DIFFERENTIAL_OUTPUT'] = str(context.mission.optimized_differential_output)
+        header['HIERARCH SYGN_OPTIMIZED_STAR_SEPARATION'] = str(context.mission.optimized_star_separation)
         header['HIERARCH SYGN_OPTIMIZED_WAVELENGTH'] = str(context.mission.optimized_wavelength)
-        header['HIERARCH SYGN_ARRAY_CONFIGURATION_TYPE'] = context.observatory.array_configuration.type
-        header['HIERARCH SYGN_BASELINE_MAXIMUM'] = str(
-            context.observatory.array_configuration.baseline_maximum)
-        header['HIERARCH SYGN_BASELINE_MINIMUM'] = str(
-            context.observatory.array_configuration.baseline_minimum)
-        header['HIERARCH SYGN_BASELINE_RATIO'] = context.observatory.array_configuration.baseline_ratio
-        header['HIERARCH SYGN_MODULATION_PERIOD'] = str(
-            context.observatory.array_configuration.modulation_period)
-        header[
-            'HIERARCH SYGN_BEAM_COMBINATION_SCHEME'] = context.observatory.beam_combination_scheme.type.value
+        header['HIERARCH SYGN_ARRAY_CONFIGURATION_TYPE'] = context.observatory.array_configuration.type.value
+        header['HIERARCH SYGN_BEAM_COMBINATION_SCHEME'] = context.observatory.beam_combination_scheme.type
         header[
             'HIERARCH SYGN_SPECTRAL_RESOLVING_POWER'] = context.observatory.instrument_parameters.spectral_resolving_power
         header['HIERARCH SYGN_WAVELENGTH_RANGE_LOWER_LIMIT'] = str(

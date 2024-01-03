@@ -45,10 +45,13 @@ class TemplateGeneratorModule(BaseModule):
         :param context: The context object of the pipeline
         :return: The (updated) context object
         """
-        context.observatory.array_configuration.set_optimal_baseline(context.mission.optimized_wavelength,
-                                                                     context.star.habitable_zone_central_angular_radius)
+        context.observatory.set_optimal_baseline(context.star,
+                                                 context.mission.optimized_differential_output,
+                                                 context.mission.optimized_wavelength,
+                                                 context.mission.optimized_star_separation,
+                                                 context.mission.baseline_minimum,
+                                                 context.mission.baseline_maximum)
         context_template = self._unload_noise_contributions(context)
-        # effective_areas = []
 
         context.templates = np.zeros((context.settings.grid_size, context.settings.grid_size), dtype=object)
 
@@ -76,14 +79,12 @@ class TemplateGeneratorModule(BaseModule):
                         normalization = np.sqrt(np.mean(signal ** 2, axis=2))
                         signal = np.einsum('ijk, ij->ijk', signal, 1 / normalization)
 
+                        # Create template objects
                         template = Template(signal, np.sqrt(np.mean(np.array(effective_area) ** 2, axis=2)) * units,
                                             index_x, index_y)
-
                         context.templates[index_x, index_y] = template
 
-                        # effective_areas.append(effective_area)
                 else:
                     raise Exception('Template generation including planet orbital motion is not yet supported')
 
-        # context.effective_area_rms = np.sqrt(np.mean(np.array(effective_areas) ** 2, axis=3))
         return context

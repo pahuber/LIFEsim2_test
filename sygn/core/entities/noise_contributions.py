@@ -23,7 +23,7 @@ class OpticalPathDifferenceVariability(BaseModel):
         :param info: ValidationInfo object
         :return: The rms in units of length
         """
-        return validate_quantity_units(value=value, field_name=info.field_name, unit_equivalency=u.m)
+        return validate_quantity_units(value=value, field_name=info.field_name, unit_equivalency=(u.m,))
 
 
 class NoiseContributions(BaseModel):

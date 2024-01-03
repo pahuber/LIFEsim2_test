@@ -47,7 +47,7 @@ class Planet(PhotonSource):
         :param info: ValidationInfo object
         :return: The argument of periapsis in units of degrees
         """
-        return validate_quantity_units(value=value, field_name=info.field_name, unit_equivalency=u.deg)
+        return validate_quantity_units(value=value, field_name=info.field_name, unit_equivalency=(u.deg,))
 
     @field_validator('inclination')
     def _validate_inclination(cls, value: Any, info: ValidationInfo) -> astropy.units.Quantity:
@@ -57,7 +57,7 @@ class Planet(PhotonSource):
         :param info: ValidationInfo object
         :return: The inclination in units of degrees
         """
-        return validate_quantity_units(value=value, field_name=info.field_name, unit_equivalency=u.deg)
+        return validate_quantity_units(value=value, field_name=info.field_name, unit_equivalency=(u.deg,))
 
     @field_validator('mass')
     def _validate_mass(cls, value: Any, info: ValidationInfo) -> astropy.units.Quantity:
@@ -67,7 +67,7 @@ class Planet(PhotonSource):
         :param info: ValidationInfo object
         :return: The mass in units of weight
         """
-        return validate_quantity_units(value=value, field_name=info.field_name, unit_equivalency=u.kg)
+        return validate_quantity_units(value=value, field_name=info.field_name, unit_equivalency=(u.kg,))
 
     @field_validator('raan')
     def _validate_raan(cls, value: Any, info: ValidationInfo) -> astropy.units.Quantity:
@@ -77,7 +77,7 @@ class Planet(PhotonSource):
         :param info: ValidationInfo object
         :return: The raan in units of degrees
         """
-        return validate_quantity_units(value=value, field_name=info.field_name, unit_equivalency=u.deg)
+        return validate_quantity_units(value=value, field_name=info.field_name, unit_equivalency=(u.deg,))
 
     @field_validator('radius')
     def _validate_radius(cls, value: Any, info: ValidationInfo) -> astropy.units.Quantity:
@@ -87,7 +87,7 @@ class Planet(PhotonSource):
         :param info: ValidationInfo object
         :return: The radius in units of length
         """
-        return validate_quantity_units(value=value, field_name=info.field_name, unit_equivalency=u.m)
+        return validate_quantity_units(value=value, field_name=info.field_name, unit_equivalency=(u.m,))
 
     @field_validator('semi_major_axis')
     def _validate_semi_major_axis(cls, value: Any, info: ValidationInfo) -> astropy.units.Quantity:
@@ -97,7 +97,7 @@ class Planet(PhotonSource):
         :param info: ValidationInfo object
         :return: The semi-major axis in units of length
         """
-        return validate_quantity_units(value=value, field_name=info.field_name, unit_equivalency=u.m)
+        return validate_quantity_units(value=value, field_name=info.field_name, unit_equivalency=(u.m,))
 
     @field_validator('temperature')
     def _validate_temperature(cls, value: Any, info: ValidationInfo) -> astropy.units.Quantity:
@@ -107,7 +107,7 @@ class Planet(PhotonSource):
         :param info: ValidationInfo object
         :return: The temperature in units of temperature
         """
-        return validate_quantity_units(value=value, field_name=info.field_name, unit_equivalency=u.K)
+        return validate_quantity_units(value=value, field_name=info.field_name, unit_equivalency=(u.K,))
 
     @field_validator('true_anomaly')
     def _validate_true_anomaly(cls, value: Any, info: ValidationInfo) -> astropy.units.Quantity:
@@ -117,7 +117,7 @@ class Planet(PhotonSource):
         :param info: ValidationInfo object
         :return: The true anomaly in units of degrees
         """
-        return validate_quantity_units(value=value, field_name=info.field_name, unit_equivalency=u.deg)
+        return validate_quantity_units(value=value, field_name=info.field_name, unit_equivalency=(u.deg,))
 
     @property
     def solid_angle(self) -> astropy.units.Quantity:
