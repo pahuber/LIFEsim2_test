@@ -46,8 +46,12 @@ class DataGeneratorModule(BaseModule):
         :param context: The contexts object of the pipelines
         :return: The (updated) contexts object
         """
-        context.observatory.array_configuration.set_optimal_baseline(context.mission.optimized_wavelength,
-                                                                     context.star.habitable_zone_central_angular_radius)
+        context.observatory.set_optimal_baseline(context.star,
+                                                 context.mission.optimized_differential_output,
+                                                 context.mission.optimized_wavelength,
+                                                 context.mission.optimized_star_separation,
+                                                 context.mission.baseline_minimum,
+                                                 context.mission.baseline_maximum)
         if context.animator:
             context.signal, _ = self._create_animation(context)
         else:

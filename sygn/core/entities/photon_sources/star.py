@@ -34,7 +34,7 @@ class Star(PhotonSource):
         :param info: ValidationInfo object
         :return: The distance in units of length
         """
-        return validate_quantity_units(value=value, field_name=info.field_name, unit_equivalency=u.m)
+        return validate_quantity_units(value=value, field_name=info.field_name, unit_equivalency=(u.m,))
 
     @field_validator('luminosity')
     def _validate_luminosity(cls, value: Any, info: ValidationInfo) -> astropy.units.Quantity:
@@ -44,7 +44,7 @@ class Star(PhotonSource):
         :param info: ValidationInfo object
         :return: The luminosity in units of luminosity
         """
-        return validate_quantity_units(value=value, field_name=info.field_name, unit_equivalency=u.Lsun).to(u.Lsun)
+        return validate_quantity_units(value=value, field_name=info.field_name, unit_equivalency=(u.Lsun,)).to(u.Lsun)
 
     @field_validator('mass')
     def _validate_mass(cls, value: Any, info: ValidationInfo) -> astropy.units.Quantity:
@@ -54,7 +54,7 @@ class Star(PhotonSource):
         :param info: ValidationInfo object
         :return: The mass in units of weight
         """
-        return validate_quantity_units(value=value, field_name=info.field_name, unit_equivalency=u.kg)
+        return validate_quantity_units(value=value, field_name=info.field_name, unit_equivalency=(u.kg,))
 
     @field_validator('radius')
     def _validate_radius(cls, value: Any, info: ValidationInfo) -> astropy.units.Quantity:
@@ -64,15 +64,7 @@ class Star(PhotonSource):
         :param info: ValidationInfo object
         :return: The radius in units of length
         """
-        return validate_quantity_units(value=value, field_name=info.field_name, unit_equivalency=u.m)
-
-    @property
-    def angular_radius(self) -> astropy.units.Quantity:
-        """Return the solid angle covered by the star on the sky.
-
-        :return: The solid angle
-        """
-        return ((self.radius.to(u.m) / self.distance.to(u.m)) * u.rad).to(u.arcsec)
+        return validate_quantity_units(value=value, field_name=info.field_name, unit_equivalency=(u.m,))
 
     @field_validator('temperature')
     def _validate_temperature(cls, value: Any, info: ValidationInfo) -> astropy.units.Quantity:
@@ -82,7 +74,15 @@ class Star(PhotonSource):
         :param info: ValidationInfo object
         :return: The temperature in units of temperature
         """
-        return validate_quantity_units(value=value, field_name=info.field_name, unit_equivalency=u.K)
+        return validate_quantity_units(value=value, field_name=info.field_name, unit_equivalency=(u.K,))
+
+    @property
+    def angular_radius(self) -> astropy.units.Quantity:
+        """Return the solid angle covered by the star on the sky.
+
+        :return: The solid angle
+        """
+        return ((self.radius.to(u.m) / self.distance.to(u.m)) * u.rad).to(u.arcsec)
 
     @property
     def habitable_zone_central_angular_radius(self) -> astropy.units.Quantity:

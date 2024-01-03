@@ -43,20 +43,24 @@ class ConfigLoaderModule(BaseModule):
         :param config_dict: The dictionary
         :return: The array configuration object.
         """
-        type = config_dict['observatory']['array_configuration']['type']
+        type = config_dict['observatory']['array_configuration']
 
         match type:
             case ArrayConfigurationEnum.EMMA_X_CIRCULAR_ROTATION.value:
-                return EmmaXCircularRotation(**config_dict['observatory']['array_configuration'])
+                return EmmaXCircularRotation(modulation_period=self.mission.modulation_period,
+                                             baseline_ratio=self.mission.baseline_ratio)
 
             case ArrayConfigurationEnum.EMMA_X_DOUBLE_STRETCH.value:
-                return EmmaXDoubleStretch(**config_dict['observatory']['array_configuration'])
+                return EmmaXDoubleStretch(modulation_period=self.mission.modulation_period,
+                                          baseline_ratio=self.mission.baseline_ratio)
 
             case ArrayConfigurationEnum.EQUILATERAL_TRIANGLE_CIRCULAR_ROTATION.value:
-                return EquilateralTriangleCircularRotation(**config_dict['observatory']['array_configuration'])
+                return EquilateralTriangleCircularRotation(modulation_period=self.mission.modulation_period,
+                                                           baseline_ratio=self.mission.baseline_ratio)
 
             case ArrayConfigurationEnum.REGULAR_PENTAGON_CIRCULAR_ROTATION.value:
-                return RegularPentagonCircularRotation(**config_dict['observatory']['array_configuration'])
+                return RegularPentagonCircularRotation(modulation_period=self.mission.modulation_period,
+                                                       baseline_ratio=self.mission.baseline_ratio)
 
     def _load_beam_combination_scheme(self, config_dict: dict) -> BeamCombinationScheme:
         """Return the beam combination scheme object from the dictionary.
@@ -105,7 +109,7 @@ class ConfigLoaderModule(BaseModule):
         :param config_dict: The dictionary
         :return: The settings object
         """
-        return Settings(**config_dict['settings'])
+        return Settings(**config_dict['settings'], integration_time=self.mission.integration_time)
 
     def apply(self, context: Context) -> Context:
         """Load the configurations from the config file and initialize the settings, mission and observatory objects.
@@ -115,8 +119,8 @@ class ConfigLoaderModule(BaseModule):
         """
         if not self._config_dict:
             self._config_dict = ConfigReader(path_to_config_file=self._path_to_config_file).get_dictionary_from_file()
-        self.settings = self._load_settings(self._config_dict) if self.settings is None else self.settings
         self.mission = self._load_mission(self._config_dict) if self.mission is None else self.mission
+        self.settings = self._load_settings(self._config_dict) if self.settings is None else self.settings
         self.observatory = self._load_observatory(self._config_dict) if self.observatory is None else self.observatory
         context.settings = self.settings
         context.mission = self.mission

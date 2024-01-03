@@ -146,3 +146,16 @@ plt.tight_layout()
 plt.legend()
 plt.savefig('spec.png', dpi=300)
 plt.show()
+
+# # Get position
+# x = planet.sky_coordinates[0].x
+# y = planet.sky_coordinates[0].y
+# x_coordinate = x[i1][i2]
+# y_coordinate = y[i1][i2]
+#
+# extent = np.max(x[0]) - np.min(x[0])
+# extent_per_pixel = extent / len(x[0])
+# uncertainty = extent_per_pixel / 2
+#
+# print(f'{x_coordinate} +/- {uncertainty}')
+# print(f'{y_coordinate} +/- {uncertainty}')

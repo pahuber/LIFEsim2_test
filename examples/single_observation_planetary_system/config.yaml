@@ -10,7 +10,7 @@
 # -------------------------------------------
 settings:
   grid_size: 10
-  time_step: 0.01 d
+  time_steps: 100
   planet_orbital_motion: false
   noise_contributions:
     stellar_leakage: true
@@ -25,23 +25,23 @@ settings:
 # Mission Configuration
 # -------------------------------------------
 mission:
-  adjust_baseline_to_habitable_zone: true
-  integration_time: 1 d
+  integration_time: 100 d
+  modulation_period: 100 d
+  baseline_ratio: 6
+  baseline_maximum: 600 m
+  baseline_minimum: 5 m
+  optimized_differential_output: 0
+  optimized_star_separation: habitable-zone
   optimized_wavelength: 10 um
 # -------------------------------------------
 # Observatory Configuration
 # -------------------------------------------
 observatory:
-  array_configuration:
-    type: emma-x-circular-rotation
-    baseline_maximum: 600 m
-    baseline_minimum: 8 m
-    baseline_ratio: 6
-    modulation_period: 1 d
+  array_configuration: emma-x-circular-rotation
   beam_combination_scheme: double-bracewell
   instrument_parameters:
     aperture_diameter: 4 m
-    spectral_resolving_power: 20
+    spectral_resolving_power: 30
     wavelength_range_lower_limit: 4 um
     wavelength_range_upper_limit: 18 um
     unperturbed_instrument_throughput: 0.1

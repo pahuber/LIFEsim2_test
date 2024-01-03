@@ -26,7 +26,7 @@ class InstrumentParameters(BaseModel):
         :param info: ValidationInfo object
         :return: The aperture diameter in units of length
         """
-        return validate_quantity_units(value=value, field_name=info.field_name, unit_equivalency=u.m).to(u.m)
+        return validate_quantity_units(value=value, field_name=info.field_name, unit_equivalency=(u.m,)).to(u.m)
 
     @field_validator('wavelength_range_lower_limit')
     def _validate_wavelength_range_lower_limit(cls, value: Any, info: ValidationInfo) -> astropy.units.Quantity:
@@ -36,7 +36,7 @@ class InstrumentParameters(BaseModel):
         :param info: ValidationInfo object
         :return: The lower wavelength range limit in units of length
         """
-        return validate_quantity_units(value=value, field_name=info.field_name, unit_equivalency=u.m).to(u.um)
+        return validate_quantity_units(value=value, field_name=info.field_name, unit_equivalency=(u.m,)).to(u.um)
 
     @field_validator('wavelength_range_upper_limit')
     def _validate_wavelength_range_upper_limit(cls, value: Any, info: ValidationInfo) -> astropy.units.Quantity:
@@ -46,7 +46,7 @@ class InstrumentParameters(BaseModel):
         :param info: ValidationInfo object
         :return: The upper wavelength range limit in units of length
         """
-        return validate_quantity_units(value=value, field_name=info.field_name, unit_equivalency=u.m).to(u.um)
+        return validate_quantity_units(value=value, field_name=info.field_name, unit_equivalency=(u.m,)).to(u.um)
 
     @property
     def aperture_radius(self) -> astropy.units.Quantity:

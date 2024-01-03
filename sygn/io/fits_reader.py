@@ -37,18 +37,17 @@ class FITSReader():
             }
         }
         config_dict['mission'] = {
-            'adjust_baseline_to_habitable_zone': data_fits_header['SYGN_ADJUST_BASELINE_TO_HABITABLE_ZONE'],
             'integration_time': data_fits_header['SYGN_INTEGRATION_TIME'],
+            'modulation_period': data_fits_header['SYGN_MODULATION_PERIOD'],
+            'baseline_ratio': data_fits_header['SYGN_BASELINE_RATIO'],
+            'baseline_maximum': data_fits_header['SYGN_BASELINE_MAXIMUM'],
+            'baseline_minimum': data_fits_header['SYGN_BASELINE_MINIMUM'],
+            'optimized_differential_output': data_fits_header['SYGN_OPTIMIZED_DIFFERENTIAL_OUTPUT'],
+            'optimized_star_separation': data_fits_header['SYGN_OPTIMIZED_STAR_SEPARATION'],
             'optimized_wavelength': data_fits_header['SYGN_OPTIMIZED_WAVELENGTH']
         }
         config_dict['observatory'] = {
-            'array_configuration': {
-                'type': data_fits_header['SYGN_ARRAY_CONFIGURATION_TYPE'],
-                'baseline_maximum': data_fits_header['SYGN_BASELINE_MAXIMUM'],
-                'baseline_minimum': data_fits_header['SYGN_BASELINE_MINIMUM'],
-                'baseline_ratio': data_fits_header['SYGN_BASELINE_RATIO'],
-                'modulation_period': data_fits_header['SYGN_MODULATION_PERIOD']
-            },
+            'array_configuration': data_fits_header['SYGN_ARRAY_CONFIGURATION_TYPE'],
             'beam_combination_scheme': data_fits_header['SYGN_BEAM_COMBINATION_SCHEME'],
             'instrument_parameters': {
                 'aperture_diameter': data_fits_header['SYGN_APERTURE_DIAMETER'],
