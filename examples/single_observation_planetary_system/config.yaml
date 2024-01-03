@@ -9,8 +9,8 @@
 # Settings
 # -------------------------------------------
 settings:
-  grid_size: 2
-  time_step: 1 d
+  grid_size: 10
+  time_steps: 100
   planet_orbital_motion: false
   noise_contributions:
     stellar_leakage: false
