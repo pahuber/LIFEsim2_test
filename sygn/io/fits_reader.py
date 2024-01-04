@@ -56,6 +56,16 @@ class FITSReader():
         if context.observatory.instrument_parameters.wavelength_range_upper_limit != \
                 template_fits_header['SYGN_WAVELENGTH_RANGE_UPPER_LIMIT']:
             raise ValueError(f'Template wavelength range upper limit does not match data wavelength range upper limit')
+        if context.star.distance != template_fits_header['SYGN_STAR_DISTANCE']:
+            raise ValueError(f'Template star distance does not match data star distance.')
+        if context.mission.optimized_star_separation == 'habitable-zone' and context.star.temperature != \
+                template_fits_header['SYGN_STAR_TEMPERATURE']:
+            raise ValueError(
+                f'Template star temperature does not match data star temperature. This is an issue since the habitable zone is dependent on this quantity.')
+        if context.mission.optimized_star_separation == 'habitable-zone' and context.star.luminosity != \
+                template_fits_header['SYGN_STAR_LUMINOSITY']:
+            raise ValueError(
+                f'Template star luminosity does not match data star luminosity. This is an issue since the habitable zone is dependent on this quantity.')
 
     @staticmethod
     def _create_config_dict_from_fits_header(data_fits_header: fits.header.Header) -> dict:
