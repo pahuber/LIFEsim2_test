@@ -37,18 +37,6 @@ class ArrayConfiguration(ABC, BaseModel):
         """
         pass
 
-    @abstractmethod
-    def get_optimal_baseline(self,
-                             wavelength: astropy.units.Quantity,
-                             optimal_angular_distance: astropy.units.Quantity) -> astropy.units.Quantity:
-        """Return the optimal baseline for a given wavelength and an angular separation that is to be optimized for
-
-        :param wavelength: Wavelength to be optimized for
-        :param optimal_angular_distance: Angular distance between the star and a (potential) planet to be optimized for
-        :return: The baseline
-        """
-        pass
-
 
 class EmmaXCircularRotation(ArrayConfiguration):
     """Class representation of the Emma-X array configuration with circular rotation of the array.
@@ -61,10 +49,6 @@ class EmmaXCircularRotation(ArrayConfiguration):
             [[self.baseline_ratio, self.baseline_ratio, -self.baseline_ratio, -self.baseline_ratio], [1, -1, -1, 1]])
         collector_positions = np.matmul(rotation_matrix, emma_x_static)
         return Coordinates(collector_positions[0], collector_positions[1])
-
-    def get_optimal_baseline(self, wavelength: astropy.units.Quantity,
-                             optimal_angular_distance: astropy.units.Quantity):
-        return 0.59 * wavelength.to(u.m) / optimal_angular_distance.to(u.rad) * u.rad
 
 
 class EmmaXDoubleStretch(ArrayConfiguration):
@@ -79,11 +63,6 @@ class EmmaXDoubleStretch(ArrayConfiguration):
         collector_positions = emma_x_static * (1 + (2 * self.baseline) / self.baseline * np.sin(
             2 * np.pi * u.rad / self.modulation_period * time))
         return Coordinates(collector_positions[0], collector_positions[1])
-
-    def get_optimal_baseline(self, wavelength: astropy.units.Quantity,
-                             optimal_angular_distance: astropy.units.Quantity):
-        # TODO: Implement correct formula
-        return 0.59 * wavelength / optimal_angular_distance.to(u.rad) * u.rad
 
 
 class EquilateralTriangleCircularRotation(ArrayConfiguration):
@@ -101,11 +80,6 @@ class EquilateralTriangleCircularRotation(ArrayConfiguration):
              [height.value - height_to_center.value, -height_to_center.value, -height_to_center.value]])
         collector_positions = np.matmul(rotation_matrix, equilateral_triangle_static) * self.baseline.unit
         return Coordinates(collector_positions[0], collector_positions[1])
-
-    def get_optimal_baseline(self, wavelength: astropy.units.Quantity,
-                             optimal_angular_distance: astropy.units.Quantity):
-        # TODO: Implement correct formula
-        return 0.59 * wavelength / optimal_angular_distance.to(u.rad) * u.rad
 
 
 class RegularPentagonCircularRotation(ArrayConfiguration):
@@ -137,8 +111,3 @@ class RegularPentagonCircularRotation(ArrayConfiguration):
             [self._y(angles[0]), self._y(angles[1]), self._y(angles[2]), self._y(angles[3]), self._y(angles[4])]])
         collector_positions = np.matmul(rotation_matrix, pentagon_static) * self.baseline.unit
         return Coordinates(collector_positions[0], collector_positions[1])
-
-    def get_optimal_baseline(self, wavelength: astropy.units.Quantity,
-                             optimal_angular_distance: astropy.units.Quantity):
-        # TODO: Implement correct formula
-        return 0.59 * wavelength / optimal_angular_distance.to(u.rad) * u.rad
