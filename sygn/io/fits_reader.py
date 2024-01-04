@@ -58,7 +58,12 @@ class FITSReader():
             raise ValueError(f'Template wavelength range upper limit does not match data wavelength range upper limit')
 
     @staticmethod
-    def _create_config_dict_from_fits_header(data_fits_header):
+    def _create_config_dict_from_fits_header(data_fits_header: fits.header.Header) -> dict:
+        """Create the configuration dictionary from the FITS header.
+
+        :param data_fits_header: The FITS header
+        :return: The configuration dictionary
+        """
         config_dict = {}
         config_dict['settings'] = {
             'grid_size': data_fits_header['SYGN_GRID_SIZE'],
@@ -100,7 +105,12 @@ class FITSReader():
         return config_dict
 
     @staticmethod
-    def _create_target_dict_from_fits_header(data_fits_header):
+    def _create_target_dict_from_fits_header(data_fits_header: fits.header.Header) -> dict:
+        """Create the target dictionary from the FITS header.
+
+        :param data_fits_header: The FITS header
+        :return: The target dictionary
+        """
         target_dict = {}
         target_dict['star'] = {
             'name': data_fits_header['SYGN_STAR_NAME'],
@@ -134,7 +144,12 @@ class FITSReader():
         return target_dict
 
     @staticmethod
-    def _read_indices_from_fits_header(template_fits_header) -> Tuple:
+    def _read_indices_from_fits_header(template_fits_header: fits.header.Header) -> Tuple:
+        """Read the indices from the FITS header.
+
+        :param template_fits_header: The FITS header
+        :return: A tuple containing the indices
+        """
         index_x = template_fits_header['SYGN_INDEX_X']
         index_y = template_fits_header['SYGN_INDEX_Y']
         return index_x, index_y
