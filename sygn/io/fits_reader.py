@@ -2,6 +2,7 @@ from pathlib import Path
 from typing import Tuple
 
 import numpy as np
+from astropy import units as u
 from astropy.io import fits
 
 from sygn.core.context import Context
@@ -12,17 +13,71 @@ class FITSReader():
     """
 
     @staticmethod
-    def _check_template_fits_header(context: Context, template_fits_header):
+    def _check_template_fits_header(context: Context, template_fits_header: fits.header.Header):
+        """Check that the relevant template configuration and the data configuration match.
+
+        :param context: The context object
+        :param template_fits_header: The template FITS header
+        """
         if context.settings.grid_size != template_fits_header['SYGN_GRID_SIZE']:
             raise ValueError(f'Template grid size does not match data grid size')
-        # TODO: check other properties
+        if context.settings.time_steps != template_fits_header['SYGN_TIME_STEPS']:
+            raise ValueError(f'Template time steps do not match data time steps')
+        if context.settings.planet_orbital_motion != template_fits_header['SYGN_PLANET_ORBITAL_MOTION']:
+            raise ValueError(f'Template planet orbital motion flag does not match data planet orbital motion')
+        if context.mission.integration_time.to(u.d) / context.mission.modulation_period.to(u.d) != \
+                u.Quantity(template_fits_header['SYGN_INTEGRATION_TIME']).to(u.d) / u.Quantity(
+            template_fits_header['SYGN_MODULATION_PERIOD']).to(u.d):
+            raise ValueError(
+                f'Ratio of integration time to modulation period of data does not match the template ratio')
+        if context.mission.baseline_ratio != template_fits_header['SYGN_BASELINE_RATIO']:
+            raise ValueError(f'Template baseline ratio does not match data baseline ratio')
+        if context.mission.baseline_maximum != template_fits_header['SYGN_BASELINE_MAXIMUM']:
+            raise ValueError(f'Template baseline maximum does not match data baseline maximum')
+        if context.mission.baseline_minimum != template_fits_header['SYGN_BASELINE_MINIMUM']:
+            raise ValueError(f'Template baseline minimum does not match data baseline minimum')
+        if context.mission.optimized_differential_output != template_fits_header['SYGN_OPTIMIZED_DIFFERENTIAL_OUTPUT']:
+            raise ValueError(f'Template optimized differential output flag does not match data optimized differential '
+                             f'output')
+        if context.mission.optimized_star_separation != template_fits_header['SYGN_OPTIMIZED_STAR_SEPARATION']:
+            raise ValueError(f'Template optimized star separation does not match data optimized star separation')
+        if context.mission.optimized_wavelength != template_fits_header['SYGN_OPTIMIZED_WAVELENGTH']:
+            raise ValueError(f'Template optimized wavelength does not match data optimized wavelength')
+        if context.observatory.array_configuration != template_fits_header['SYGN_ARRAY_CONFIGURATION_TYPE']:
+            raise ValueError(f'Template array configuration does not match data array configuration')
+        if context.observatory.beam_combination_scheme != template_fits_header['SYGN_BEAM_COMBINATION_SCHEME']:
+            raise ValueError(f'Template beam combination scheme does not match data beam combination scheme')
+        if context.observatory.instrument_parameters.spectral_resolving_power != \
+                template_fits_header['SYGN_SPECTRAL_RESOLVING_POWER']:
+            raise ValueError(f'Template spectral resolving power does not match data spectral resolving power')
+        if context.observatory.instrument_parameters.wavelength_range_lower_limit != \
+                template_fits_header['SYGN_WAVELENGTH_RANGE_LOWER_LIMIT']:
+            raise ValueError(f'Template wavelength range lower limit does not match data wavelength range lower limit')
+        if context.observatory.instrument_parameters.wavelength_range_upper_limit != \
+                template_fits_header['SYGN_WAVELENGTH_RANGE_UPPER_LIMIT']:
+            raise ValueError(f'Template wavelength range upper limit does not match data wavelength range upper limit')
+        if context.star.distance != template_fits_header['SYGN_STAR_DISTANCE']:
+            raise ValueError(f'Template star distance does not match data star distance.')
+        if context.mission.optimized_star_separation == 'habitable-zone' and context.star.temperature != \
+                template_fits_header['SYGN_STAR_TEMPERATURE']:
+            raise ValueError(
+                f'Template star temperature does not match data star temperature. This is an issue since the habitable zone is dependent on this quantity.')
+        if context.mission.optimized_star_separation == 'habitable-zone' and context.star.luminosity != \
+                template_fits_header['SYGN_STAR_LUMINOSITY']:
+            raise ValueError(
+                f'Template star luminosity does not match data star luminosity. This is an issue since the habitable zone is dependent on this quantity.')
 
     @staticmethod
-    def _create_config_dict_from_fits_header(data_fits_header):
+    def _create_config_dict_from_fits_header(data_fits_header: fits.header.Header) -> dict:
+        """Create the configuration dictionary from the FITS header.
+
+        :param data_fits_header: The FITS header
+        :return: The configuration dictionary
+        """
         config_dict = {}
         config_dict['settings'] = {
             'grid_size': data_fits_header['SYGN_GRID_SIZE'],
-            'time_step': data_fits_header['SYGN_TIME_STEP'],
+            'time_steps': data_fits_header['SYGN_TIME_STEPS'],
             'planet_orbital_motion': data_fits_header['SYGN_PLANET_ORBITAL_MOTION'],
             'noise_contributions': {
                 'stellar_leakage': data_fits_header['SYGN_STELLAR_LEAKAGE'],
@@ -60,7 +115,12 @@ class FITSReader():
         return config_dict
 
     @staticmethod
-    def _create_target_dict_from_fits_header(data_fits_header):
+    def _create_target_dict_from_fits_header(data_fits_header: fits.header.Header) -> dict:
+        """Create the target dictionary from the FITS header.
+
+        :param data_fits_header: The FITS header
+        :return: The target dictionary
+        """
         target_dict = {}
         target_dict['star'] = {
             'name': data_fits_header['SYGN_STAR_NAME'],
@@ -94,7 +154,12 @@ class FITSReader():
         return target_dict
 
     @staticmethod
-    def _read_indices_from_fits_header(template_fits_header) -> Tuple:
+    def _read_indices_from_fits_header(template_fits_header: fits.header.Header) -> Tuple:
+        """Read the indices from the FITS header.
+
+        :param template_fits_header: The FITS header
+        :return: A tuple containing the indices
+        """
         index_x = template_fits_header['SYGN_INDEX_X']
         index_y = template_fits_header['SYGN_INDEX_Y']
         return index_x, index_y
