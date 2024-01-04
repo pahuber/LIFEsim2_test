@@ -67,7 +67,7 @@ class FITSReader():
         config_dict = {}
         config_dict['settings'] = {
             'grid_size': data_fits_header['SYGN_GRID_SIZE'],
-            'time_step': data_fits_header['SYGN_TIME_STEP'],
+            'time_steps': data_fits_header['SYGN_TIME_STEPS'],
             'planet_orbital_motion': data_fits_header['SYGN_PLANET_ORBITAL_MOTION'],
             'noise_contributions': {
                 'stellar_leakage': data_fits_header['SYGN_STELLAR_LEAKAGE'],

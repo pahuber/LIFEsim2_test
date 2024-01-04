@@ -31,7 +31,7 @@ class FITSWriter():
 
         # The following properties are relevant for both data types
         header['HIERARCH SYGN_GRID_SIZE'] = context.settings.grid_size
-        header['HIERARCH SYGN_TIME_STEP'] = str(context.settings.time_step)
+        header['HIERARCH SYGN_TIME_STEPS'] = str(context.settings.time_steps)
         header['HIERARCH SYGN_PLANET_ORBITAL_MOTION'] = context.settings.planet_orbital_motion
         header['HIERARCH SYGN_INTEGRATION_TIME'] = str(context.mission.integration_time)
         header['HIERARCH SYGN_MODULATION_PERIOD'] = str(context.mission.modulation_period)
