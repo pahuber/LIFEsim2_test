@@ -9,24 +9,29 @@
 # Settings
 # -------------------------------------------
 settings:
-  grid_size: 10
+  grid_size: 60
   time_steps: 100
   planet_orbital_motion: false
-  noise_contributions:
+  noise:
     stellar_leakage: true
     local_zodi_leakage: false
     exozodi_leakage: false
-    fiber_injection_variability: false
-    optical_path_difference_variability:
-      apply: false
+    amplitude_perturbations: true
+    phase_perturbations:
+      apply: true
       power_law_exponent: 1
       rms: 0.1 nm
+    polarization_perturbations:
+      apply: true
+      power_law_exponent: 1
+      rms: 0.1 rad
+
 # -------------------------------------------
 # Mission Configuration
 # -------------------------------------------
 mission:
-  integration_time: 100 d
-  modulation_period: 100 d
+  integration_time: 1 d
+  modulation_period: 1 d
   baseline_ratio: 6
   baseline_maximum: 600 m
   baseline_minimum: 5 m

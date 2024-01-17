@@ -283,9 +283,9 @@ class DataGenerator():
                     beam_combination_matrix=self._context.observatory.beam_combination_scheme.get_beam_combination_transfer_matrix(),
                     number_of_inputs=self._context.observatory.beam_combination_scheme.number_of_inputs,
                     number_of_outputs=self._context.observatory.beam_combination_scheme.number_of_outputs,
-                    fiber_injection_variability=self._context.settings.noise_contributions.fiber_injection_variability,
-                    optical_path_difference_variability_apply=self._context.settings.noise_contributions.optical_path_difference_variability.apply,
-                    optical_path_difference_distribution=self._context.settings.noise_contributions.optical_path_difference_distribution,
+                    fiber_injection_variability=self._context.settings.noise.amplitude_perturbations,
+                    optical_path_difference_variability_apply=self._context.settings.noise.phase_perturbations.apply,
+                    optical_path_difference_distribution=self._context.settings.noise.phase_perturbations_distribution,
                     grid_size=self._context.settings.grid_size)
 
                 # Calculate the photon counts at each of the outputs

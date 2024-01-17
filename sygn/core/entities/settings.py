@@ -2,7 +2,7 @@ from typing import Any, Optional
 
 from pydantic import BaseModel
 
-from sygn.core.entities.noise_contributions import NoiseContributions
+from sygn.core.entities.noise import Noise
 
 
 class Settings(BaseModel):
@@ -12,7 +12,7 @@ class Settings(BaseModel):
     grid_size: int
     time_steps: int
     planet_orbital_motion: bool
-    noise_contributions: Optional[NoiseContributions]
+    noise: Optional[Noise]
     integration_time: Any = None
     time_step: Any = None
 
@@ -23,4 +23,4 @@ class Settings(BaseModel):
         """
         super().__init__(**data)
         self.time_step = self.integration_time / self.time_steps
-        self.noise_contributions.get_optical_path_difference_distribution(self.time_step)
+        self.noise.get_phase_perturbations_distribution(self.time_step)

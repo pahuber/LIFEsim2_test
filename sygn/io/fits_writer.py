@@ -80,17 +80,17 @@ class FITSWriter():
                 header['HIERARCH SYGN_LOCAL_ZODI'] = True
 
         if data_type == FITSReadWriteType.SyntheticMeasurement:
-            header['HIERARCH SYGN_STELLAR_LEAKAGE'] = context.settings.noise_contributions.stellar_leakage
-            header['HIERARCH SYGN_LOCAL_ZODI_LEAKAGE'] = context.settings.noise_contributions.local_zodi_leakage
-            header['HIERARCH SYGN_EXOZODI_LEAKAGE'] = context.settings.noise_contributions.exozodi_leakage
+            header['HIERARCH SYGN_STELLAR_LEAKAGE'] = context.settings.noise.stellar_leakage
+            header['HIERARCH SYGN_LOCAL_ZODI_LEAKAGE'] = context.settings.noise.local_zodi_leakage
+            header['HIERARCH SYGN_EXOZODI_LEAKAGE'] = context.settings.noise.exozodi_leakage
             header[
-                'HIERARCH SYGN_FIBER_INJECTION_VARIABILITY'] = context.settings.noise_contributions.fiber_injection_variability
+                'HIERARCH SYGN_FIBER_INJECTION_VARIABILITY'] = context.settings.noise.amplitude_perturbations
             header[
-                'HIERARCH SYGN_OPD_VARIABILITY_APPLY'] = context.settings.noise_contributions.optical_path_difference_variability.apply
+                'HIERARCH SYGN_OPD_VARIABILITY_APPLY'] = context.settings.noise.phase_perturbations.apply
             header[
-                'HIERARCH SYGN_OPD_VARIABILITY_POWER_LAW_EXPONENT'] = context.settings.noise_contributions.optical_path_difference_variability.power_law_exponent
+                'HIERARCH SYGN_OPD_VARIABILITY_POWER_LAW_EXPONENT'] = context.settings.noise.phase_perturbations.power_law_exponent
             header['HIERARCH SYGN_OPD_VARIABILITY_RMS'] = str(
-                context.settings.noise_contributions.optical_path_difference_variability.rms)
+                context.settings.noise.phase_perturbations.rms)
             header['HIERARCH SYGN_APERTURE_DIAMETER'] = str(
                 context.observatory.instrument_parameters.aperture_diameter)
             header[

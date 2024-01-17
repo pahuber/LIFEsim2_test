@@ -10,7 +10,7 @@ from pydantic_core.core_schema import ValidationInfo
 from sygn.io.validators import validate_quantity_units
 
 
-class OpticalPathDifferenceVariability(BaseModel):
+class PhasePerturbations(BaseModel):
     apply: bool
     power_law_exponent: int
     rms: Any
@@ -26,17 +26,17 @@ class OpticalPathDifferenceVariability(BaseModel):
         return validate_quantity_units(value=value, field_name=info.field_name, unit_equivalency=(u.m,))
 
 
-class NoiseContributions(BaseModel):
+class Noise(BaseModel):
     """Class representation of the noise contributions that are considered for the simulation.
     """
     stellar_leakage: bool
     local_zodi_leakage: bool
     exozodi_leakage: bool
-    fiber_injection_variability: bool
-    optical_path_difference_variability: Optional[OpticalPathDifferenceVariability]
-    optical_path_difference_distribution: Any = None
+    amplitude_perturbations: bool
+    phase_perturbations: Optional[PhasePerturbations]
+    phase_perturbations_distribution: Any = None
 
-    def get_optical_path_difference_distribution(self, time_step: astropy.units.Quantity) -> np.ndarray:
+    def get_phase_perturbations_distribution(self, time_step: astropy.units.Quantity) -> np.ndarray:
         """Return a distribution that phase differences should be drawn from. The distribution is created using a power
         law as 1/f^exponent.
 
@@ -44,6 +44,6 @@ class NoiseContributions(BaseModel):
         :return: The distribution
         """
         phase_difference_distribution = cn.powerlaw_psd_gaussian(1, 1000, 1 / time_step.to(u.s).value)
-        phase_difference_distribution *= self.optical_path_difference_variability.rms.value / np.sqrt(
+        phase_difference_distribution *= self.phase_perturbations.rms.value / np.sqrt(
             np.mean(phase_difference_distribution ** 2))
-        self.optical_path_difference_distribution = phase_difference_distribution * self.optical_path_difference_variability.rms.unit
+        self.phase_perturbations_distribution = phase_difference_distribution * self.phase_perturbations.rms.unit

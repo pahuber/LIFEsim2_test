@@ -31,11 +31,11 @@ class TemplateGeneratorModule(BaseModule):
         :param context: The context
         :return: The context with the updated noise contributions
         """
-        context.settings.noise_contributions.stellar_leakage = False
-        context.settings.noise_contributions.local_zodi_leakage = False
-        context.settings.noise_contributions.exozodi_leakage = False
-        context.settings.noise_contributions.fiber_injection_variability = False
-        context.settings.noise_contributions.optical_path_difference_variability.apply = False
+        context.settings.noise.stellar_leakage = False
+        context.settings.noise.local_zodi_leakage = False
+        context.settings.noise.exozodi_leakage = False
+        context.settings.noise.amplitude_perturbations = False
+        context.settings.noise.phase_perturbations.apply = False
         return context
 
     def apply(self, context: Context) -> Context:
