@@ -85,6 +85,7 @@ class MLExtractionModule(BaseModule):
             y, x = np.ogrid[:height, :width]
             mask = ((x - center[0]) ** 2 + (y - center[1]) ** 2 <= radius ** 2 + 0.5) & \
                    ((x - center[0]) ** 2 + (y - center[1]) ** 2 >= (radius - 1) ** 2 + 0.5)
+            # TODO: Remove planet position from mask
 
             # Extract the pixels within the circle
             # circle_pixels = image[mask]
