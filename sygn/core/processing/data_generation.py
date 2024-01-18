@@ -1,6 +1,5 @@
 from enum import Enum
 from itertools import product
-from random import choice
 from typing import Tuple
 
 import astropy
@@ -64,6 +63,7 @@ class DataGenerator():
 
     def _get_input_complex_amplitudes(self,
                                       time: astropy.units.Quantity,
+                                      time_index: int,
                                       wavelength: astropy.units.Quantity,
                                       source_sky_coordinates: Coordinates,
                                       observatory_coordinates: Coordinates,
@@ -73,6 +73,7 @@ class DataGenerator():
         """Return the input complex amplitude vector, consisting of a flat wavefront per collector.
 
         :param time: The time for which the intensity response is calculated
+        :param time_index: The time index
         :param wavelength: The wavelength for which the intensity response is calculated
         :param source_sky_coordinates: The sky coordinates of the source for which the intensity response is calculated
         :param observatory_coordinates: The observatory coordinates at the time
@@ -91,6 +92,7 @@ class DataGenerator():
 
     def _get_intensity_responses(self,
                                  time: astropy.units.Quantity,
+                                 time_index: int,
                                  wavelength: astropy.units.Quantity,
                                  source_sky_coordinates: np.ndarray,
                                  observatory_coordinates: np.ndarray,
@@ -105,6 +107,7 @@ class DataGenerator():
         """Return the intensity response vector consisting of the intensity responses of each input collector.
 
         :param time: The time
+        :param time_index: The time index
         :param wavelength: The wavelength
         :param source_sky_coordinates: The source sky coordinates
         :param observatory_coordinates: The observatory coordinates
@@ -119,6 +122,7 @@ class DataGenerator():
         :return: The intensity response vector
         """
         input_complex_amplitudes = self._get_input_complex_amplitudes(time=time,
+                                                                      time_index=time_index,
                                                                       wavelength=wavelength,
                                                                       source_sky_coordinates=source_sky_coordinates,
                                                                       observatory_coordinates=observatory_coordinates,
@@ -129,10 +133,11 @@ class DataGenerator():
 
         if fiber_injection_variability or optical_path_difference_variability_apply:
             perturbation_matrix = self._get_perturbation_matrix(
+                time_index=time_index,
                 wavelength=wavelength,
                 fiber_injection_variability=fiber_injection_variability,
-                optical_path_difference_variability_apply=optical_path_difference_variability_apply,
-                optical_path_difference_distribution=optical_path_difference_distribution,
+                phase_perturbations_apply=optical_path_difference_variability_apply,
+                phase_perturbation_distribution=optical_path_difference_distribution,
                 number_of_inputs=number_of_inputs)
             input_complex_amplitudes = np.dot(perturbation_matrix, input_complex_amplitudes)
 
@@ -151,17 +156,19 @@ class DataGenerator():
             source_sky_brightness_distribution[source_sky_brightness_distribution.value > 0]) == 0 else 1
 
     def _get_perturbation_matrix(self,
+                                 time_index: int,
                                  wavelength: astropy.units.Quantity,
                                  fiber_injection_variability: bool,
-                                 optical_path_difference_variability_apply: bool,
-                                 optical_path_difference_distribution: np.ndarray,
+                                 phase_perturbations_apply: bool,
+                                 phase_perturbation_distribution: np.ndarray,
                                  number_of_inputs: int) -> np.ndarray:
         """Return the perturbation matrix with randomly generated noise.
 
+        :param time_index: The time index
         :param wavelength: The wavelength
         :param fiber_injection_variability: Whether fiber injection variability should be modeled
-        :param optical_path_difference_variability_apply: Whether optical path difference variability should be modeled
-        :param optical_path_difference_distribution: The distribution to sample the OPD
+        :param phase_perturbations_apply: Whether phase perturbations sould be modeled
+        :param phase_perturbation_distribution: The distribution to sample the OPD
         :param number_of_inputs: The number of inputs, i.e. collectors
         :return:
         """
@@ -173,8 +180,8 @@ class DataGenerator():
             # TODO: Use more realistic distributions
             if fiber_injection_variability:
                 amplitude_factor = np.random.uniform(0.8, 0.9)
-            if optical_path_difference_variability_apply:
-                phase_difference = choice(optical_path_difference_distribution).to(u.um)
+            if phase_perturbations_apply:
+                phase_difference = (phase_perturbation_distribution[index][time_index]).to(u.um)
 
             diagonal_of_matrix.append(amplitude_factor * np.exp(2j * np.pi / wavelength * phase_difference))
 
@@ -276,6 +283,7 @@ class DataGenerator():
                 # Calculate the vector of intensity responses, each intensity response corresponding to one output
                 intensity_responses = self._get_intensity_responses(
                     time=time,
+                    time_index=index_time,
                     wavelength=wavelength,
                     source_sky_coordinates=source.get_sky_coordinates(index_time_planet_motion, index_wavelength),
                     observatory_coordinates=self._context.observatory.array_configuration.get_collector_positions(time),
@@ -285,7 +293,7 @@ class DataGenerator():
                     number_of_outputs=self._context.observatory.beam_combination_scheme.number_of_outputs,
                     fiber_injection_variability=self._context.settings.noise.amplitude_perturbations,
                     optical_path_difference_variability_apply=self._context.settings.noise.phase_perturbations.apply,
-                    optical_path_difference_distribution=self._context.settings.noise.phase_perturbations_distribution,
+                    optical_path_difference_distribution=self._context.settings.noise.phase_perturbation_distribution,
                     grid_size=self._context.settings.grid_size)
 
                 # Calculate the photon counts at each of the outputs

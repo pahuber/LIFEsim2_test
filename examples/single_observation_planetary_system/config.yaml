@@ -16,13 +16,13 @@ settings:
     stellar_leakage: true
     local_zodi_leakage: false
     exozodi_leakage: false
-    amplitude_perturbations: true
+    amplitude_perturbations: false
     phase_perturbations:
       apply: true
       power_law_exponent: 1
-      rms: 0.1 nm
+      rms: 1 nm
     polarization_perturbations:
-      apply: true
+      apply: false
       power_law_exponent: 1
       rms: 0.1 rad
 

@@ -109,7 +109,9 @@ class ConfigLoaderModule(BaseModule):
         :param config_dict: The dictionary
         :return: The settings object
         """
-        return Settings(**config_dict['settings'], integration_time=self.mission.integration_time)
+        return Settings(**config_dict['settings'],
+                        integration_time=self.mission.integration_time,
+                        number_of_inputs=self.observatory.beam_combination_scheme.number_of_inputs)
 
     def apply(self, context: Context) -> Context:
         """Load the configurations from the config file and initialize the settings, mission and observatory objects.
@@ -120,8 +122,8 @@ class ConfigLoaderModule(BaseModule):
         if not self._config_dict:
             self._config_dict = ConfigReader(path_to_config_file=self._path_to_config_file).get_dictionary_from_file()
         self.mission = self._load_mission(self._config_dict) if self.mission is None else self.mission
-        self.settings = self._load_settings(self._config_dict) if self.settings is None else self.settings
         self.observatory = self._load_observatory(self._config_dict) if self.observatory is None else self.observatory
+        self.settings = self._load_settings(self._config_dict) if self.settings is None else self.settings
         context.settings = self.settings
         context.mission = self.mission
         context.observatory = self.observatory
