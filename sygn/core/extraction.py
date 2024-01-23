@@ -5,3 +5,4 @@ class Extraction():
         self.spectrum = spectrum
         self.spectrum_uncertainties = spectrum_uncertainties
         self.cost_function = cost_function
+        self.spectrum_fit = None
