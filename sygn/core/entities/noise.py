@@ -69,19 +69,21 @@ class Noise(BaseModel):
         """
         noise_generator = NoiseGenerator()
         perturbation_distributions = np.zeros((number_of_inputs, number_of_samples)) * rms.unit
+        sample_time = 1 / 10000  # Corresponds to 10kHz
 
+        # TODO: make perturbation distributions chromatic and use correct cutoff frequency
         for i in range(number_of_inputs):
             match color_exponent:
                 case 0:
-                    perturbation_distributions[i] = noise_generator.generate(dt=sample_time.to(u.s).value,
+                    perturbation_distributions[i] = noise_generator.generate(dt=sample_time,
                                                                              n=number_of_samples,
                                                                              colour=noise_generator.white()) * rms.unit
                 case 1:
-                    perturbation_distributions[i] = noise_generator.generate(dt=sample_time.to(u.s).value,
+                    perturbation_distributions[i] = noise_generator.generate(dt=sample_time,
                                                                              n=number_of_samples,
                                                                              colour=noise_generator.pink()) * rms.unit
                 case 2:
-                    perturbation_distributions[i] = noise_generator.generate(dt=sample_time.to(u.s).value,
+                    perturbation_distributions[i] = noise_generator.generate(dt=sample_time,
                                                                              n=number_of_samples,
                                                                              colour=noise_generator.brown()) * rms.unit
 
