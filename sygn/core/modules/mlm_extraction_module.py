@@ -87,21 +87,22 @@ class MLExtractionModule(BaseModule):
                    ((x - center[0]) ** 2 + (y - center[1]) ** 2 >= (radius - 1) ** 2 + 0.5)
             # TODO: Remove planet position from mask
 
-            # Extract the pixels within the circle
-            # circle_pixels = image[mask]
-            # print(mask.shape)
-            # print(extracted_photon_counts.shape)
-            # plt.imshow(cost_function_white[0, :, :] * mask)
+            # # Extract the pixels within the circle
+            # plt.imshow(cost_functions_white[0, :, :] * mask)
             # plt.colorbar()
             # plt.show()
 
-            a = np.einsum('ijk, ij -> ijk', optimum_fluxes_white[index_output, :, :], mask).reshape(
+            masked_fluxes_white_flattened = np.einsum('ijk, ij -> ijk', optimum_fluxes_white[index_output, :, :],
+                                                      mask).reshape(
                 context.settings.grid_size ** 2, -1)
 
-            uncertainties = np.zeros(a.shape[1], dtype=object)
+            uncertainties = np.zeros(masked_fluxes_white_flattened.shape[1], dtype=object)
 
-            for index in range(a.shape[1]):
-                uncertainties[index] = np.std(a[:, index])
+            for index in range(masked_fluxes_white_flattened.shape[1]):
+                # Remove zero values from array, since they are not part of the mask and would change the standard
+                # deviation
+                non_zero_values = [el for el in masked_fluxes_white_flattened[:, index] if el > 0]
+                uncertainties[index] = np.std(non_zero_values)
 
         return uncertainties
 
