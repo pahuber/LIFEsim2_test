@@ -84,13 +84,19 @@ class FITSWriter():
             header['HIERARCH SYGN_LOCAL_ZODI_LEAKAGE'] = context.settings.noise.local_zodi_leakage
             header['HIERARCH SYGN_EXOZODI_LEAKAGE'] = context.settings.noise.exozodi_leakage
             header[
-                'HIERARCH SYGN_FIBER_INJECTION_VARIABILITY'] = context.settings.noise.amplitude_perturbations
+                'HIERARCH SYGN_AMPLITUDE_PERTURBATIONS'] = context.settings.noise.amplitude_perturbations
             header[
-                'HIERARCH SYGN_OPD_VARIABILITY_APPLY'] = context.settings.noise.phase_perturbations.apply
+                'HIERARCH SYGN_PHASE_PERTURBATIONS_APPLY'] = context.settings.noise.phase_perturbations.apply
             header[
-                'HIERARCH SYGN_OPD_VARIABILITY_POWER_LAW_EXPONENT'] = context.settings.noise.phase_perturbations.power_law_exponent
-            header['HIERARCH SYGN_OPD_VARIABILITY_RMS'] = str(
+                'HIERARCH SYGN_PHASE_PERTURBATIONS_POWER_LAW_EXPONENT'] = context.settings.noise.phase_perturbations.power_law_exponent
+            header['HIERARCH SYGN_PHASE_PERTURBATIONS_VARIABILITY_RMS'] = str(
                 context.settings.noise.phase_perturbations.rms)
+            header[
+                'HIERARCH SYGN_POLARIZATION_PERTURBATIONS_APPLY'] = context.settings.noise.polarization_perturbations.apply
+            header[
+                'HIERARCH SYGN_POLARIZATION_PERTURBATIONS_POWER_LAW_EXPONENT'] = context.settings.noise.polarization_perturbations.power_law_exponent
+            header['HIERARCH SYGN_POLARIZATION_PERTURBATIONS_VARIABILITY_RMS'] = str(
+                context.settings.noise.polarization_perturbations.rms)
             header['HIERARCH SYGN_APERTURE_DIAMETER'] = str(
                 context.observatory.instrument_parameters.aperture_diameter)
             header[

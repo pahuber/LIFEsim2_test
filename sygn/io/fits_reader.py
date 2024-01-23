@@ -80,15 +80,20 @@ class FITSReader():
             'grid_size': data_fits_header['SYGN_GRID_SIZE'],
             'time_steps': data_fits_header['SYGN_TIME_STEPS'],
             'planet_orbital_motion': data_fits_header['SYGN_PLANET_ORBITAL_MOTION'],
-            'noise_contributions': {
+            'noise': {
                 'stellar_leakage': data_fits_header['SYGN_STELLAR_LEAKAGE'],
                 'local_zodi_leakage': data_fits_header['SYGN_LOCAL_ZODI_LEAKAGE'],
                 'exozodi_leakage': data_fits_header['SYGN_EXOZODI_LEAKAGE'],
-                'fiber_injection_variability': data_fits_header['SYGN_FIBER_INJECTION_VARIABILITY'],
-                'optical_path_difference_variability': {
-                    'apply': data_fits_header['SYGN_OPD_VARIABILITY_APPLY '],
-                    'power_law_exponent': data_fits_header['SYGN_OPD_VARIABILITY_POWER_LAW_EXPONENT'],
-                    'rms': data_fits_header['SYGN_OPD_VARIABILITY_RMS']
+                'amplitude_perturbations': data_fits_header['SYGN_AMPLITUDE_PERTURBATIONS'],
+                'phase_perturbations': {
+                    'apply': data_fits_header['SYGN_PHASE_PERTURBATIONS_APPLY '],
+                    'power_law_exponent': data_fits_header['SYGN_PHASE_PERTURBATIONS_POWER_LAW_EXPONENT'],
+                    'rms': data_fits_header['SYGN_PHASE_PERTURBATIONS_VARIABILITY_RMS']
+                },
+                'polarization_perturbations': {
+                    'apply': data_fits_header['SYGN_POLARIZATION_PERTURBATIONS_APPLY '],
+                    'power_law_exponent': data_fits_header['SYGN_POLARIZATION_PERTURBATIONS_POWER_LAW_EXPONENT'],
+                    'rms': data_fits_header['SYGN_POLARIZATION_PERTURBATIONS_VARIABILITY_RMS']
                 }
             }
         }
