@@ -3,14 +3,14 @@ from pathlib import Path
 from matplotlib import pyplot as plt
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
-from sygn.core.modules.config_loader_module import ConfigLoaderModule
-from sygn.core.modules.data_generator_module import DataGeneratorModule
-from sygn.core.modules.fits_reader_module import FITSReaderModule
-from sygn.core.modules.flux_calibration_module import FluxCalibrationModule
-from sygn.core.modules.mlm_extraction_module import MLExtractionModule
-from sygn.core.modules.target_loader_module import TargetLoaderModule
-from sygn.core.pipeline import Pipeline
-from sygn.util.helpers import FITSReadWriteType
+from lifesim2.core.modules.config_loader_module import ConfigLoaderModule
+from lifesim2.core.modules.data_generator_module import DataGeneratorModule
+from lifesim2.core.modules.fits_reader_module import FITSReaderModule
+from lifesim2.core.modules.flux_calibration_module import FluxCalibrationModule
+from lifesim2.core.modules.mlm_extraction_module import MLExtractionModule
+from lifesim2.core.modules.target_loader_module import TargetLoaderModule
+from lifesim2.core.pipeline import Pipeline
+from lifesim2.util.helpers import FITSReadWriteType
 
 ########################################################################################################################
 # Create Pipeline
