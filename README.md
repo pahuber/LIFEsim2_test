@@ -1,3 +1,3 @@
-# SYGN
+# LIFEsim 2
 
-`SYGN` (SYnthetic measurement Generator for space-based Nulling interferometers) is a synthetic measurement generation and processing pipeline to analyze the performance of space-based nulling interferometers, such as the Large Interferometer For Exoplanets (LIFE).
+`LIFEsim 2` is a package to simulate observations with the LIFE observatory.
