@@ -1,6 +1,5 @@
 from enum import Enum
 from itertools import product
-from random import choice
 from typing import Tuple
 
 import astropy
@@ -64,33 +63,65 @@ class DataGenerator():
 
     def _get_input_complex_amplitudes(self,
                                       time: astropy.units.Quantity,
+                                      time_index: int,
                                       wavelength: astropy.units.Quantity,
                                       source_sky_coordinates: Coordinates,
                                       observatory_coordinates: Coordinates,
                                       aperture_radius: astropy.units.Quantity,
                                       number_of_inputs: int,
+                                      amplitude_perturbation_apply: bool,
+                                      phase_perturbation_apply: bool,
+                                      phase_perturbation_distribution: np.ndarray,
+                                      polarization_perturbation_apply: bool,
+                                      polarization_perturbation_distribution: np.ndarray,
                                       grid_size: int) -> np.ndarray:
         """Return the input complex amplitude vector, consisting of a flat wavefront per collector.
 
         :param time: The time for which the intensity response is calculated
+        :param time_index: The time index
         :param wavelength: The wavelength for which the intensity response is calculated
         :param source_sky_coordinates: The sky coordinates of the source for which the intensity response is calculated
         :param observatory_coordinates: The observatory coordinates at the time
         :param aperture_radius: The aperture radius of the collectors
         :param number_of_inputs: The number of inputs, i.e. collectors
+        :param amplitude_perturbation_apply: Whether fiber injection variability should be modeled
+        :param phase_perturbation_apply: Whether optical path difference variability should be modeled
+        :param phase_perturbation_distribution: The distribution to sample the OPD
         :param grid_size: The grid size for the calculations
         :return: The input complex amplitude vector
         """
-        input_complex_amplitudes = np.zeros((number_of_inputs, grid_size, grid_size), dtype=complex) * u.m
+        input_complex_amplitudes = np.zeros((number_of_inputs, 2, grid_size, grid_size), dtype=complex) * u.m
 
         for index_input in range(number_of_inputs):
-            input_complex_amplitudes[index_input] = aperture_radius.to(u.m) * np.exp(1j * 2 * np.pi / wavelength * (
-                    observatory_coordinates.x[index_input] * source_sky_coordinates.x.to(u.rad).value +
-                    observatory_coordinates.y[index_input] * source_sky_coordinates.y.to(u.rad).value))
+            amplitude_perturbation = 1
+            phase_perturbation = 0 * u.um
+            polarization_perturbation = 0 * u.rad
+            # TODO: check this value = 0 is ok
+            polarization_angle = 0 * u.rad  # We can set this to zero here without loss of generality
+            if amplitude_perturbation_apply:
+                amplitude_perturbation = np.random.uniform(0.8, 0.9)
+            if phase_perturbation_apply:
+                phase_perturbation = (phase_perturbation_distribution[index_input][time_index]).to(u.um)
+            if polarization_perturbation_apply:
+                polarization_perturbation = (polarization_perturbation_distribution[index_input][time_index]).to(u.rad)
+
+            # TODO: Add eta total here instead of photon counts calculation
+            input_complex_amplitudes[index_input][0] = amplitude_perturbation * aperture_radius.to(u.m) * np.exp(
+                1j * 2 * np.pi / wavelength * (
+                        observatory_coordinates.x[index_input] * source_sky_coordinates.x.to(u.rad).value +
+                        observatory_coordinates.y[index_input] * source_sky_coordinates.y.to(
+                    u.rad).value + phase_perturbation)) * np.cos(polarization_angle + polarization_perturbation)
+
+            input_complex_amplitudes[index_input][1] = amplitude_perturbation * aperture_radius.to(u.m) * np.exp(
+                1j * 2 * np.pi / wavelength * (
+                        observatory_coordinates.x[index_input] * source_sky_coordinates.x.to(u.rad).value +
+                        observatory_coordinates.y[index_input] * source_sky_coordinates.y.to(
+                    u.rad).value + phase_perturbation)) * np.sin(polarization_angle + polarization_perturbation)
         return input_complex_amplitudes
 
     def _get_intensity_responses(self,
                                  time: astropy.units.Quantity,
+                                 time_index: int,
                                  wavelength: astropy.units.Quantity,
                                  source_sky_coordinates: np.ndarray,
                                  observatory_coordinates: np.ndarray,
@@ -98,13 +129,16 @@ class DataGenerator():
                                  beam_combination_matrix: np.ndarray,
                                  number_of_inputs: int,
                                  number_of_outputs: int,
-                                 fiber_injection_variability: bool,
-                                 optical_path_difference_variability_apply: bool,
-                                 optical_path_difference_distribution: np.ndarray,
+                                 amplitude_perturbation_apply: bool,
+                                 phase_perturbation_apply: bool,
+                                 phase_perturbation_distribution: np.ndarray,
+                                 polarization_perturbation_apply: bool,
+                                 polarization_perturbation_distribution: np.ndarray,
                                  grid_size: int) -> np.ndarray:
         """Return the intensity response vector consisting of the intensity responses of each input collector.
 
         :param time: The time
+        :param time_index: The time index
         :param wavelength: The wavelength
         :param source_sky_coordinates: The source sky coordinates
         :param observatory_coordinates: The observatory coordinates
@@ -112,31 +146,41 @@ class DataGenerator():
         :param beam_combination_matrix: The bea, combination transfer matrix
         :param number_of_inputs: The number of inputs, i.e. collectors
         :param number_of_outputs: The number of interferometric outputs
-        :param fiber_injection_variability: Whether fiber injection variability should be modeled
-        :param optical_path_difference_variability_apply: Whether optical path difference variability should be modeled
-        :param optical_path_difference_distribution: The distribution to sample the OPD
+        :param amplitude_perturbation_apply: Whether fiber injection variability should be modeled
+        :param phase_perturbation_apply: Whether optical path difference variability should be modeled
+        :param phase_perturbation_distribution: The distribution to sample the OPD
+        :param polarization_perturbation_apply: Whether polarization perturbations should be modeled
+        :param polarization_perturbation_distribution: The distribution to sample the polarization perturbations
         :param grid_size: The grid size for the calculations
         :return: The intensity response vector
         """
         input_complex_amplitudes = self._get_input_complex_amplitudes(time=time,
+                                                                      time_index=time_index,
                                                                       wavelength=wavelength,
                                                                       source_sky_coordinates=source_sky_coordinates,
                                                                       observatory_coordinates=observatory_coordinates,
                                                                       aperture_radius=aperture_radius,
                                                                       number_of_inputs=number_of_inputs,
+                                                                      amplitude_perturbation_apply=amplitude_perturbation_apply,
+                                                                      phase_perturbation_apply=phase_perturbation_apply,
+                                                                      phase_perturbation_distribution=phase_perturbation_distribution,
+                                                                      polarization_perturbation_apply=polarization_perturbation_apply,
+                                                                      polarization_perturbation_distribution=polarization_perturbation_distribution,
                                                                       grid_size=grid_size)
-        input_complex_amplitudes = np.reshape(input_complex_amplitudes, (number_of_inputs, grid_size ** 2))
+        input_complex_amplitudes = np.reshape(input_complex_amplitudes, (number_of_inputs, 2, grid_size ** 2))
 
-        if fiber_injection_variability or optical_path_difference_variability_apply:
-            perturbation_matrix = self._get_perturbation_matrix(
-                wavelength=wavelength,
-                fiber_injection_variability=fiber_injection_variability,
-                optical_path_difference_variability_apply=optical_path_difference_variability_apply,
-                optical_path_difference_distribution=optical_path_difference_distribution,
-                number_of_inputs=number_of_inputs)
-            input_complex_amplitudes = np.dot(perturbation_matrix, input_complex_amplitudes)
+        # if amplitude_perturbation_apply or phase_perturbation_apply:
+        #     perturbation_matrix = self._get_perturbation_matrix(
+        #         time_index=time_index,
+        #         wavelength=wavelength,
+        #         fiber_injection_variability=amplitude_perturbation_apply,
+        #         phase_perturbations_apply=phase_perturbation_apply,
+        #         phase_perturbation_distribution=phase_perturbation_distribution,
+        #         number_of_inputs=number_of_inputs)
+        #     input_complex_amplitudes = np.dot(perturbation_matrix, input_complex_amplitudes)
 
-        intensity_responses = abs(np.dot(beam_combination_matrix, input_complex_amplitudes)) ** 2
+        intensity_responses = abs(np.dot(beam_combination_matrix, input_complex_amplitudes[:, 0])) ** 2 + abs(
+            np.dot(beam_combination_matrix, input_complex_amplitudes[:, 1])) ** 2
         intensity_responses = np.reshape(intensity_responses, (number_of_outputs, grid_size, grid_size))
         return intensity_responses
 
@@ -150,35 +194,37 @@ class DataGenerator():
         return len(source_sky_brightness_distribution[source_sky_brightness_distribution.value > 0]) if not len(
             source_sky_brightness_distribution[source_sky_brightness_distribution.value > 0]) == 0 else 1
 
-    def _get_perturbation_matrix(self,
-                                 wavelength: astropy.units.Quantity,
-                                 fiber_injection_variability: bool,
-                                 optical_path_difference_variability_apply: bool,
-                                 optical_path_difference_distribution: np.ndarray,
-                                 number_of_inputs: int) -> np.ndarray:
-        """Return the perturbation matrix with randomly generated noise.
-
-        :param wavelength: The wavelength
-        :param fiber_injection_variability: Whether fiber injection variability should be modeled
-        :param optical_path_difference_variability_apply: Whether optical path difference variability should be modeled
-        :param optical_path_difference_distribution: The distribution to sample the OPD
-        :param number_of_inputs: The number of inputs, i.e. collectors
-        :return:
-        """
-        diagonal_of_matrix = []
-
-        for index in range(number_of_inputs):
-            amplitude_factor = 1
-            phase_difference = 0 * u.um
-            # TODO: Use more realistic distributions
-            if fiber_injection_variability:
-                amplitude_factor = np.random.uniform(0.8, 0.9)
-            if optical_path_difference_variability_apply:
-                phase_difference = choice(optical_path_difference_distribution).to(u.um)
-
-            diagonal_of_matrix.append(amplitude_factor * np.exp(2j * np.pi / wavelength * phase_difference))
-
-        return np.diag(diagonal_of_matrix)
+    # def _get_perturbation_matrix(self,
+    #                              time_index: int,
+    #                              wavelength: astropy.units.Quantity,
+    #                              fiber_injection_variability: bool,
+    #                              phase_perturbations_apply: bool,
+    #                              phase_perturbation_distribution: np.ndarray,
+    #                              number_of_inputs: int) -> np.ndarray:
+    #     """Return the perturbation matrix with randomly generated noise.
+    #
+    #     :param time_index: The time index
+    #     :param wavelength: The wavelength
+    #     :param fiber_injection_variability: Whether fiber injection variability should be modeled
+    #     :param phase_perturbations_apply: Whether phase perturbations sould be modeled
+    #     :param phase_perturbation_distribution: The distribution to sample the OPD
+    #     :param number_of_inputs: The number of inputs, i.e. collectors
+    #     :return:
+    #     """
+    #     diagonal_of_matrix = []
+    #
+    #     for index in range(number_of_inputs):
+    #         amplitude_factor = 1
+    #         phase_difference = 0 * u.um
+    #         # TODO: Use more realistic distributions
+    #         if fiber_injection_variability:
+    #             amplitude_factor = np.random.uniform(0.8, 0.9)
+    #         if phase_perturbations_apply:
+    #             phase_difference = (phase_perturbation_distribution[index][time_index]).to(u.um)
+    #
+    #         diagonal_of_matrix.append(amplitude_factor * np.exp(2j * np.pi / wavelength * phase_difference))
+    #
+    #     return np.diag(diagonal_of_matrix)
 
     def _get_photon_counts_per_output(self,
                                       source_sky_brightness_distribution: np.ndarray,
@@ -276,6 +322,7 @@ class DataGenerator():
                 # Calculate the vector of intensity responses, each intensity response corresponding to one output
                 intensity_responses = self._get_intensity_responses(
                     time=time,
+                    time_index=index_time,
                     wavelength=wavelength,
                     source_sky_coordinates=source.get_sky_coordinates(index_time_planet_motion, index_wavelength),
                     observatory_coordinates=self._context.observatory.array_configuration.get_collector_positions(time),
@@ -283,9 +330,11 @@ class DataGenerator():
                     beam_combination_matrix=self._context.observatory.beam_combination_scheme.get_beam_combination_transfer_matrix(),
                     number_of_inputs=self._context.observatory.beam_combination_scheme.number_of_inputs,
                     number_of_outputs=self._context.observatory.beam_combination_scheme.number_of_outputs,
-                    fiber_injection_variability=self._context.settings.noise_contributions.fiber_injection_variability,
-                    optical_path_difference_variability_apply=self._context.settings.noise_contributions.optical_path_difference_variability.apply,
-                    optical_path_difference_distribution=self._context.settings.noise_contributions.optical_path_difference_distribution,
+                    amplitude_perturbation_apply=self._context.settings.noise.amplitude_perturbations,
+                    phase_perturbation_apply=self._context.settings.noise.phase_perturbations.apply,
+                    phase_perturbation_distribution=self._context.settings.noise.phase_perturbation_distribution,
+                    polarization_perturbation_apply=self._context.settings.noise.polarization_perturbations.apply,
+                    polarization_perturbation_distribution=self._context.settings.noise.polarization_perturbation_distribution,
                     grid_size=self._context.settings.grid_size)
 
                 # Calculate the photon counts at each of the outputs

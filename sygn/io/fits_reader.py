@@ -21,7 +21,7 @@ class FITSReader():
         """
         if context.settings.grid_size != template_fits_header['SYGN_GRID_SIZE']:
             raise ValueError(f'Template grid size does not match data grid size')
-        if context.settings.time_steps != template_fits_header['SYGN_TIME_STEPS']:
+        if context.settings.time_steps != int(template_fits_header['SYGN_TIME_STEPS']):
             raise ValueError(f'Template time steps do not match data time steps')
         if context.settings.planet_orbital_motion != template_fits_header['SYGN_PLANET_ORBITAL_MOTION']:
             raise ValueError(f'Template planet orbital motion flag does not match data planet orbital motion')
@@ -36,19 +36,20 @@ class FITSReader():
             raise ValueError(f'Template baseline maximum does not match data baseline maximum')
         if context.mission.baseline_minimum != template_fits_header['SYGN_BASELINE_MINIMUM']:
             raise ValueError(f'Template baseline minimum does not match data baseline minimum')
-        if context.mission.optimized_differential_output != template_fits_header['SYGN_OPTIMIZED_DIFFERENTIAL_OUTPUT']:
+        if context.mission.optimized_differential_output != int(
+                template_fits_header['SYGN_OPTIMIZED_DIFFERENTIAL_OUTPUT']):
             raise ValueError(f'Template optimized differential output flag does not match data optimized differential '
                              f'output')
         if context.mission.optimized_star_separation != template_fits_header['SYGN_OPTIMIZED_STAR_SEPARATION']:
             raise ValueError(f'Template optimized star separation does not match data optimized star separation')
         if context.mission.optimized_wavelength != template_fits_header['SYGN_OPTIMIZED_WAVELENGTH']:
             raise ValueError(f'Template optimized wavelength does not match data optimized wavelength')
-        if context.observatory.array_configuration != template_fits_header['SYGN_ARRAY_CONFIGURATION_TYPE']:
+        if context.observatory.array_configuration.type.value != template_fits_header['SYGN_ARRAY_CONFIGURATION_TYPE']:
             raise ValueError(f'Template array configuration does not match data array configuration')
-        if context.observatory.beam_combination_scheme != template_fits_header['SYGN_BEAM_COMBINATION_SCHEME']:
+        if context.observatory.beam_combination_scheme.type != template_fits_header['SYGN_BEAM_COMBINATION_SCHEME']:
             raise ValueError(f'Template beam combination scheme does not match data beam combination scheme')
         if context.observatory.instrument_parameters.spectral_resolving_power != \
-                template_fits_header['SYGN_SPECTRAL_RESOLVING_POWER']:
+                int(template_fits_header['SYGN_SPECTRAL_RESOLVING_POWER']):
             raise ValueError(f'Template spectral resolving power does not match data spectral resolving power')
         if context.observatory.instrument_parameters.wavelength_range_lower_limit != \
                 template_fits_header['SYGN_WAVELENGTH_RANGE_LOWER_LIMIT']:
@@ -79,15 +80,20 @@ class FITSReader():
             'grid_size': data_fits_header['SYGN_GRID_SIZE'],
             'time_steps': data_fits_header['SYGN_TIME_STEPS'],
             'planet_orbital_motion': data_fits_header['SYGN_PLANET_ORBITAL_MOTION'],
-            'noise_contributions': {
+            'noise': {
                 'stellar_leakage': data_fits_header['SYGN_STELLAR_LEAKAGE'],
                 'local_zodi_leakage': data_fits_header['SYGN_LOCAL_ZODI_LEAKAGE'],
                 'exozodi_leakage': data_fits_header['SYGN_EXOZODI_LEAKAGE'],
-                'fiber_injection_variability': data_fits_header['SYGN_FIBER_INJECTION_VARIABILITY'],
-                'optical_path_difference_variability': {
-                    'apply': data_fits_header['SYGN_OPD_VARIABILITY_APPLY '],
-                    'power_law_exponent': data_fits_header['SYGN_OPD_VARIABILITY_POWER_LAW_EXPONENT'],
-                    'rms': data_fits_header['SYGN_OPD_VARIABILITY_RMS']
+                'amplitude_perturbations': data_fits_header['SYGN_AMPLITUDE_PERTURBATIONS'],
+                'phase_perturbations': {
+                    'apply': data_fits_header['SYGN_PHASE_PERTURBATIONS_APPLY '],
+                    'power_law_exponent': data_fits_header['SYGN_PHASE_PERTURBATIONS_POWER_LAW_EXPONENT'],
+                    'rms': data_fits_header['SYGN_PHASE_PERTURBATIONS_VARIABILITY_RMS']
+                },
+                'polarization_perturbations': {
+                    'apply': data_fits_header['SYGN_POLARIZATION_PERTURBATIONS_APPLY '],
+                    'power_law_exponent': data_fits_header['SYGN_POLARIZATION_PERTURBATIONS_POWER_LAW_EXPONENT'],
+                    'rms': data_fits_header['SYGN_POLARIZATION_PERTURBATIONS_VARIABILITY_RMS']
                 }
             }
         }

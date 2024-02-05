@@ -8,11 +8,14 @@ from astropy.modeling.models import BlackBody
 
 
 def create_blackbody_spectrum(temperature,
-                              wavelength_range_lower_limit: astropy.units.Quantity,
-                              wavelength_range_upper_limit: astropy.units.Quantity,
+                              wavelength_range_lower_limit: Union[astropy.units.Quantity, float],
+                              wavelength_range_upper_limit: Union[astropy.units.Quantity, float],
                               wavelength_bin_centers: np.ndarray,
                               wavelength_bin_widths: np.ndarray,
-                              source_solid_angle: Union[astropy.units.Quantity, np.ndarray]) -> np.ndarray:
+                              source_solid_angle: Union[astropy.units.Quantity, np.ndarray],
+                              is_fitting_mode: bool = False,
+                              planet_radius: float = None,
+                              star_distance: float = None) -> np.ndarray:
     """Return a blackbody spectrum for an astrophysical object. The spectrum is binned already to the wavelength bin
     centers of the mission.
 
@@ -24,6 +27,14 @@ def create_blackbody_spectrum(temperature,
     :param source_solid_angle: The solid angle of the source
     :return: Array containing the flux per bin in units of ph m-2 s-1 um-1
     """
+    if is_fitting_mode:
+        temperature *= u.K
+        wavelength_range_lower_limit *= u.um
+        wavelength_range_upper_limit *= u.um
+        wavelength_bin_centers *= u.um
+        wavelength_bin_widths *= u.um
+        source_solid_angle = np.pi * (planet_radius / star_distance) ** 2 * u.sr
+
     wavelength_range = np.linspace(wavelength_range_lower_limit.value, wavelength_range_upper_limit.value + 1,
                                    1000) * wavelength_range_upper_limit.unit
     blackbody_spectrum = BlackBody(temperature=temperature)(wavelength_range)
@@ -33,12 +44,15 @@ def create_blackbody_spectrum(temperature,
                                                   spec_wavs=wavelength_range.to(u.um).value,
                                                   spec_fluxes=blackbody_spectrum.value,
                                                   fill=0) * units
-    return _convert_blackbody_units(blackbody_spectrum_binned, wavelength_bin_centers, source_solid_angle)
+
+    return _convert_blackbody_units(blackbody_spectrum_binned, wavelength_bin_centers, source_solid_angle,
+                                    is_fitting_mode)
 
 
 def _convert_blackbody_units(blackbody_spectrum_binned: np.ndarray,
                              wavelength_bin_centers: np.ndarray,
-                             source_solid_angle: Union[astropy.units.Quantity, np.ndarray]) -> np.ndarray:
+                             source_solid_angle: Union[astropy.units.Quantity, np.ndarray],
+                             is_fitting_mode: bool = False) -> np.ndarray:
     """Convert the binned black body spectrum from units erg / (Hz s sr cm2) to units ph / (m2 s um)
 
     :param blackbody_spectrum_binned: The binned blackbody spectrum
@@ -63,4 +77,6 @@ def _convert_blackbody_units(blackbody_spectrum_binned: np.ndarray,
                 wavelength_bin_centers[index]))
 
         spectral_flux_density[index] = current_spectral_flux_density
+    if is_fitting_mode:
+        return spectral_flux_density.value
     return spectral_flux_density

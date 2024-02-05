@@ -1,14 +1,14 @@
 from pathlib import Path
 
 from matplotlib import pyplot as plt
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 from sygn.core.modules.config_loader_module import ConfigLoaderModule
 from sygn.core.modules.data_generator_module import DataGeneratorModule
-from sygn.core.modules.fits_writer_module import FITSWriterModule
+from sygn.core.modules.fits_reader_module import FITSReaderModule
 from sygn.core.modules.flux_calibration_module import FluxCalibrationModule
 from sygn.core.modules.mlm_extraction_module import MLExtractionModule
 from sygn.core.modules.target_loader_module import TargetLoaderModule
-from sygn.core.modules.template_generator_module import TemplateGeneratorModule
 from sygn.core.pipeline import Pipeline
 from sygn.util.helpers import FITSReadWriteType
 
@@ -35,10 +35,10 @@ pipeline.add_module(module)
 #                          source_name='Earth',
 #                          wavelength=10 * astropy.units.um,
 #                          differential_intensity_response_index=0,
-#                          photon_count_limits=1000,
-#                          collector_position_limits=50,
-#                          image_vmin=-10,
-#                          image_vmax=10)
+#                          photon_count_limits=10000,
+#                          collector_position_limits=20,
+#                          image_vmin=-20,
+#                          image_vmax=20)
 # pipeline.add_module(modules)
 
 ########################################################################################################################
@@ -50,8 +50,8 @@ module = DataGeneratorModule()
 pipeline.add_module(module)
 
 # Write synthetic measurements to FITS file
-module = FITSWriterModule(output_path=Path('.'), data_type=FITSReadWriteType.SyntheticMeasurement)
-pipeline.add_module(module)
+# module = FITSWriterModule(output_path=Path('.'), data_type=FITSReadWriteType.SyntheticMeasurement)
+# pipeline.add_module(module)
 
 ########################################################################################################################
 # Or load synthetic measurements
@@ -65,20 +65,20 @@ pipeline.add_module(module)
 # Generate templates
 ########################################################################################################################
 
-# Generate Templates
-module = TemplateGeneratorModule()
-pipeline.add_module(module)
-
-# Write templates to FITS file
-module = FITSWriterModule(output_path=Path('.'), data_type=FITSReadWriteType.Template)
-pipeline.add_module(module)
+# # Generate Templates
+# module = TemplateGeneratorModule()
+# pipeline.add_module(module)
+#
+# # Write templates to FITS file
+# module = FITSWriterModule(output_path=Path('.'), data_type=FITSReadWriteType.Template)
+# pipeline.add_module(module)
 
 ########################################################################################################################
 # Or load templates
 ########################################################################################################################
 
-# module = FITSReaderModule(input_path=Path('templates_20231215_124021.546307'), data_type=FITSReadWriteType.Template)
-# pipeline.add_module(module)
+module = FITSReaderModule(input_path=Path('templates_20240105_091157.495302'), data_type=FITSReadWriteType.Template)
+pipeline.add_module(module)
 
 ########################################################################################################################
 # Process data
@@ -115,12 +115,16 @@ cost_function = extractions[0].cost_function[0]
 wavelengths = [round(wavelength, 1) for wavelength in pipeline.get_wavelengths().value]
 
 # Plot synthetic signal
-plt.imshow(signal, cmap='Greys')
+plt.figure()
+ax = plt.gca()
+im = ax.imshow(signal, cmap='Greys')
 plt.title('Differential Photon Counts')
 plt.ylabel('Spectral Channel')
 plt.xlabel('Time')
-plt.colorbar()
-plt.savefig('signal.png', dpi=300)
+divider = make_axes_locatable(ax)
+cax = divider.append_axes("right", size="5%", pad=0.05)
+plt.colorbar(im, cax=cax)
+plt.savefig('photon_counts.pdf', bbox_inches='tight')
 plt.show()
 
 # Plot cost function
@@ -144,7 +148,6 @@ plt.xlabel('Wavelength ($\mu$m)')
 plt.ylabel('Flux Density (ph s$^{-1}$ m$^{-2}$ $\mu$m$^{-1}$)')
 plt.tight_layout()
 plt.legend()
-plt.savefig('spec.png', dpi=300)
 plt.show()
 
 # # Get position

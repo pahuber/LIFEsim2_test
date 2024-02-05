@@ -39,12 +39,12 @@ class TargetLoaderModule(BaseModule):
         :return: The list containing the specified photon sources
         """
         target_specific_photon_sources = []
-        if context.settings.noise_contributions.stellar_leakage:
+        if context.settings.noise.stellar_leakage:
             target_specific_photon_sources.append(self.star)
-        if context.settings.noise_contributions.local_zodi_leakage:
+        if context.settings.noise.local_zodi_leakage:
             target_specific_photon_sources.append(
                 self.local_zodi)
-        if context.settings.noise_contributions.exozodi_leakage:
+        if context.settings.noise.exozodi_leakage:
             target_specific_photon_sources.append(self.exozodi)
         for planet in self.planets:
             target_specific_photon_sources.append(planet)
@@ -133,9 +133,9 @@ class TargetLoaderModule(BaseModule):
         self.star = self._load_star(self._config_dict, context)
         self.planets = self._load_planets(self._config_dict, context)
         self.exozodi = self._load_exozodi(self._config_dict,
-                                          context) if context.settings.noise_contributions.exozodi_leakage else None
+                                          context) if context.settings.noise.exozodi_leakage else None
         self.local_zodi = self._load_local_zodi(
-            context) if context.settings.noise_contributions.local_zodi_leakage else None
+            context) if context.settings.noise.local_zodi_leakage else None
         context.photon_sources = self._add_target_specific_photon_sources(context)
         context.star = self.star
         return context
